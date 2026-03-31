@@ -1,0 +1,91 @@
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+  const body = await req.json();
+  const { searchParams } = new URL(req.url);
+  const type = searchParams.get("type");
+
+  if (type === "recipe") {
+    const data: {
+      name?: string;
+      description?: string | null;
+      emoji?: string;
+      prepTime?: number | null;
+      cookTime?: number | null;
+      servings?: number;
+      category?: string;
+      imageUrl?: string | null;
+      ingredients?: { deleteMany: Record<string, never>; create: { name: string; amount: string; unit?: string | null }[] };
+    } = {};
+
+    if (body.name !== undefined) data.name = body.name;
+    if (body.description !== undefined) data.description = body.description;
+    if (body.emoji !== undefined) data.emoji = body.emoji;
+    if (body.prepTime !== undefined) data.prepTime = body.prepTime;
+    if (body.cookTime !== undefined) data.cookTime = body.cookTime;
+    if (body.servings !== undefined) data.servings = body.servings;
+    if (body.category !== undefined) data.category = body.category;
+    if (body.imageUrl !== undefined) {
+      data.imageUrl = body.imageUrl === null || body.imageUrl === "" ? null : String(body.imageUrl);
+    }
+    if (Array.isArray(body.ingredients)) {
+      data.ingredients = {
+        deleteMany: {},
+        create: body.ingredients.map((i: { name: string; amount: string; unit?: string | null }) => ({
+          name: i.name,
+          amount: i.amount,
+          unit: i.unit ?? null,
+        })),
+      };
+    }
+
+    const recipe = await prisma.recipe.update({
+      where: { id },
+      data,
+      include: { ingredients: true },
+    });
+    return NextResponse.json(recipe);
+  }
+
+  const plan = await prisma.mealPlan.update({
+    where: { id },
+    data: {
+      recipeId: body.recipeId || undefined,
+      cookId: body.cookId || undefined,
+      note: body.note,
+    },
+    include: {
+      recipe: { include: { ingredients: true } },
+      cook: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+    },
+  });
+
+  return NextResponse.json(plan);
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const type = searchParams.get("type");
+
+  if (type === "recipe") {
+    await prisma.mealPlan.updateMany({
+      where: { recipeId: id },
+      data: { recipeId: null },
+    });
+    await prisma.recipe.delete({ where: { id } });
+  } else {
+    await prisma.mealPlan.delete({ where: { id } });
+  }
+
+  return NextResponse.json({ success: true });
+}

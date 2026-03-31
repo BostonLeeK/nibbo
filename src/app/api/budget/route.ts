@@ -1,0 +1,74 @@
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const type = searchParams.get("type");
+
+  if (type === "categories") {
+    const categories = await prisma.expenseCategory.findMany({
+      include: { expenses: true },
+      orderBy: { name: "asc" },
+    });
+    return NextResponse.json(categories);
+  }
+
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+
+  const expenses = await prisma.expense.findMany({
+    where: {
+      date: {
+        gte: from ? new Date(from) : undefined,
+        lte: to ? new Date(to) : undefined,
+      },
+    },
+    include: {
+      category: true,
+      user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+    },
+    orderBy: { date: "desc" },
+  });
+
+  return NextResponse.json(expenses);
+}
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json();
+
+  if (body.type === "category") {
+    const category = await prisma.expenseCategory.create({
+      data: {
+        name: body.name,
+        emoji: body.emoji || "💰",
+        color: body.color || "#4ade80",
+        budget: body.budget,
+      },
+    });
+    return NextResponse.json(category);
+  }
+
+  const expense = await prisma.expense.create({
+    data: {
+      title: body.title,
+      amount: body.amount,
+      date: body.date ? new Date(body.date) : new Date(),
+      categoryId: body.categoryId || undefined,
+      userId: session.user.id,
+      note: body.note,
+    },
+    include: {
+      category: true,
+      user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+    },
+  });
+
+  return NextResponse.json(expense);
+}

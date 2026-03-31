@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- AUTH ---
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  color         String    @default("#f43f5e")
+  emoji         String    @default("🌸")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  tasks        Task[]           @relation("TaskAssignee")
+  createdTasks Task[]           @relation("TaskCreator")
+  events       Event[]          @relation("EventAssignee")
+  mealCooks    MealPlan[]       @relation("MealCook")
+  notes        Note[]
+  expenses     Expense[]
+  shoppingItems ShoppingItem[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- TASKS ---
+
+model TaskBoard {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  emoji       String   @default("📋")
+  color       String   @default("#f43f5e")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  columns TaskColumn[]
+}
+
+model TaskColumn {
+  id        String   @id @default(cuid())
+  name      String
+  emoji     String   @default("📝")
+  color     String   @default("#e7e5e4")
+  order     Int      @default(0)
+  boardId   String
+  createdAt DateTime @default(now())
+
+  board TaskBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks Task[]
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+  completed   Boolean    @default(false)
+  order       Int        @default(0)
+  columnId    String
+  assigneeId  String?
+  creatorId   String
+  labels      String[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  column   TaskColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  assignee User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator  User       @relation("TaskCreator", fields: [creatorId], references: [id])
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// --- CALENDAR ---
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  emoji       String    @default("📅")
+  color       String    @default("#8b5cf6")
+  startDate   DateTime
+  endDate     DateTime
+  allDay      Boolean   @default(false)
+  location    String?
+  assigneeId  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  assignee User? @relation("EventAssignee", fields: [assigneeId], references: [id])
+}
+
+// --- MEAL PLANNER ---
+
+model Recipe {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  emoji       String   @default("🍽️")
+  prepTime    Int?
+  cookTime    Int?
+  servings    Int      @default(4)
+  category    String   @default("Обід")
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ingredients Ingredient[]
+  mealPlans   MealPlan[]
+}
+
+model Ingredient {
+  id       String  @id @default(cuid())
+  name     String
+  amount   String
+  unit     String?
+  recipeId String
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+model MealPlan {
+  id       String   @id @default(cuid())
+  date     DateTime
+  mealType MealType
+  recipeId String?
+  cookId   String?
+  note     String?
+  createdAt DateTime @default(now())
+
+  recipe Recipe? @relation(fields: [recipeId], references: [id])
+  cook   User?   @relation("MealCook", fields: [cookId], references: [id])
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+// --- NOTES ---
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  emoji     String   @default("📓")
+  color     String   @default("#faf3e0")
+  pinned    Boolean  @default(false)
+  authorId  String
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User @relation(fields: [authorId], references: [id])
+}
+
+// --- BUDGET ---
+
+model ExpenseCategory {
+  id       String    @id @default(cuid())
+  name     String
+  emoji    String    @default("💰")
+  color    String    @default("#4ade80")
+  budget   Float?
+  expenses Expense[]
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  title       String
+  amount      Float
+  date        DateTime @default(now())
+  categoryId  String?
+  userId      String
+  note        String?
+  createdAt   DateTime @default(now())
+
+  category ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  user     User             @relation(fields: [userId], references: [id])
+}
+
+// --- SHOPPING ---
+
+model ShoppingList {
+  id        String   @id @default(cuid())
+  name      String
+  emoji     String   @default("🛒")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items ShoppingItem[]
+}
+
+model ShoppingItem {
+  id         String   @id @default(cuid())
+  name       String
+  quantity   String?
+  unit       String?
+  checked    Boolean  @default(false)
+  category   String?
+  listId     String
+  addedById  String
+  createdAt  DateTime @default(now())
+
+  list    ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  addedBy User         @relation(fields: [addedById], references: [id])
+}

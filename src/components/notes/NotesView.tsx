@@ -1,0 +1,361 @@
+"use client";
+
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Pin, Trash2, X, Search } from "lucide-react";
+import { formatDate } from "@/lib/utils";
+import toast from "react-hot-toast";
+
+interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
+interface Note {
+  id: string; title: string; content: string; emoji: string;
+  color: string; pinned: boolean; author: User; tags: string[]; updatedAt: string;
+}
+
+const NOTE_COLORS = [
+  "#faf3e0", "#fff1f4", "#f5f3ff", "#f0fdf4", "#f0f9ff", "#fff7ed", "#fdf2f8",
+];
+const NOTE_EMOJIS = ["📓", "💭", "🌟", "💡", "🎯", "📝", "💌", "🌸", "✨", "🍀"];
+
+export default function NotesView({ initialNotes, currentUserId }: { initialNotes: Note[]; currentUserId: string }) {
+  const [notes, setNotes] = useState(initialNotes);
+  const [search, setSearch] = useState("");
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newNote, setNewNote] = useState({ title: "", content: "", emoji: "📓", color: "#faf3e0", tags: "" });
+
+  const filtered = notes.filter(
+    (n) => n.title.toLowerCase().includes(search.toLowerCase()) || n.content.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const pinned = filtered.filter((n) => n.pinned);
+  const unpinned = filtered.filter((n) => !n.pinned);
+
+  const handleAdd = async () => {
+    if (!newNote.title && !newNote.content) return;
+    const res = await fetch("/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: newNote.title || "Нотатка",
+        content: newNote.content,
+        emoji: newNote.emoji,
+        color: newNote.color,
+        tags: newNote.tags ? newNote.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+      }),
+    });
+    const note = await res.json();
+    setNotes((prev) => [note, ...prev]);
+    setShowAdd(false);
+    setNewNote({ title: "", content: "", emoji: "📓", color: "#faf3e0", tags: "" });
+    toast.success("Нотатку збережено! 📓");
+  };
+
+  const handlePin = async (note: Note) => {
+    const res = await fetch(`/api/notes/${note.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pinned: !note.pinned }),
+    });
+    const updated = await res.json();
+    setNotes((prev) => prev.map((n) => n.id === note.id ? updated : n).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)));
+    toast.success(updated.pinned ? "Закріплено 📌" : "Відкріплено");
+  };
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/notes/${id}`, { method: "DELETE" });
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+    setEditingNote(null);
+    toast.success("Нотатку видалено");
+  };
+
+  const NoteCard = ({ note }: { note: Note }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      onClick={() => setEditingNote(note)}
+      className="rounded-2xl cursor-pointer transition-shadow relative group bg-white border border-warm-200/90 shadow-cozy hover:shadow-cozy-hover overflow-hidden flex flex-col min-h-[140px]"
+    >
+      <div
+        className="h-1.5 w-full shrink-0"
+        style={{ backgroundColor: note.color }}
+      />
+      <div className="p-4 flex flex-col flex-1 min-h-0">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <span className="text-2xl leading-none shrink-0">{note.emoji}</span>
+          {note.pinned && (
+            <Pin size={14} className="text-rose-400 fill-rose-200 shrink-0 mt-0.5" />
+          )}
+        </div>
+        <h3 className="font-semibold text-warm-900 text-sm leading-snug mb-2 line-clamp-2 break-words">
+          {note.title}
+        </h3>
+        <p className="text-xs text-warm-600 line-clamp-4 leading-relaxed break-words flex-1">
+          {note.content || "…"}
+        </p>
+        {note.tags.length > 0 && (
+          <div className="flex gap-1 flex-wrap mt-3">
+            {note.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[10px] font-medium bg-warm-100 text-warm-600 px-2 py-0.5 rounded-md"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-warm-100">
+          <p className="text-[10px] text-warm-400">{formatDate(note.updatedAt)}</p>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePin(note);
+              }}
+              className="w-8 h-8 rounded-lg bg-warm-50 hover:bg-warm-100 flex items-center justify-center text-warm-500"
+            >
+              <Pin size={12} className={note.pinned ? "text-rose-500 fill-rose-400" : ""} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(note.id);
+              }}
+              className="w-8 h-8 rounded-lg bg-warm-50 hover:bg-rose-50 flex items-center justify-center text-warm-400 hover:text-rose-500"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex-1 relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-400" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Пошук нотаток..." className="w-full pl-10 pr-4 py-2.5 bg-white/80 rounded-2xl border border-warm-200 text-sm outline-none focus:border-rose-300 shadow-sm" />
+        </div>
+        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cream-400 to-cream-300 text-warm-800 rounded-2xl text-sm font-medium shadow-cozy border border-cream-300">
+          <Plus size={16} /> Нова нотатка
+        </motion.button>
+      </div>
+
+      {/* Pinned */}
+      {pinned.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-semibold text-warm-400 mb-3 flex items-center gap-1">
+            <Pin size={12} /> ЗАКРІПЛЕНІ
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+            {pinned.map((note) => (
+              <NoteCard key={note.id} note={note} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All notes */}
+      {unpinned.length > 0 && (
+        <div>
+          {pinned.length > 0 && <p className="text-xs font-semibold text-warm-400 mb-3">ІНШІ</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+            {unpinned.map((note) => (
+              <NoteCard key={note.id} note={note} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filtered.length === 0 && (
+        <div className="text-center py-16 text-warm-400">
+          <div className="text-5xl mb-4">📓</div>
+          <p className="text-lg font-semibold mb-2">Нотаток поки немає</p>
+          <p className="text-sm">Записуйте ідеї, плани, думки</p>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {showAdd && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAdd(false)}
+              className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+              className="relative z-10 w-full max-w-lg max-h-[min(92dvh,760px)] flex flex-col rounded-3xl bg-white shadow-cozy-lg border border-warm-200 overflow-hidden"
+            >
+              <div
+                className="h-2 w-full shrink-0"
+                style={{ backgroundColor: newNote.color }}
+              />
+              <div className="overflow-y-auto overscroll-contain p-5 flex-1 min-h-0">
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <p className="text-sm font-semibold text-warm-800">Нова нотатка</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdd(false)}
+                    className="w-9 h-9 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center shrink-0"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">Емодзі</p>
+                <div className="flex flex-wrap gap-1.5 mb-4 max-h-20 overflow-y-auto">
+                  {NOTE_EMOJIS.map((e) => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => setNewNote((p) => ({ ...p, emoji: e }))}
+                      className={`text-lg w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${
+                        newNote.emoji === e
+                          ? "bg-rose-50 border-rose-300"
+                          : "bg-warm-50 border-transparent hover:border-warm-200"
+                      }`}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">Колір смуги</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {NOTE_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setNewNote((p) => ({ ...p, color: c }))}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        newNote.color === c ? "border-warm-700 scale-110" : "border-warm-200 hover:border-warm-300"
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+                <input
+                  value={newNote.title}
+                  onChange={(e) => setNewNote((p) => ({ ...p, title: e.target.value }))}
+                  placeholder="Заголовок"
+                  className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm font-semibold text-warm-900 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 mb-3"
+                />
+                <textarea
+                  value={newNote.content}
+                  onChange={(e) => setNewNote((p) => ({ ...p, content: e.target.value }))}
+                  placeholder="Текст нотатки…"
+                  rows={5}
+                  className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm text-warm-800 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 resize-none mb-3"
+                />
+                <input
+                  value={newNote.tags}
+                  onChange={(e) => setNewNote((p) => ({ ...p, tags: e.target.value }))}
+                  placeholder="Теги через кому"
+                  className="w-full bg-warm-50 rounded-xl px-4 py-2.5 text-xs text-warm-700 placeholder:text-warm-400 outline-none border border-warm-200 mb-4"
+                />
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleAdd}
+                  className="w-full py-3 bg-gradient-to-r from-rose-400 to-rose-500 text-white rounded-2xl font-semibold text-sm"
+                >
+                  Зберегти {newNote.emoji}
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editingNote && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setEditingNote(null)}
+              className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+              className="relative z-10 w-full max-w-lg max-h-[min(92dvh,760px)] flex flex-col rounded-3xl bg-white shadow-cozy-lg border border-warm-200 overflow-hidden"
+            >
+              <div
+                className="h-2 w-full shrink-0"
+                style={{ backgroundColor: editingNote.color }}
+              />
+              <div className="overflow-y-auto overscroll-contain p-5 flex-1 min-h-0">
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-3xl shrink-0">{editingNote.emoji}</span>
+                    <div className="min-w-0">
+                      <p className="text-xs text-warm-500 truncate">{editingNote.author.name}</p>
+                      <p className="text-[10px] text-warm-400">{formatDate(editingNote.updatedAt)}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handlePin(editingNote)}
+                      className="w-9 h-9 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-600 flex items-center justify-center"
+                    >
+                      <Pin size={14} className={editingNote.pinned ? "text-rose-500 fill-rose-400" : ""} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(editingNote.id)}
+                      className="w-9 h-9 rounded-xl bg-warm-100 hover:bg-rose-100 text-warm-500 hover:text-rose-600 flex items-center justify-center"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingNote(null)}
+                      className="w-9 h-9 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+                <h2 className="text-lg font-bold text-warm-900 mb-3 break-words">{editingNote.title}</h2>
+                <p className="text-sm text-warm-700 whitespace-pre-wrap leading-relaxed break-words">
+                  {editingNote.content}
+                </p>
+                {editingNote.tags.length > 0 && (
+                  <div className="flex gap-1 flex-wrap mt-4 pt-4 border-t border-warm-100">
+                    {editingNote.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[10px] font-medium bg-warm-100 text-warm-600 px-2 py-0.5 rounded-md"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
