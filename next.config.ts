@@ -7,6 +7,14 @@ if (process.env.NODE_ENV !== "production" && !process.env.DATABASE_URL) {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  async rewrites() {
+    return [
+      {
+        source: "/uploads/recipes/:filename",
+        destination: "/api/recipes/image/:filename",
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
