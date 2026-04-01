@@ -12,7 +12,8 @@ if [ -z "$DB_PASSWORD" ]; then
 fi
 
 mkdir -p /app/public/uploads/recipes
-chown -R nextjs:nodejs /app/public/uploads
+chown -R nextjs:nodejs /app/public/uploads 2>/dev/null || true
+chmod -R a+rwX /app/public/uploads
 
 PGDATA=${PGDATA:-/var/lib/postgresql/data}
 mkdir -p "$PGDATA"

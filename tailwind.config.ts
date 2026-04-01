@@ -104,6 +104,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-heading)", "var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["ui-monospace", "Cascadia Code", "monospace"],
       },
       boxShadow: {

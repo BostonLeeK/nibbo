@@ -32,6 +32,26 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+export function dashboardHeaderLabels(now: Date = new Date()) {
+  const greetings = ["Привіт", "Вітаю", "Доброго дня"];
+  const hour = parseInt(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: "Europe/Kyiv",
+    }).format(now),
+    10
+  );
+  const greeting = greetings[Number.isFinite(hour) ? hour % greetings.length : 0];
+  const dateLabel = new Intl.DateTimeFormat("uk-UA", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Kyiv",
+  }).format(now);
+  return { greeting, dateLabel };
+}
+
 export const PRIORITY_CONFIG = {
   LOW: { label: "Низький", color: "bg-sage-100 text-sage-700", emoji: "🟢" },
   MEDIUM: { label: "Середній", color: "bg-sky-100 text-sky-700", emoji: "🔵" },

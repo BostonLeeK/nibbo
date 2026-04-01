@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Calendar, Trash2, GripVertical } from "lucide-react";
@@ -19,10 +18,21 @@ interface TaskCardProps {
   task: Task;
   users: User[];
   onDelete?: () => void;
+  onAssigneeChange?: (assigneeId: string | null) => void;
+  onPriorityChange?: (priority: Task["priority"]) => void;
   isDragging?: boolean;
 }
 
-export default function TaskCard({ task, users, onDelete, isDragging }: TaskCardProps) {
+const CARD_PRIORITIES: Task["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+
+export default function TaskCard({
+  task,
+  users,
+  onDelete,
+  onAssigneeChange,
+  onPriorityChange,
+  isDragging,
+}: TaskCardProps) {
   const [showActions, setShowActions] = useState(false);
   const priority = PRIORITY_CONFIG[task.priority];
 
@@ -42,14 +52,12 @@ export default function TaskCard({ task, users, onDelete, isDragging }: TaskCard
   };
 
   return (
-    <motion.div
+    <div
       ref={setNodeRef}
       style={style}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
       className={cn(
         "bg-white rounded-2xl p-3 shadow-sm border border-warm-100 cursor-pointer group",
-        "hover:shadow-cozy hover:border-rose-100 transition-all",
+        "hover:shadow-cozy hover:border-rose-100 transition-[box-shadow,border-color]",
         isDragging && "rotate-2 scale-105 shadow-cozy-hover"
       )}
       onMouseEnter={() => setShowActions(true)}
@@ -66,11 +74,31 @@ export default function TaskCard({ task, users, onDelete, isDragging }: TaskCard
         </div>
 
         <div className="flex-1 min-w-0">
-          {/* Priority badge */}
           <div className="flex items-center gap-2 mb-2">
-            <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", priority.color)}>
-              {priority.emoji} {priority.label}
-            </span>
+            {!isDragging && onPriorityChange ? (
+              <select
+                value={task.priority}
+                onChange={(e) => onPriorityChange(e.target.value as Task["priority"])}
+                onPointerDown={(e) => e.stopPropagation()}
+                className={cn(
+                  "text-xs px-2 py-0.5 rounded-full font-medium border-0 cursor-pointer outline-none max-w-full",
+                  priority.color
+                )}
+              >
+                {CARD_PRIORITIES.map((p) => {
+                  const c = PRIORITY_CONFIG[p];
+                  return (
+                    <option key={p} value={p}>
+                      {c.emoji} {c.label}
+                    </option>
+                  );
+                })}
+              </select>
+            ) : (
+              <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", priority.color)}>
+                {priority.emoji} {priority.label}
+              </span>
+            )}
           </div>
 
           {/* Title */}
@@ -98,7 +126,7 @@ export default function TaskCard({ task, users, onDelete, isDragging }: TaskCard
             </div>
 
             <div className="flex items-center gap-1">
-              {task.assignee && (
+              {!onAssigneeChange && task.assignee && (
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white font-medium ring-2 ring-white"
                   style={{ backgroundColor: task.assignee.color }}
@@ -109,19 +137,34 @@ export default function TaskCard({ task, users, onDelete, isDragging }: TaskCard
               )}
 
               {showActions && onDelete && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                <button
+                  type="button"
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
                   className="w-6 h-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-400 hover:text-rose-600 flex items-center justify-center transition-colors ml-1"
                 >
                   <Trash2 size={11} />
-                </motion.button>
+                </button>
               )}
             </div>
           </div>
+
+          {!isDragging && onAssigneeChange && users.length > 0 && (
+            <select
+              value={task.assignee?.id ?? ""}
+              onChange={(e) => onAssigneeChange(e.target.value || null)}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="mt-2 w-full bg-warm-50 rounded-xl px-2 py-1.5 text-xs text-warm-800 border border-warm-200 focus:border-rose-300 outline-none"
+            >
+              <option value="">Не призначено</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.emoji} {u.name ?? "Користувач"}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

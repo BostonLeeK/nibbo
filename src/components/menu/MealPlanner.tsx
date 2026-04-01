@@ -6,9 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays, startOfWeek } from "date-fns";
 import { uk } from "date-fns/locale";
 import Link from "next/link";
-import { Plus, X, Copy, ClipboardList, ImagePlus, Pencil, Trash2 } from "lucide-react";
+import { Plus, X, Copy, ClipboardList, ImagePlus, Pencil, Trash2, Eye } from "lucide-react";
 import { MEAL_TYPE_CONFIG } from "@/lib/utils";
 import toast from "react-hot-toast";
+
+function isLocalUpload(src: string | null | undefined) {
+  return Boolean(src?.startsWith("/uploads/"));
+}
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface Ingredient { id: string; name: string; amount: string; unit: string | null; }
@@ -58,6 +62,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
   const [recipeImagePreview, setRecipeImagePreview] = useState<string | null>(null);
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
   const [editInitialImageUrl, setEditInitialImageUrl] = useState<string | null>(null);
+  const [viewRecipe, setViewRecipe] = useState<Recipe | null>(null);
   const [newRecipe, setNewRecipe] = useState({
     name: "", description: "", emoji: "🍽️", category: "Обід",
     prepTime: "", cookTime: "", servings: "4",
@@ -115,6 +120,13 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
           : [{ name: "", amount: "", unit: "" }],
     });
     setShowAddRecipe(true);
+  };
+
+  const openEditFromView = () => {
+    if (!viewRecipe) return;
+    const r = viewRecipe;
+    setViewRecipe(null);
+    openEditRecipe(r);
   };
 
   const closeAddRecipeModal = () => {
@@ -415,10 +427,28 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                           <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className={`${config.color} rounded-2xl p-3 h-full min-h-[80px] relative group border border-warm-100`}
+                            role={meal.recipe ? "button" : undefined}
+                            tabIndex={meal.recipe ? 0 : undefined}
+                            onClick={() => meal.recipe && setViewRecipe(meal.recipe)}
+                            onKeyDown={(e) => {
+                              if (!meal.recipe) return;
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setViewRecipe(meal.recipe);
+                              }
+                            }}
+                            className={`${config.color} rounded-2xl p-3 h-full min-h-[80px] relative group border border-warm-100 ${
+                              meal.recipe ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-peach-400" : ""
+                            }`}
                           >
-                            <button onClick={() => handleDeleteMeal(meal.id)}
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full bg-white/80 text-warm-400 hover:text-rose-500 flex items-center justify-center transition-all">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteMeal(meal.id);
+                              }}
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full bg-white/80 text-warm-400 hover:text-rose-500 flex items-center justify-center transition-all z-20"
+                            >
                               <X size={10} />
                             </button>
                             {meal.recipe?.imageUrl ? (
@@ -429,6 +459,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                                   fill
                                   className="object-cover"
                                   sizes="120px"
+                                  unoptimized={isLocalUpload(meal.recipe.imageUrl)}
                                 />
                               </div>
                             ) : (
@@ -478,6 +509,14 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
               <div className="absolute top-3 right-3 z-10 flex gap-1">
                 <button
                   type="button"
+                  onClick={() => setViewRecipe(recipe)}
+                  className="w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-600 hover:text-sky-600 flex items-center justify-center"
+                  title="Переглянути"
+                >
+                  <Eye size={15} />
+                </button>
+                <button
+                  type="button"
                   onClick={() => openEditRecipe(recipe)}
                   className="w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-600 hover:text-peach-600 flex items-center justify-center"
                   title="Редагувати"
@@ -501,6 +540,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 33vw"
+                    unoptimized={isLocalUpload(recipe.imageUrl)}
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-5xl">
@@ -596,6 +636,113 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
       </AnimatePresence>
 
       <AnimatePresence>
+        {viewRecipe && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setViewRecipe(null)}
+              className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative z-10 w-full max-w-lg max-h-[min(92dvh,820px)] flex flex-col rounded-3xl bg-white shadow-cozy-lg overflow-hidden border border-warm-100"
+            >
+              <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-warm-100 shrink-0">
+                <div className="min-w-0">
+                  <p className="text-2xl leading-none mb-1">{viewRecipe.emoji}</p>
+                  <h2 className="text-lg font-bold text-warm-800 leading-tight">{viewRecipe.name}</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewRecipe(null)}
+                  className="shrink-0 w-9 h-9 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="overflow-y-auto overscroll-contain px-5 py-4 flex-1 min-h-0 space-y-4">
+                {viewRecipe.imageUrl ? (
+                  <div className="relative w-full aspect-[4/3] max-h-56 rounded-2xl overflow-hidden bg-warm-100">
+                    <Image
+                      src={viewRecipe.imageUrl}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 32rem"
+                      unoptimized={isLocalUpload(viewRecipe.imageUrl)}
+                    />
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs bg-peach-50 text-peach-600 px-2.5 py-1 rounded-full font-medium">{viewRecipe.category}</span>
+                  {viewRecipe.prepTime != null && (
+                    <span className="text-xs bg-sage-50 text-sage-600 px-2.5 py-1 rounded-full">Підготовка {viewRecipe.prepTime} хв</span>
+                  )}
+                  {viewRecipe.cookTime != null && (
+                    <span className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">Готування {viewRecipe.cookTime} хв</span>
+                  )}
+                  <span className="text-xs bg-sky-50 text-sky-600 px-2.5 py-1 rounded-full">Порцій: {viewRecipe.servings}</span>
+                </div>
+                {viewRecipe.description?.trim() ? (
+                  <div>
+                    <p className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-1.5">Опис</p>
+                    <p className="text-sm text-warm-800 whitespace-pre-wrap leading-relaxed">{viewRecipe.description}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-warm-400 italic">Опис не додано</p>
+                )}
+                <div>
+                  <p className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2">Інгредієнти</p>
+                  {viewRecipe.ingredients.length > 0 ? (
+                    <ul className="space-y-2">
+                      {viewRecipe.ingredients.map((ing) => (
+                        <li
+                          key={ing.id}
+                          className="text-sm text-warm-700 py-2 px-3 rounded-xl bg-warm-50 border border-warm-100"
+                        >
+                          <span className="font-medium text-warm-800">{ing.name}</span>
+                          <span className="text-warm-500">
+                            {" "}
+                            — {ing.amount}
+                            {ing.unit ? ` ${ing.unit}` : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-warm-400">Інгредієнтів немає</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col-reverse sm:flex-row gap-2 p-4 border-t border-warm-100 shrink-0 bg-cream-50/50">
+                <button
+                  type="button"
+                  onClick={() => setViewRecipe(null)}
+                  className="flex-1 py-3 rounded-2xl bg-white border border-warm-200 text-warm-800 font-medium text-sm"
+                >
+                  Закрити
+                </button>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.98 }}
+                  onClick={openEditFromView}
+                  className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-400 text-white font-semibold text-sm"
+                >
+                  Редагувати
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {showAddRecipe && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
@@ -658,7 +805,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                             src={recipeImagePreview || editInitialImageUrl!}
                             alt=""
                             fill
-                            unoptimized={!!recipeImagePreview}
+                            unoptimized={!!recipeImagePreview || isLocalUpload(editInitialImageUrl)}
                             className="object-cover"
                             sizes="80px"
                           />

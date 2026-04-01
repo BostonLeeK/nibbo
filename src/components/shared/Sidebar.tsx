@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -25,38 +25,24 @@ export default function Sidebar({ user: u }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <motion.aside
-      initial={{ x: -280 }}
-      animate={{ x: 0 }}
-      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-      className="w-64 h-full bg-white/80 backdrop-blur-md border-r border-warm-100 flex flex-col shadow-cozy z-10"
-    >
+    <aside className="w-64 h-full bg-white/80 backdrop-blur-md border-r border-warm-100 flex flex-col shadow-cozy z-10">
       {/* Logo */}
       <div className="p-6 border-b border-warm-100">
-        <motion.div
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="flex items-center gap-3"
-        >
+        <div className="flex items-center gap-3">
           <span className="text-3xl">🏠</span>
           <div>
             <h1 className="font-bold text-warm-800 text-lg leading-tight">Цифровий дім</h1>
             <p className="text-xs text-warm-400">Родинний простір</p>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item, i) => {
+        {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
-            <motion.div
-              key={item.href}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
+            <div key={item.href}>
               <Link href={item.href}>
                 <motion.div
                   whileHover={{ x: 4 }}
@@ -82,7 +68,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
                   )}
                 </motion.div>
               </Link>
-            </motion.div>
+            </div>
           );
         })}
       </nav>
@@ -109,6 +95,6 @@ export default function Sidebar({ user: u }: SidebarProps) {
           </div>
         </div>
       </div>
-    </motion.aside>
+    </aside>
   );
 }

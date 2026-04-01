@@ -1,6 +1,7 @@
 services:
   app:
     image: home-crm:latest
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile

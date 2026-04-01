@@ -176,7 +176,12 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
     toast.success("Колонку додано! 🎉");
   };
 
-  const addTask = async (columnId: string, title: string, assigneeId?: string) => {
+  const addTask = async (
+    columnId: string,
+    title: string,
+    assigneeId?: string,
+    priority: Task["priority"] = "MEDIUM"
+  ) => {
     const res = await fetch("/api/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -186,7 +191,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         columnId,
         assigneeId,
         creatorId: currentUserId,
-        priority: "MEDIUM",
+        priority,
       }),
     });
     const task = await res.json();
@@ -203,6 +208,52 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
       )
     );
     toast.success("Задачу додано! ✅");
+  };
+
+  const updateTaskAssignee = async (taskId: string, assigneeId: string | null) => {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assigneeId }),
+      });
+      if (!res.ok) throw new Error("fail");
+      const task = await res.json();
+      setBoards((prev) =>
+        prev.map((b) => ({
+          ...b,
+          columns: b.columns.map((c) => ({
+            ...c,
+            tasks: c.tasks.map((t) => (t.id === taskId ? task : t)),
+          })),
+        }))
+      );
+    } catch {
+      toast.error("Не вдалося оновити виконавця");
+    }
+  };
+
+  const updateTaskPriority = async (taskId: string, priority: Task["priority"]) => {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priority }),
+      });
+      if (!res.ok) throw new Error("fail");
+      const task = await res.json();
+      setBoards((prev) =>
+        prev.map((b) => ({
+          ...b,
+          columns: b.columns.map((c) => ({
+            ...c,
+            tasks: c.tasks.map((t) => (t.id === taskId ? task : t)),
+          })),
+        }))
+      );
+    } catch {
+      toast.error("Не вдалося змінити пріоритет");
+    }
   };
 
   const deleteTask = async (taskId: string, columnId: string) => {
@@ -277,6 +328,8 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
                 users={users}
                 onAddTask={addTask}
                 onDeleteTask={deleteTask}
+                onAssigneeChange={updateTaskAssignee}
+                onPriorityChange={updateTaskPriority}
               />
             ))}
 

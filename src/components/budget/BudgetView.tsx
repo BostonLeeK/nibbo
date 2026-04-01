@@ -178,12 +178,12 @@ export default function BudgetView({ initialCategories, initialExpenses, current
       {/* Add Expense Modal */}
       <AnimatePresence>
         {showAddExpense && (
-          <>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowAddExpense(false)} className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md m-4">
+              onClick={() => setShowAddExpense(false)} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative z-10 w-full max-w-md">
               <div className="bg-white rounded-3xl shadow-cozy-lg p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-warm-800">Нова витрата 💰</h2>
@@ -209,19 +209,19 @@ export default function BudgetView({ initialCategories, initialExpenses, current
                 </div>
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Add Category Modal */}
       <AnimatePresence>
         {showAddCategory && (
-          <>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowAddCategory(false)} className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-sm m-4">
+              onClick={() => setShowAddCategory(false)} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative z-10 w-full max-w-sm">
               <div className="bg-white rounded-3xl shadow-cozy-lg p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-warm-800">Нова категорія</h2>
@@ -254,7 +254,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
                 </div>
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </div>

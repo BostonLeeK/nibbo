@@ -61,6 +61,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.type === "task") {
+    const assigneeId = body.assigneeId || undefined;
+    const assigneeSeenAt =
+      assigneeId && assigneeId !== session.user.id ? null : assigneeId ? new Date() : null;
+
     const task = await prisma.task.create({
       data: {
         title: body.title,
@@ -68,7 +72,8 @@ export async function POST(req: NextRequest) {
         priority: body.priority || "MEDIUM",
         dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
         columnId: body.columnId,
-        assigneeId: body.assigneeId || undefined,
+        assigneeId,
+        assigneeSeenAt,
         creatorId: session.user.id,
         labels: body.labels || [],
         order: body.order || 0,

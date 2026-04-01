@@ -11,16 +11,6 @@ interface DashboardClientProps {
   userName: string;
 }
 
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } },
-};
-
 export default function DashboardClient({ stats, upcomingEvents, recentTasks, userName }: DashboardClientProps) {
   const statCards = [
     { label: "Активних задач", value: stats.taskCount, emoji: "📋", color: "from-rose-400 to-rose-500", href: "/tasks" },
@@ -38,17 +28,17 @@ export default function DashboardClient({ stats, upcomingEvents, recentTasks, us
   ];
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Welcome */}
-      <motion.div variants={item}>
+      <div>
         <h2 className="text-2xl font-bold text-warm-800">
           Що нового, <span className="text-rose-500">{userName.split(" ")[0]}</span>? 🌸
         </h2>
         <p className="text-warm-500 text-sm mt-1">Твій родинний простір готовий до роботи</p>
-      </motion.div>
+      </div>
 
       {/* Stats */}
-      <motion.div variants={item} className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {statCards.map((card) => (
           <Link key={card.href} href={card.href}>
             <motion.div
@@ -62,10 +52,10 @@ export default function DashboardClient({ stats, upcomingEvents, recentTasks, us
             </motion.div>
           </Link>
         ))}
-      </motion.div>
+      </div>
 
       {/* Quick links */}
-      <motion.div variants={item}>
+      <div>
         <h3 className="font-semibold text-warm-700 mb-3 text-sm">Швидкий доступ ✨</h3>
         <div className="grid grid-cols-3 gap-3">
           {quickLinks.map((link) => (
@@ -81,12 +71,12 @@ export default function DashboardClient({ stats, upcomingEvents, recentTasks, us
             </Link>
           ))}
         </div>
-      </motion.div>
+      </div>
 
       {/* Content grid */}
       <div className="grid grid-cols-2 gap-6">
         {/* Upcoming events */}
-        <motion.div variants={item} className="bg-white/70 rounded-3xl p-5 shadow-cozy border border-warm-100">
+        <div className="bg-white/70 rounded-3xl p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
               <span>📅</span> Майбутні події
@@ -131,10 +121,10 @@ export default function DashboardClient({ stats, upcomingEvents, recentTasks, us
               ))
             )}
           </div>
-        </motion.div>
+        </div>
 
         {/* Recent tasks */}
-        <motion.div variants={item} className="bg-white/70 rounded-3xl p-5 shadow-cozy border border-warm-100">
+        <div className="bg-white/70 rounded-3xl p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
               <span>📋</span> Активні задачі
@@ -181,8 +171,8 @@ export default function DashboardClient({ stats, upcomingEvents, recentTasks, us
               })
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

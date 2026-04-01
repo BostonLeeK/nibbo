@@ -39,7 +39,6 @@ RUN apk add --no-cache su-exec tini libc6-compat openssl postgresql postgresql-c
   && mkdir -p /var/lib/postgresql/data \
   && chown -R postgres:postgres /var/lib/postgresql/data
 
-COPY --from=builder /app/public ./public
 RUN mkdir -p public/uploads/recipes && chown -R nextjs:nodejs public
 
 RUN mkdir .next

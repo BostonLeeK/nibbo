@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Plus } from "lucide-react";
+import { PRIORITY_CONFIG } from "@/lib/utils";
 import TaskCard from "./TaskCard";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
@@ -14,33 +15,54 @@ interface Task {
   dueDate: string | null; completed: boolean; order: number;
   columnId: string; assignee: User | null; creator: User; labels: string[];
 }
+
+const TASK_PRIORITIES: Task["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+
 interface Column { id: string; name: string; emoji: string; color: string; order: number; tasks: Task[]; }
 
 interface TaskColumnProps {
   column: Column;
   users: User[];
-  onAddTask: (columnId: string, title: string, assigneeId?: string) => void;
+  onAddTask: (columnId: string, title: string, assigneeId?: string, priority?: Task["priority"]) => void;
   onDeleteTask: (taskId: string, columnId: string) => void;
+  onAssigneeChange: (taskId: string, assigneeId: string | null) => void;
+  onPriorityChange: (taskId: string, priority: Task["priority"]) => void;
 }
 
-export default function TaskColumn({ column, users, onAddTask, onDeleteTask }: TaskColumnProps) {
+export default function TaskColumn({
+  column,
+  users,
+  onAddTask,
+  onDeleteTask,
+  onAssigneeChange,
+  onPriorityChange,
+}: TaskColumnProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newAssigneeId, setNewAssigneeId] = useState("");
+  const [newPriority, setNewPriority] = useState<Task["priority"]>("MEDIUM");
 
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   const handleAdd = () => {
     if (!newTaskTitle.trim()) return;
-    onAddTask(column.id, newTaskTitle);
+    onAddTask(column.id, newTaskTitle.trim(), newAssigneeId || undefined, newPriority);
     setNewTaskTitle("");
+    setNewAssigneeId("");
+    setNewPriority("MEDIUM");
     setIsAdding(false);
   };
 
+  const closeAdd = () => {
+    setIsAdding(false);
+    setNewTaskTitle("");
+    setNewAssigneeId("");
+    setNewPriority("MEDIUM");
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`w-72 flex-shrink-0 bg-white/60 backdrop-blur-sm rounded-3xl border transition-all ${
+    <div
+      className={`w-72 flex-shrink-0 bg-white/60 backdrop-blur-sm rounded-3xl border transition-[border-color,box-shadow,background-color] ${
         isOver ? "border-rose-300 shadow-cozy-hover bg-rose-50/50" : "border-warm-100 shadow-cozy"
       }`}
     >
@@ -74,6 +96,8 @@ export default function TaskColumn({ column, users, onAddTask, onDeleteTask }: T
               task={task}
               users={users}
               onDelete={() => onDeleteTask(task.id, column.id)}
+              onAssigneeChange={(assigneeId) => onAssigneeChange(task.id, assigneeId)}
+              onPriorityChange={(priority) => onPriorityChange(task.id, priority)}
             />
           ))}
         </SortableContext>
@@ -95,6 +119,34 @@ export default function TaskColumn({ column, users, onAddTask, onDeleteTask }: T
             rows={2}
             className="w-full bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 resize-none mb-2"
           />
+          <select
+            value={newPriority}
+            onChange={(e) => setNewPriority(e.target.value as Task["priority"])}
+            className="w-full bg-warm-50 rounded-xl px-3 py-2 text-xs text-warm-800 border border-warm-200 focus:border-rose-300 outline-none mb-2"
+          >
+            {TASK_PRIORITIES.map((p) => {
+              const c = PRIORITY_CONFIG[p];
+              return (
+                <option key={p} value={p}>
+                  {c.emoji} {c.label}
+                </option>
+              );
+            })}
+          </select>
+          {users.length > 0 && (
+            <select
+              value={newAssigneeId}
+              onChange={(e) => setNewAssigneeId(e.target.value)}
+              className="w-full bg-warm-50 rounded-xl px-3 py-2 text-xs text-warm-800 border border-warm-200 focus:border-rose-300 outline-none mb-2"
+            >
+              <option value="">Виконавець: не призначено</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.emoji} {u.name ?? "Користувач"}
+                </option>
+              ))}
+            </select>
+          )}
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
@@ -103,7 +155,7 @@ export default function TaskColumn({ column, users, onAddTask, onDeleteTask }: T
               Додати задачу
             </button>
             <button
-              onClick={() => setIsAdding(false)}
+              onClick={closeAdd}
               className="px-3 bg-warm-100 text-warm-600 rounded-xl py-2 text-xs hover:bg-warm-200 transition-colors"
             >
               ✕
@@ -111,6 +163,6 @@ export default function TaskColumn({ column, users, onAddTask, onDeleteTask }: T
           </div>
         </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 }

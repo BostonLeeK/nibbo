@@ -18,7 +18,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json(task);
   }
 
-  // Update task
+  const existing = await prisma.task.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  let assigneeSeenAt: Date | null | undefined = undefined;
+  if (body.assigneeId !== undefined) {
+    const nextAssignee =
+      body.assigneeId === null || body.assigneeId === "" ? null : String(body.assigneeId);
+    if (nextAssignee !== existing.assigneeId) {
+      if (!nextAssignee) assigneeSeenAt = null;
+      else if (nextAssignee === session.user.id) assigneeSeenAt = new Date();
+      else assigneeSeenAt = null;
+    }
+  }
+
   const task = await prisma.task.update({
     where: { id },
     data: {
@@ -26,11 +39,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       description: body.description,
       priority: body.priority,
       dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
-      assigneeId: body.assigneeId,
+      assigneeId:
+        body.assigneeId === undefined
+          ? undefined
+          : body.assigneeId === null || body.assigneeId === ""
+            ? null
+            : body.assigneeId,
       labels: body.labels,
       completed: body.completed,
       order: body.order,
       columnId: body.columnId,
+      ...(assigneeSeenAt !== undefined && { assigneeSeenAt }),
     },
     include: {
       assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
