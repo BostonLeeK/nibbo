@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
-import { LogOut } from "lucide-react";
+import { LogOut, Sparkles } from "lucide-react";
 import Image from "next/image";
 import NotificationBell from "./NotificationBell";
 import ProfileModal from "./ProfileModal";
+import { TASK_POINTS_AWARDED_EVENT } from "@/lib/task-points";
 
 interface HeaderProps {
   user: {
@@ -20,12 +21,29 @@ interface HeaderProps {
   };
   greeting: string;
   dateLabel: string;
+  initialPoints: number;
 }
 
-export default function Header({ user: u, greeting, dateLabel }: HeaderProps) {
+export default function Header({ user: u, greeting, dateLabel, initialPoints }: HeaderProps) {
   const router = useRouter();
   const [user, setUser] = useState(u);
   const [openProfile, setOpenProfile] = useState(false);
+  const [points, setPoints] = useState(initialPoints);
+
+  useEffect(() => {
+    setPoints(initialPoints);
+  }, [initialPoints]);
+
+  useEffect(() => {
+    const onAwarded = (event: Event) => {
+      const detail = (event as CustomEvent<{ points?: number }>).detail;
+      const awarded = detail?.points ?? 0;
+      if (awarded <= 0) return;
+      setPoints((prev) => prev + awarded);
+    };
+    window.addEventListener(TASK_POINTS_AWARDED_EVENT, onAwarded as EventListener);
+    return () => window.removeEventListener(TASK_POINTS_AWARDED_EVENT, onAwarded as EventListener);
+  }, []);
 
   return (
     <header className="h-16 bg-white/60 backdrop-blur-md border-b border-warm-100 flex items-center px-6 gap-4">
@@ -37,6 +55,10 @@ export default function Header({ user: u, greeting, dateLabel }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        <div className="h-9 px-3 rounded-xl bg-gradient-to-r from-lavender-100 to-rose-100 border border-lavender-200 flex items-center gap-2">
+          <Sparkles size={14} className="text-lavender-500" />
+          <span className="text-xs font-semibold text-warm-700">{points} XP</span>
+        </div>
         <NotificationBell />
 
         <motion.button

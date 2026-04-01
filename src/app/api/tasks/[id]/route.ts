@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { taskRelationInclude } from "@/lib/task-prisma-include";
+import { POINTS_PER_TASK_COMPLETION } from "@/lib/task-points";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -68,7 +69,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     include: taskRelationInclude,
   });
 
-  return NextResponse.json(task);
+  const awardedPoints =
+    body.completed === true && existing.completed === false ? POINTS_PER_TASK_COMPLETION : 0;
+
+  return NextResponse.json({ ...task, awardedPoints });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

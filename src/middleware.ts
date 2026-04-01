@@ -3,16 +3,18 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-  const isLoginPage = req.nextUrl.pathname === "/login";
+  const publicPaths = new Set(["/login"]);
+  const isPublicPage = publicPaths.has(req.nextUrl.pathname);
   const isApiAuth = req.nextUrl.pathname.startsWith("/api/auth");
+  const isPublicModelAsset = req.nextUrl.pathname.startsWith("/models/");
 
-  if (isApiAuth) return NextResponse.next();
+  if (isApiAuth || isPublicModelAsset) return NextResponse.next();
 
-  if (!isLoggedIn && !isLoginPage) {
+  if (!isLoggedIn && !isPublicPage) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (isLoggedIn && isLoginPage) {
+  if (isLoggedIn && req.nextUrl.pathname === "/login") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
@@ -21,6 +23,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|uploads/|.*\\.(?:png|jpg|jpeg|webp|gif|svg|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|uploads/|.*\\.(?:png|jpg|jpeg|webp|gif|svg|ico|glb|gltf|bin)$).*)",
   ],
 };

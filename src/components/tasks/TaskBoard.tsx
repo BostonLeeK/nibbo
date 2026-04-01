@@ -29,6 +29,9 @@ import {
   type TaskBoardTask,
   type TaskBoardUser,
 } from "@/lib/task-board";
+import {
+  TASK_POINTS_AWARDED_EVENT,
+} from "@/lib/task-points";
 import TaskColumn from "./TaskColumn";
 import TaskCard from "./TaskCard";
 import AddBoardModal from "./AddBoardModal";
@@ -39,6 +42,8 @@ interface TaskBoardProps {
   users: TaskBoardUser[];
   currentUserId: string;
 }
+
+type TaskPatchResponse = TaskBoardTask & { awardedPoints?: number };
 
 async function fetchBoards(): Promise<TaskBoardBoard[]> {
   const res = await fetch("/api/tasks");
@@ -395,8 +400,26 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         body: JSON.stringify({ completed }),
       });
       if (!res.ok) throw new Error("fail");
-      const task = (await res.json()) as TaskBoardTask;
+      const task = (await res.json()) as TaskPatchResponse;
       setBoards((prev) => mergeTaskIntoBoards(prev, task));
+      if (task.awardedPoints && task.awardedPoints > 0) {
+        window.dispatchEvent(
+          new CustomEvent(TASK_POINTS_AWARDED_EVENT, { detail: { points: task.awardedPoints } })
+        );
+        toast.custom(
+          (t) => (
+            <div
+              className={`${
+                t.visible ? "animate-enter" : "animate-leave"
+              } bg-white border border-lavender-200 shadow-cozy rounded-2xl px-4 py-3`}
+            >
+              <p className="text-sm font-semibold text-warm-800">🎉 Вітаємо! +{task.awardedPoints} XP</p>
+              <p className="text-xs text-warm-500 mt-1">Ще один крок до супер форми тамагочі</p>
+            </div>
+          ),
+          { duration: 2200 }
+        );
+      }
     } catch {
       toast.error("Не вдалося оновити статус");
     }
@@ -411,8 +434,26 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
     if (!res.ok) {
       throw new Error("fail");
     }
-    const task = (await res.json()) as TaskBoardTask;
+    const task = (await res.json()) as TaskPatchResponse;
     setBoards((prev) => mergeTaskIntoBoards(prev, task));
+    if (task.awardedPoints && task.awardedPoints > 0) {
+      window.dispatchEvent(
+        new CustomEvent(TASK_POINTS_AWARDED_EVENT, { detail: { points: task.awardedPoints } })
+      );
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible ? "animate-enter" : "animate-leave"
+            } bg-white border border-lavender-200 shadow-cozy rounded-2xl px-4 py-3`}
+          >
+            <p className="text-sm font-semibold text-warm-800">🎉 Вітаємо! +{task.awardedPoints} XP</p>
+            <p className="text-xs text-warm-500 mt-1">Тамагочі радіє кожному завершенню задачі</p>
+          </div>
+        ),
+        { duration: 2200 }
+      );
+    }
     toast.success("Збережено");
   };
 

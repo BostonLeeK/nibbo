@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { formatDate, formatTime, PRIORITY_CONFIG } from "@/lib/utils";
+import TaskTamagotchi3D from "./TaskTamagotchi3D";
 
 interface DashboardClientProps {
   stats: { taskCount: number; eventCount: number; shoppingCount: number };
@@ -44,35 +45,15 @@ export default function DashboardClient({
         <p className="text-warm-500 text-sm mt-1">Твій родинний простір готовий до роботи</p>
       </div>
 
-      <div>
-        <h3 className="font-semibold text-warm-700 mb-3 text-sm">Твоя статистика задач ✓</h3>
-        <p className="text-xs text-warm-400 mb-3">
-          Задачі, де ти виконавець або автор (час за Києвом)
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Активних моїх", value: personalTaskStats.myOpen, emoji: "📌", bg: "bg-rose-50 border-rose-100" },
-            { label: "Сьогодні зроблено", value: personalTaskStats.doneToday, emoji: "☀️", bg: "bg-peach-50 border-peach-100" },
-            { label: "За тиждень зроблено", value: personalTaskStats.doneWeek, emoji: "📈", bg: "bg-sage-50 border-sage-100" },
-            { label: "Усього завершено", value: personalTaskStats.doneTotal, emoji: "🏆", bg: "bg-lavender-50 border-lavender-100" },
-          ].map((row) => (
-            <Link key={row.label} href="/tasks">
-              <motion.div
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className={`rounded-2xl p-4 border shadow-sm cursor-pointer ${row.bg}`}
-              >
-                <div className="text-2xl mb-1">{row.emoji}</div>
-                <div className="text-2xl font-bold text-warm-800">{row.value}</div>
-                <div className="text-xs text-warm-600 mt-1 leading-tight">{row.label}</div>
-              </motion.div>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <TaskTamagotchi3D
+        doneToday={personalTaskStats.doneToday}
+        doneWeek={personalTaskStats.doneWeek}
+        myOpen={personalTaskStats.myOpen}
+        doneTotal={personalTaskStats.doneTotal}
+      />
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {statCards.map((card) => (
           <Link key={card.href} href={card.href}>
             <motion.div
@@ -91,7 +72,7 @@ export default function DashboardClient({
       {/* Quick links */}
       <div>
         <h3 className="font-semibold text-warm-700 mb-3 text-sm">Швидкий доступ ✨</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {quickLinks.map((link) => (
             <Link key={link.href} href={link.href}>
               <motion.div
@@ -108,7 +89,7 @@ export default function DashboardClient({
       </div>
 
       {/* Content grid */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming events */}
         <div className="bg-white/70 rounded-3xl p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Sidebar from "@/components/shared/Sidebar";
 import Header from "@/components/shared/Header";
 import { dashboardHeaderLabels } from "@/lib/utils";
+import { POINTS_PER_TASK_COMPLETION } from "@/lib/task-points";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -14,13 +15,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
   });
   if (!user) redirect("/login");
 
+  const userId = session.user.id;
+  const mine = { OR: [{ assigneeId: userId }, { creatorId: userId }] };
+  const doneTotal = await prisma.task.count({ where: { ...mine, completed: true } });
+  const points = doneTotal * POINTS_PER_TASK_COMPLETION;
+
   const { greeting, dateLabel } = dashboardHeaderLabels();
 
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar user={user} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header user={user} greeting={greeting} dateLabel={dateLabel} />
+        <Header user={user} greeting={greeting} dateLabel={dateLabel} initialPoints={points} />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
