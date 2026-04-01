@@ -143,8 +143,9 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
           {/* Items list */}
           <div className="flex-1 overflow-y-auto space-y-2">
             {uncheckedItems.map((item) => (
-              <motion.div key={item.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-3 bg-white/80 rounded-2xl px-4 py-3 shadow-sm border border-warm-100 group hover:shadow-cozy transition-all">
+              <div
+                key={item.id}
+                className="flex items-center gap-3 bg-white/80 rounded-2xl px-4 py-3 shadow-sm border border-warm-100 group hover:shadow-cozy transition-[box-shadow,border-color]">
                 <button onClick={() => handleToggle(item)}
                   className="w-6 h-6 rounded-full border-2 border-warm-300 hover:border-rose-400 flex items-center justify-center transition-colors flex-shrink-0">
                 </button>
@@ -166,7 +167,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
                     <Trash2 size={14} />
                   </button>
                 </div>
-              </motion.div>
+              </div>
             ))}
 
             {/* Checked items */}
@@ -174,7 +175,8 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
               <div className="mt-4">
                 <p className="text-xs font-semibold text-warm-400 mb-2 px-1">✅ КУПЛЕНО ({checkedItems.length})</p>
                 {checkedItems.map((item) => (
-                  <motion.div key={item.id} layout
+                  <div
+                    key={item.id}
                     className="flex items-center gap-3 bg-warm-50/80 rounded-2xl px-4 py-3 border border-warm-100 mb-2 group opacity-60">
                     <button onClick={() => handleToggle(item)}
                       className="w-6 h-6 rounded-full bg-sage-400 border-2 border-sage-400 flex items-center justify-center flex-shrink-0">
@@ -187,7 +189,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
                       className="opacity-0 group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all">
                       <Trash2 size={14} />
                     </button>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}

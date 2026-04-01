@@ -134,6 +134,8 @@ model Event {
   startDate   DateTime
   endDate     DateTime
   allDay      Boolean   @default(false)
+  weeklyRepeat Boolean  @default(false)
+  weeklyDay    Int?
   location    String?
   assigneeId  String?
   createdAt   DateTime  @default(now())
@@ -201,11 +203,27 @@ model Note {
   color     String   @default("#faf3e0")
   pinned    Boolean  @default(false)
   authorId  String
+  categoryId String?
   tags      String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  author User @relation(fields: [authorId], references: [id])
+  author   User          @relation(fields: [authorId], references: [id])
+  category NoteCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+}
+
+model NoteCategory {
+  id        String         @id @default(cuid())
+  name      String
+  emoji     String         @default("📂")
+  color     String         @default("#f5f3ff")
+  parentId  String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  parent   NoteCategory?   @relation("NoteCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children NoteCategory[]  @relation("NoteCategoryTree")
+  notes    Note[]
 }
 
 // --- BUDGET ---

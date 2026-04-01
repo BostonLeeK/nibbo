@@ -19,6 +19,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       endDate: body.endDate ? new Date(body.endDate) : undefined,
       allDay: body.allDay,
+      weeklyRepeat: body.weeklyRepeat,
+      weeklyDay:
+        body.weeklyRepeat === undefined
+          ? undefined
+          : body.weeklyRepeat
+            ? Number(body.weeklyDay)
+            : null,
       location: body.location,
       assigneeId: body.assigneeId || undefined,
     },

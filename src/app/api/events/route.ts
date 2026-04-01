@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
       startDate: new Date(body.startDate),
       endDate: new Date(body.endDate),
       allDay: body.allDay || false,
+      weeklyRepeat: Boolean(body.weeklyRepeat),
+      weeklyDay: body.weeklyRepeat ? Number(body.weeklyDay) : null,
       location: body.location,
       assigneeId: body.assigneeId || undefined,
     },

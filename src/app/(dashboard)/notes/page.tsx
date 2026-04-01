@@ -6,15 +6,29 @@ export default async function NotesPage() {
   const session = await auth();
   if (!session) return null;
 
-  const notes = await prisma.note.findMany({
-    include: { author: { select: { id: true, name: true, image: true, color: true, emoji: true } } },
-    orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
-  });
+  const [notes, categories] = await Promise.all([
+    prisma.note.findMany({
+      include: {
+        author: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+        category: { select: { id: true, name: true, emoji: true, color: true, parentId: true } },
+      },
+      orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
+    }),
+    prisma.noteCategory.findMany({
+      orderBy: [{ parentId: "asc" }, { createdAt: "asc" }],
+    }),
+  ]);
 
   const initialNotes = notes.map((n) => ({
     ...n,
     updatedAt: n.updatedAt.toISOString(),
   }));
 
-  return <NotesView initialNotes={initialNotes} currentUserId={session.user.id} />;
+  return (
+    <NotesView
+      initialNotes={initialNotes}
+      initialCategories={categories}
+      currentUserId={session.user.id}
+    />
+  );
 }

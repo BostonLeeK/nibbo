@@ -18,6 +18,7 @@ interface Event {
   emoji: string; color: string;
   startDate: string | Date; endDate: string | Date;
   allDay: boolean; location: string | null; assignee: User | null;
+  weeklyRepeat: boolean; weeklyDay: number | null;
 }
 
 const EVENT_COLORS = [
@@ -26,6 +27,7 @@ const EVENT_COLORS = [
 ];
 
 const EVENT_EMOJIS = ["📅", "🎉", "🏃", "💊", "🍽️", "✈️", "🎂", "🎓", "💼", "🌟"];
+const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 
 export default function CalendarView({ initialEvents, users, currentUserId }: {
   initialEvents: Event[];
@@ -40,6 +42,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
     title: "", description: "", emoji: "📅", color: "#8b5cf6",
     startDate: "", startTime: "10:00", endTime: "11:00",
     allDay: false, location: "", assigneeId: "",
+    weeklyRepeat: false, weeklyDay: 1,
   });
 
   const monthStart = startOfMonth(currentMonth);
@@ -48,8 +51,23 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
   const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: calStart, end: calEnd });
 
+  const getWeekday = (d: Date) => {
+    const day = d.getDay();
+    return day === 0 ? 7 : day;
+  };
+
   const getEventsForDay = (day: Date) =>
-    events.filter((e) => isSameDay(new Date(e.startDate), day));
+    events.filter((e) => {
+      const eventStart = new Date(e.startDate);
+      if (e.weeklyRepeat && e.weeklyDay) {
+        const dayStart = new Date(day);
+        dayStart.setHours(0, 0, 0, 0);
+        const eventDayStart = new Date(eventStart);
+        eventDayStart.setHours(0, 0, 0, 0);
+        return dayStart >= eventDayStart && getWeekday(day) === e.weeklyDay;
+      }
+      return isSameDay(eventStart, day);
+    });
 
   const selectedDayEvents = selectedDay ? getEventsForDay(selectedDay) : [];
 
@@ -72,13 +90,15 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
         allDay: newEvent.allDay,
         location: newEvent.location,
         assigneeId: newEvent.assigneeId || undefined,
+        weeklyRepeat: newEvent.weeklyRepeat,
+        weeklyDay: newEvent.weeklyRepeat ? newEvent.weeklyDay : null,
       }),
     });
 
     const event = await res.json();
     setEvents((prev) => [...prev, event]);
     setShowAddEvent(false);
-    setNewEvent({ title: "", description: "", emoji: "📅", color: "#8b5cf6", startDate: "", startTime: "10:00", endTime: "11:00", allDay: false, location: "", assigneeId: "" });
+    setNewEvent({ title: "", description: "", emoji: "📅", color: "#8b5cf6", startDate: "", startTime: "10:00", endTime: "11:00", allDay: false, location: "", assigneeId: "", weeklyRepeat: false, weeklyDay: 1 });
     toast.success("Подію додано! 📅");
   };
 
@@ -87,8 +107,6 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
     setEvents((prev) => prev.filter((e) => e.id !== id));
     toast.success("Подію видалено");
   };
-
-  const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 
   return (
     <div className="h-full flex gap-6">
@@ -227,6 +245,11 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
                             {formatTime(event.startDate)} — {formatTime(event.endDate)}
                           </p>
                         )}
+                        {event.weeklyRepeat && event.weeklyDay && (
+                          <p className="text-xs text-warm-500 mt-1">
+                            Щотижня: {WEEKDAYS[event.weeklyDay - 1]}
+                          </p>
+                        )}
                         {event.location && (
                           <p className="text-xs text-warm-400 mt-1">📍 {event.location}</p>
                         )}
@@ -316,6 +339,29 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
 
                   <input type="date" value={newEvent.startDate} onChange={(e) => setNewEvent((p) => ({ ...p, startDate: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400" />
+
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newEvent.weeklyRepeat}
+                        onChange={(e) => setNewEvent((p) => ({ ...p, weeklyRepeat: e.target.checked }))}
+                        className="rounded accent-lavender-500"
+                      />
+                      <span className="text-sm text-warm-600">Повторювати щотижня</span>
+                    </label>
+                    {newEvent.weeklyRepeat && (
+                      <select
+                        value={newEvent.weeklyDay}
+                        onChange={(e) => setNewEvent((p) => ({ ...p, weeklyDay: Number(e.target.value) }))}
+                        className="bg-warm-50 rounded-xl px-3 py-2 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                      >
+                        {WEEKDAYS.map((w, idx) => (
+                          <option key={w} value={idx + 1}>{w}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
 
                   {!newEvent.allDay && (
                     <div className="grid grid-cols-2 gap-3">

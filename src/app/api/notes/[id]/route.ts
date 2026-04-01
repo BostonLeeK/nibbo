@@ -17,10 +17,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       emoji: body.emoji,
       color: body.color,
       pinned: body.pinned,
+      categoryId: body.categoryId === undefined ? undefined : body.categoryId || null,
       tags: body.tags,
     },
     include: {
       author: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+      category: { select: { id: true, name: true, emoji: true, color: true, parentId: true } },
     },
   });
 
