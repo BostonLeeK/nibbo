@@ -13,8 +13,8 @@
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
     "postinstall": "prisma generate",
-    "docker:build": "docker compose build app",
-    "docker:export": "docker compose build app && docker save home-crm:latest -o home-crm-latest.tar"
+    "docker:build": "docker compose build --progress=plain app",
+    "docker:export": "docker compose build --progress=plain app && docker save home-crm:latest -o home-crm-latest.tar"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.2",
@@ -37,6 +37,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.462.0",
     "next": "15.0.3",

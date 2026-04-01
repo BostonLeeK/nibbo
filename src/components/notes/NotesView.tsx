@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pin, Trash2, X, Search } from "lucide-react";
+import { Plus, Pin, Trash2, X, Search, Save } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -21,6 +21,7 @@ export default function NotesView({ initialNotes, currentUserId }: { initialNote
   const [notes, setNotes] = useState(initialNotes);
   const [search, setSearch] = useState("");
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [editDraft, setEditDraft] = useState({ title: "", content: "", emoji: "📓", color: "#faf3e0", tags: "" });
   const [showAdd, setShowAdd] = useState(false);
   const [newNote, setNewNote] = useState({ title: "", content: "", emoji: "📓", color: "#faf3e0", tags: "" });
 
@@ -30,6 +31,19 @@ export default function NotesView({ initialNotes, currentUserId }: { initialNote
 
   const pinned = filtered.filter((n) => n.pinned);
   const unpinned = filtered.filter((n) => !n.pinned);
+
+  const noteToDraft = (note: Note) => ({
+    title: note.title,
+    content: note.content,
+    emoji: note.emoji,
+    color: note.color,
+    tags: note.tags.join(", "),
+  });
+
+  const openEdit = (note: Note) => {
+    setEditingNote(note);
+    setEditDraft(noteToDraft(note));
+  };
 
   const handleAdd = async () => {
     if (!newNote.title && !newNote.content) return;
@@ -59,7 +73,34 @@ export default function NotesView({ initialNotes, currentUserId }: { initialNote
     });
     const updated = await res.json();
     setNotes((prev) => prev.map((n) => n.id === note.id ? updated : n).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)));
+    setEditingNote((prev) => (prev && prev.id === note.id ? updated : prev));
+    setEditDraft((prev) =>
+      editingNote && editingNote.id === note.id
+        ? { ...prev, emoji: updated.emoji, color: updated.color, title: updated.title, content: updated.content, tags: (updated.tags || []).join(", ") }
+        : prev
+    );
     toast.success(updated.pinned ? "Закріплено 📌" : "Відкріплено");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingNote) return;
+    const payload = {
+      title: editDraft.title || "Нотатка",
+      content: editDraft.content,
+      emoji: editDraft.emoji,
+      color: editDraft.color,
+      tags: editDraft.tags ? editDraft.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+    };
+    const res = await fetch(`/api/notes/${editingNote.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const updated = await res.json();
+    setNotes((prev) => prev.map((n) => (n.id === editingNote.id ? updated : n)).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)));
+    setEditingNote(updated);
+    setEditDraft(noteToDraft(updated));
+    toast.success("Нотатку оновлено");
   };
 
   const handleDelete = async (id: string) => {
@@ -74,7 +115,7 @@ export default function NotesView({ initialNotes, currentUserId }: { initialNote
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
-      onClick={() => setEditingNote(note)}
+      onClick={() => openEdit(note)}
       className="rounded-2xl cursor-pointer transition-shadow relative group bg-white border border-warm-200/90 shadow-cozy hover:shadow-cozy-hover overflow-hidden flex flex-col min-h-[140px]"
     >
       <div
@@ -335,13 +376,67 @@ export default function NotesView({ initialNotes, currentUserId }: { initialNote
                     </button>
                   </div>
                 </div>
-                <h2 className="text-lg font-bold text-warm-900 mb-3 break-words">{editingNote.title}</h2>
-                <p className="text-sm text-warm-700 whitespace-pre-wrap leading-relaxed break-words">
-                  {editingNote.content}
-                </p>
-                {editingNote.tags.length > 0 && (
+                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">Емодзі</p>
+                <div className="flex flex-wrap gap-1.5 mb-4 max-h-20 overflow-y-auto">
+                  {NOTE_EMOJIS.map((e) => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => setEditDraft((p) => ({ ...p, emoji: e }))}
+                      className={`text-lg w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${
+                        editDraft.emoji === e
+                          ? "bg-rose-50 border-rose-300"
+                          : "bg-warm-50 border-transparent hover:border-warm-200"
+                      }`}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">Колір смуги</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {NOTE_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setEditDraft((p) => ({ ...p, color: c }))}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        editDraft.color === c ? "border-warm-700 scale-110" : "border-warm-200 hover:border-warm-300"
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+                <input
+                  value={editDraft.title}
+                  onChange={(e) => setEditDraft((p) => ({ ...p, title: e.target.value }))}
+                  placeholder="Заголовок"
+                  className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm font-semibold text-warm-900 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 mb-3"
+                />
+                <textarea
+                  value={editDraft.content}
+                  onChange={(e) => setEditDraft((p) => ({ ...p, content: e.target.value }))}
+                  placeholder="Текст нотатки…"
+                  rows={5}
+                  className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm text-warm-800 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 resize-none mb-3"
+                />
+                <input
+                  value={editDraft.tags}
+                  onChange={(e) => setEditDraft((p) => ({ ...p, tags: e.target.value }))}
+                  placeholder="Теги через кому"
+                  className="w-full bg-warm-50 rounded-xl px-4 py-2.5 text-xs text-warm-700 placeholder:text-warm-400 outline-none border border-warm-200 mb-4"
+                />
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSaveEdit}
+                  className="w-full py-3 bg-gradient-to-r from-rose-400 to-rose-500 text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2"
+                >
+                  <Save size={14} /> Зберегти зміни
+                </motion.button>
+                {(editingNote.tags.length > 0 || editDraft.tags) && (
                   <div className="flex gap-1 flex-wrap mt-4 pt-4 border-t border-warm-100">
-                    {editingNote.tags.map((tag) => (
+                    {(editDraft.tags ? editDraft.tags.split(",").map((t) => t.trim()).filter(Boolean) : []).map((tag) => (
                       <span
                         key={tag}
                         className="text-[10px] font-medium bg-warm-100 text-warm-600 px-2 py-0.5 rounded-md"

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { taskRelationInclude } from "@/lib/task-prisma-include";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -9,11 +10,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await req.json();
 
-  // Move task between columns
   if (body.type === "move-task") {
     const task = await prisma.task.update({
       where: { id },
       data: { columnId: body.columnId, order: body.order },
+      include: taskRelationInclude,
     });
     return NextResponse.json(task);
   }
@@ -32,49 +33,49 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
+  const data: Parameters<typeof prisma.task.update>[0]["data"] = {};
+  if (body.title !== undefined) data.title = body.title;
+  if (body.description !== undefined) data.description = body.description;
+  if (body.priority !== undefined) data.priority = body.priority;
+  if (body.completed !== undefined) {
+    data.completed = body.completed;
+    if (body.completed) {
+      if (!existing.completed) data.completedAt = new Date();
+    } else {
+      data.completedAt = null;
+    }
+  }
+  if (body.labels !== undefined) data.labels = body.labels;
+  if (body.order !== undefined) data.order = body.order;
+  if (body.columnId !== undefined) data.columnId = body.columnId;
+  if ("dueDate" in body) {
+    data.dueDate =
+      body.dueDate === null || body.dueDate === ""
+        ? null
+        : body.dueDate
+          ? new Date(body.dueDate as string)
+          : null;
+  }
+  if (body.assigneeId !== undefined) {
+    data.assigneeId =
+      body.assigneeId === null || body.assigneeId === "" ? null : String(body.assigneeId);
+  }
+  if (assigneeSeenAt !== undefined) data.assigneeSeenAt = assigneeSeenAt;
+
   const task = await prisma.task.update({
     where: { id },
-    data: {
-      title: body.title,
-      description: body.description,
-      priority: body.priority,
-      dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
-      assigneeId:
-        body.assigneeId === undefined
-          ? undefined
-          : body.assigneeId === null || body.assigneeId === ""
-            ? null
-            : body.assigneeId,
-      labels: body.labels,
-      completed: body.completed,
-      order: body.order,
-      columnId: body.columnId,
-      ...(assigneeSeenAt !== undefined && { assigneeSeenAt }),
-    },
-    include: {
-      assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
-      creator: { select: { id: true, name: true, image: true, color: true, emoji: true } },
-    },
+    data,
+    include: taskRelationInclude,
   });
 
   return NextResponse.json(task);
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { searchParams } = new URL(req.url);
-  const type = searchParams.get("type");
-
-  if (type === "column") {
-    await prisma.taskColumn.delete({ where: { id } });
-  } else if (type === "board") {
-    await prisma.taskBoard.delete({ where: { id } });
-  } else {
-    await prisma.task.delete({ where: { id } });
-  }
-
+  await prisma.task.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

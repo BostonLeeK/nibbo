@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { boardFullInclude, columnWithTasksInclude, taskRelationInclude } from "@/lib/task-prisma-include";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -7,21 +8,8 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const boards = await prisma.taskBoard.findMany({
-    include: {
-      columns: {
-        include: {
-          tasks: {
-            include: {
-              assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
-              creator: { select: { id: true, name: true, image: true, color: true, emoji: true } },
-            },
-            orderBy: { order: "asc" },
-          },
-        },
-        orderBy: { order: "asc" },
-      },
-    },
-    orderBy: { createdAt: "asc" },
+    include: boardFullInclude,
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
   });
 
   return NextResponse.json(boards);
@@ -34,14 +22,17 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   if (body.type === "board") {
+    const maxOrder = await prisma.taskBoard.aggregate({ _max: { order: true } });
+    const order = (maxOrder._max.order ?? -1) + 1;
     const board = await prisma.taskBoard.create({
       data: {
         name: body.name,
         description: body.description,
         emoji: body.emoji || "📋",
         color: body.color || "#f43f5e",
+        order,
       },
-      include: { columns: { include: { tasks: true } } },
+      include: boardFullInclude,
     });
     return NextResponse.json(board);
   }
@@ -53,9 +44,9 @@ export async function POST(req: NextRequest) {
         emoji: body.emoji || "📝",
         color: body.color || "#e7e5e4",
         boardId: body.boardId,
-        order: body.order || 0,
+        order: body.order ?? 0,
       },
-      include: { tasks: true },
+      include: columnWithTasksInclude,
     });
     return NextResponse.json(column);
   }
@@ -78,10 +69,7 @@ export async function POST(req: NextRequest) {
         labels: body.labels || [],
         order: body.order || 0,
       },
-      include: {
-        assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
-        creator: { select: { id: true, name: true, image: true, color: true, emoji: true } },
-      },
+      include: taskRelationInclude,
     });
     return NextResponse.json(task);
   }

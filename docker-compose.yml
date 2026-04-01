@@ -1,3 +1,5 @@
+name: home-crm
+
 services:
   app:
     image: home-crm:latest
@@ -6,26 +8,20 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        AUTH_SECRET: ${NEXTAUTH_SECRET}
+        AUTH_SECRET: ${AUTH_SECRET}
+        AUTH_URL: ${AUTH_URL}
     container_name: homecrm
     restart: unless-stopped
     env_file:
       - .env
-    environment:
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-      AUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-      AUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-to-a-random-secret}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-to-a-random-secret}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      AUTH_ALLOWED_EMAILS: ${AUTH_ALLOWED_EMAILS:-}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "3000:3000"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - recipe_uploads:/app/public/uploads
+      - /volume1/docker/home-crm/postgres:/var/lib/postgresql/data
+      - /volume1/docker/home-crm/public/uploads:/app/public/uploads
 
 volumes:
   postgres_data:
+    name: home_crm_postgres_data
   recipe_uploads:
+    name: home_crm_recipe_uploads

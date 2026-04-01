@@ -15,7 +15,8 @@ WORKDIR /app
 
 ARG AUTH_SECRET
 ENV AUTH_SECRET=${AUTH_SECRET}
-ENV NEXTAUTH_SECRET=${AUTH_SECRET}
+ARG AUTH_URL
+ENV AUTH_URL=${AUTH_URL}
 
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build"
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -39,13 +40,13 @@ RUN apk add --no-cache su-exec tini libc6-compat openssl postgresql postgresql-c
   && mkdir -p /var/lib/postgresql/data \
   && chown -R postgres:postgres /var/lib/postgresql/data
 
-RUN mkdir -p public/uploads/recipes && chown -R nextjs:nodejs public
+RUN mkdir -p public/uploads/recipes public/uploads/avatars && chown -R nextjs:nodejs public
 
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-RUN mkdir -p public/uploads/recipes && chown -R nextjs:nodejs public
+RUN mkdir -p public/uploads/recipes public/uploads/avatars && chown -R nextjs:nodejs public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma

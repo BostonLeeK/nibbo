@@ -6,12 +6,19 @@ import { formatDate, formatTime, PRIORITY_CONFIG } from "@/lib/utils";
 
 interface DashboardClientProps {
   stats: { taskCount: number; eventCount: number; shoppingCount: number };
+  personalTaskStats: { myOpen: number; doneToday: number; doneWeek: number; doneTotal: number };
   upcomingEvents: any[];
   recentTasks: any[];
   userName: string;
 }
 
-export default function DashboardClient({ stats, upcomingEvents, recentTasks, userName }: DashboardClientProps) {
+export default function DashboardClient({
+  stats,
+  personalTaskStats,
+  upcomingEvents,
+  recentTasks,
+  userName,
+}: DashboardClientProps) {
   const statCards = [
     { label: "Активних задач", value: stats.taskCount, emoji: "📋", color: "from-rose-400 to-rose-500", href: "/tasks" },
     { label: "Майбутніх подій", value: stats.eventCount, emoji: "📅", color: "from-lavender-400 to-lavender-500", href: "/calendar" },
@@ -35,6 +42,33 @@ export default function DashboardClient({ stats, upcomingEvents, recentTasks, us
           Що нового, <span className="text-rose-500">{userName.split(" ")[0]}</span>? 🌸
         </h2>
         <p className="text-warm-500 text-sm mt-1">Твій родинний простір готовий до роботи</p>
+      </div>
+
+      <div>
+        <h3 className="font-semibold text-warm-700 mb-3 text-sm">Твоя статистика задач ✓</h3>
+        <p className="text-xs text-warm-400 mb-3">
+          Задачі, де ти виконавець або автор (час за Києвом)
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Активних моїх", value: personalTaskStats.myOpen, emoji: "📌", bg: "bg-rose-50 border-rose-100" },
+            { label: "Сьогодні зроблено", value: personalTaskStats.doneToday, emoji: "☀️", bg: "bg-peach-50 border-peach-100" },
+            { label: "За тиждень зроблено", value: personalTaskStats.doneWeek, emoji: "📈", bg: "bg-sage-50 border-sage-100" },
+            { label: "Усього завершено", value: personalTaskStats.doneTotal, emoji: "🏆", bg: "bg-lavender-50 border-lavender-100" },
+          ].map((row) => (
+            <Link key={row.label} href="/tasks">
+              <motion.div
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className={`rounded-2xl p-4 border shadow-sm cursor-pointer ${row.bg}`}
+              >
+                <div className="text-2xl mb-1">{row.emoji}</div>
+                <div className="text-2xl font-bold text-warm-800">{row.value}</div>
+                <div className="text-xs text-warm-600 mt-1 leading-tight">{row.label}</div>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Stats */}
@@ -127,7 +161,7 @@ export default function DashboardClient({ stats, upcomingEvents, recentTasks, us
         <div className="bg-white/70 rounded-3xl p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
-              <span>📋</span> Активні задачі
+              <span>📋</span> Твої активні задачі
             </h3>
             <Link href="/tasks" className="text-xs text-rose-500 hover:text-rose-600 font-medium">
               Всі →

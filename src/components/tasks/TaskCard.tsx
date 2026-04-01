@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Calendar, Trash2, GripVertical } from "lucide-react";
+import { Calendar, Trash2, GripVertical, Pencil } from "lucide-react";
 import { cn, formatDate, PRIORITY_CONFIG } from "@/lib/utils";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
@@ -20,6 +20,8 @@ interface TaskCardProps {
   onDelete?: () => void;
   onAssigneeChange?: (assigneeId: string | null) => void;
   onPriorityChange?: (priority: Task["priority"]) => void;
+  onCompletedChange?: (completed: boolean) => void;
+  onEdit?: () => void;
   isDragging?: boolean;
 }
 
@@ -31,6 +33,8 @@ export default function TaskCard({
   onDelete,
   onAssigneeChange,
   onPriorityChange,
+  onCompletedChange,
+  onEdit,
   isDragging,
 }: TaskCardProps) {
   const [showActions, setShowActions] = useState(false);
@@ -74,6 +78,26 @@ export default function TaskCard({
         </div>
 
         <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-2 mb-2">
+            {!isDragging && onCompletedChange && (
+              <input
+                type="checkbox"
+                checked={task.completed}
+                onChange={(e) => onCompletedChange(e.target.checked)}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="mt-0.5 w-4 h-4 rounded border-warm-300 text-rose-500 focus:ring-rose-400 cursor-pointer flex-shrink-0"
+                aria-label="Позначити виконаною"
+              />
+            )}
+            <p
+              className={cn(
+                "text-sm font-medium text-warm-800 leading-snug flex-1 min-w-0",
+                task.completed && "line-through text-warm-400"
+              )}
+            >
+              {task.title}
+            </p>
+          </div>
           <div className="flex items-center gap-2 mb-2">
             {!isDragging && onPriorityChange ? (
               <select
@@ -101,14 +125,6 @@ export default function TaskCard({
             )}
           </div>
 
-          {/* Title */}
-          <p className={cn(
-            "text-sm font-medium text-warm-800 leading-snug mb-2",
-            task.completed && "line-through text-warm-400"
-          )}>
-            {task.title}
-          </p>
-
           {/* Description */}
           {task.description && (
             <p className="text-xs text-warm-400 mb-2 line-clamp-2">{task.description}</p>
@@ -125,7 +141,7 @@ export default function TaskCard({
               )}
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 min-w-[58px] justify-end">
               {!onAssigneeChange && task.assignee && (
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white font-medium ring-2 ring-white"
@@ -136,11 +152,29 @@ export default function TaskCard({
                 </div>
               )}
 
-              {showActions && onDelete && (
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit();
+                  }}
+                  className={cn(
+                    "w-6 h-6 rounded-lg bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center transition-[opacity,transform,background-color] ml-1",
+                    showActions ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
+                  )}
+                >
+                  <Pencil size={11} />
+                </button>
+              )}
+              {onDelete && (
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  className="w-6 h-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-400 hover:text-rose-600 flex items-center justify-center transition-colors ml-1"
+                  className={cn(
+                    "w-6 h-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-400 hover:text-rose-600 flex items-center justify-center transition-[opacity,transform,background-color] ml-1",
+                    showActions ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
+                  )}
                 >
                   <Trash2 size={11} />
                 </button>

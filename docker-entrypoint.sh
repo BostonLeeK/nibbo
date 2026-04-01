@@ -11,7 +11,7 @@ if [ -z "$DB_PASSWORD" ]; then
   exit 1
 fi
 
-mkdir -p /app/public/uploads/recipes
+mkdir -p /app/public/uploads/recipes /app/public/uploads/avatars
 chown -R nextjs:nodejs /app/public/uploads 2>/dev/null || true
 chmod -R a+rwX /app/public/uploads
 

@@ -74,6 +74,7 @@ model TaskBoard {
   description String?
   emoji       String   @default("📋")
   color       String   @default("#f43f5e")
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -100,6 +101,7 @@ model Task {
   priority       Priority   @default(MEDIUM)
   dueDate        DateTime?
   completed      Boolean    @default(false)
+  completedAt    DateTime?
   order          Int        @default(0)
   columnId       String
   assigneeId     String?

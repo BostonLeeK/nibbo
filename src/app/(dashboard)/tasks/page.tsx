@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { normalizeBoardsPayload } from "@/lib/task-board";
 import TaskBoard from "@/components/tasks/TaskBoard";
 
 export default async function TasksPage() {
@@ -12,6 +13,7 @@ export default async function TasksPage() {
         columns: {
           include: {
             tasks: {
+              where: { completed: false },
               include: {
                 assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
                 creator: { select: { id: true, name: true, image: true, color: true, emoji: true } },
@@ -22,38 +24,14 @@ export default async function TasksPage() {
           orderBy: { order: "asc" },
         },
       },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     }),
     prisma.user.findMany({
       select: { id: true, name: true, image: true, color: true, emoji: true },
     }),
   ]);
 
-  const initialBoards = boards.map((board) => ({
-    id: board.id,
-    name: board.name,
-    emoji: board.emoji,
-    color: board.color,
-    columns: board.columns.map((col) => ({
-      id: col.id,
-      name: col.name,
-      emoji: col.emoji,
-      color: col.color,
-      order: col.order,
-      tasks: col.tasks.map((t) => ({
-        id: t.id,
-        title: t.title,
-        description: t.description,
-        priority: t.priority,
-        dueDate: t.dueDate ? t.dueDate.toISOString() : null,
-        completed: t.completed,
-        order: t.order,
-        columnId: t.columnId,
-        assignee: t.assignee,
-        creator: t.creator,
-        labels: t.labels,
-      })),
-    })),
-  }));
+  const initialBoards = normalizeBoardsPayload(boards);
 
   return <TaskBoard initialBoards={initialBoards} users={users} currentUserId={session.user.id} />;
 }

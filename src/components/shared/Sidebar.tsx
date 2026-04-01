@@ -17,11 +17,17 @@ const navItems = [
 ];
 
 interface SidebarProps {
-  user: { name?: string | null; email?: string | null; image?: string | null };
+  user: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    color?: string;
+    emoji?: string;
+  };
 }
 
 export default function Sidebar({ user: u }: SidebarProps) {
-  const user = u ?? { name: null, email: null, image: null };
+  const user = u ?? { name: null, email: null, image: null, color: "#f43f5e", emoji: "🌸" };
   const pathname = usePathname();
 
   return (
@@ -83,10 +89,14 @@ export default function Sidebar({ user: u }: SidebarProps) {
               width={36}
               height={36}
               className="rounded-full ring-2 ring-rose-200"
+              unoptimized={user.image.startsWith("/api/users/avatar/")}
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-lg">
-              🌸
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-lg text-white"
+              style={{ backgroundColor: user.color || "#f43f5e" }}
+            >
+              {user.emoji || "🌸"}
             </div>
           )}
           <div className="flex-1 min-w-0">

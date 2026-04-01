@@ -5,8 +5,17 @@ if (process.env.NODE_ENV !== "production" && !process.env.DATABASE_URL) {
     "postgresql://homecrm:homecrm_local@127.0.0.1:5432/homecrm";
 }
 
+const publicSiteUrl =
+  process.env.AUTH_URL?.trim() ||
+  process.env.NEXTAUTH_URL?.trim() ||
+  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+  "";
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  env: {
+    NEXT_PUBLIC_APP_URL: publicSiteUrl,
+  },
   async rewrites() {
     return [
       {

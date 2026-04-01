@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -10,20 +10,51 @@ const COLORS = ["#f43f5e", "#fb923c", "#facc15", "#4ade80", "#38bdf8", "#818cf8"
 interface AddBoardModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (name: string, emoji: string, color: string) => void;
+  onAdd?: (name: string, emoji: string, color: string) => void;
+  editBoard?: { id: string; name: string; emoji: string; color: string } | null;
+  onUpdate?: (id: string, name: string, emoji: string, color: string) => void;
+  onDeleteBoard?: (id: string) => void;
 }
 
-export default function AddBoardModal({ open, onClose, onAdd }: AddBoardModalProps) {
+export default function AddBoardModal({
+  open,
+  onClose,
+  onAdd,
+  editBoard,
+  onUpdate,
+  onDeleteBoard,
+}: AddBoardModalProps) {
   const [name, setName] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("📋");
   const [selectedColor, setSelectedColor] = useState("#f43f5e");
 
+  const isEdit = Boolean(editBoard);
+
+  useEffect(() => {
+    if (!open) return;
+    if (editBoard) {
+      setName(editBoard.name);
+      setSelectedEmoji(editBoard.emoji);
+      setSelectedColor(editBoard.color);
+    } else {
+      setName("");
+      setSelectedEmoji("📋");
+      setSelectedColor("#f43f5e");
+    }
+  }, [open, editBoard]);
+
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onAdd(name, selectedEmoji, selectedColor);
-    setName("");
-    setSelectedEmoji("📋");
-    setSelectedColor("#f43f5e");
+    if (isEdit && editBoard && onUpdate) {
+      onUpdate(editBoard.id, name.trim(), selectedEmoji, selectedColor);
+    } else if (onAdd) {
+      onAdd(name, selectedEmoji, selectedColor);
+    }
+    if (!isEdit) {
+      setName("");
+      setSelectedEmoji("📋");
+      setSelectedColor("#f43f5e");
+    }
   };
 
   return (
@@ -45,7 +76,9 @@ export default function AddBoardModal({ open, onClose, onAdd }: AddBoardModalPro
           >
             <div className="bg-white rounded-3xl shadow-cozy-lg p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-warm-800">Нова дошка 📋</h2>
+                <h2 className="text-lg font-bold text-warm-800">
+                  {isEdit ? "Редагувати дошку" : "Нова дошка 📋"}
+                </h2>
                 <button
                   onClick={onClose}
                   className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center transition-colors"
@@ -104,8 +137,22 @@ export default function AddBoardModal({ open, onClose, onAdd }: AddBoardModalPro
                   onClick={handleSubmit}
                   className="w-full py-3 bg-gradient-to-r from-rose-500 to-rose-400 text-white rounded-2xl font-semibold hover:shadow-cozy transition-all mt-2"
                 >
-                  Створити дошку {selectedEmoji}
+                  {isEdit ? `Зберегти ${selectedEmoji}` : `Створити дошку ${selectedEmoji}`}
                 </motion.button>
+                {isEdit && editBoard && onDeleteBoard && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm("Видалити дошку, усі колонки та задачі?")) {
+                        onDeleteBoard(editBoard.id);
+                        onClose();
+                      }
+                    }}
+                    className="w-full py-2.5 text-sm text-rose-600 hover:bg-rose-50 rounded-xl mt-2"
+                  >
+                    Видалити дошку
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
