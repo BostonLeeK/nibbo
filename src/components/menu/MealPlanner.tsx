@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays, startOfWeek } from "date-fns";
@@ -42,6 +42,54 @@ interface MealPlannerProps {
 }
 
 type Tab = "planner" | "recipes";
+
+function AnimatedRecipeImage({
+  src,
+  alt = "",
+  sizes,
+  unoptimized,
+}: {
+  src: string;
+  alt?: string;
+  sizes: string;
+  unoptimized: boolean;
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, scale: 1.03 }}
+        animate={{ opacity: loaded ? 1 : 0, scale: loaded ? 1 : 1.03 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="absolute inset-0"
+      >
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          className="object-cover"
+          sizes={sizes}
+          unoptimized={unoptimized}
+          onLoad={() => setLoaded(true)}
+          onError={() => setLoaded(true)}
+        />
+      </motion.div>
+      {!loaded && (
+        <motion.div
+          initial={{ opacity: 0.45 }}
+          animate={{ opacity: [0.45, 0.8, 0.45] }}
+          transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 bg-gradient-to-r from-warm-100 via-cream-50 to-warm-100"
+        />
+      )}
+    </>
+  );
+}
 
 export default function MealPlanner({ initialRecipes, initialMealPlans, users, currentUserId }: MealPlannerProps) {
   const [tab, setTab] = useState<Tab>("planner");
@@ -380,11 +428,9 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
           </button>
           {meal.recipe?.imageUrl ? (
             <div className="relative w-full h-12 rounded-xl overflow-hidden mb-1.5 bg-warm-100">
-              <Image
+              <AnimatedRecipeImage
                 src={meal.recipe.imageUrl}
                 alt=""
-                fill
-                className="object-cover"
                 sizes="120px"
                 unoptimized={isLocalUpload(meal.recipe.imageUrl)}
               />
@@ -565,11 +611,9 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
               </div>
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-warm-100 mb-3">
                 {recipe.imageUrl ? (
-                  <Image
+                  <AnimatedRecipeImage
                     src={recipe.imageUrl}
                     alt=""
-                    fill
-                    className="object-cover"
                     sizes="(max-width: 768px) 100vw, 33vw"
                     unoptimized={isLocalUpload(recipe.imageUrl)}
                   />
@@ -704,11 +748,9 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
               <div className="overflow-y-auto overscroll-contain px-5 py-4 flex-1 min-h-0 space-y-4">
                 {viewRecipe.imageUrl ? (
                   <div className="relative w-full aspect-[4/3] max-h-56 rounded-2xl overflow-hidden bg-warm-100">
-                    <Image
+                    <AnimatedRecipeImage
                       src={viewRecipe.imageUrl}
                       alt=""
-                      fill
-                      className="object-cover"
                       sizes="(max-width: 768px) 100vw, 32rem"
                       unoptimized={isLocalUpload(viewRecipe.imageUrl)}
                     />
@@ -839,13 +881,11 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                     {(recipeImagePreview || editInitialImageUrl) && (
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-warm-100 shrink-0 border border-warm-200">
-                          <Image
+                          <AnimatedRecipeImage
                             src={recipeImagePreview || editInitialImageUrl!}
                             alt=""
-                            fill
-                            unoptimized={!!recipeImagePreview || isLocalUpload(editInitialImageUrl)}
-                            className="object-cover"
                             sizes="80px"
+                            unoptimized={!!recipeImagePreview || isLocalUpload(editInitialImageUrl)}
                           />
                         </div>
                         <button
