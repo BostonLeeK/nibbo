@@ -28,11 +28,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { greeting, dateLabel } = dashboardHeaderLabels();
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen md:h-screen md:overflow-hidden">
       <Sidebar user={user} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col md:overflow-hidden">
         <Header user={user} greeting={greeting} dateLabel={dateLabel} initialPoints={points} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-3 md:p-6">
           {children}
         </main>
       </div>

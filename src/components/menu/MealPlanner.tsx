@@ -347,8 +347,8 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
   return (
     <div className="h-full flex flex-col">
       {/* Tabs */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex gap-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {[{ id: "planner", label: "Тижневе меню", emoji: "📅" }, { id: "recipes", label: "Рецепти", emoji: "📖" }].map((t) => (
             <motion.button key={t.id} whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}
               onClick={() => setTab(t.id as Tab)}
@@ -360,7 +360,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
           ))}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {tab === "planner" && (
             <motion.button
               type="button"
@@ -497,7 +497,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
         </div>
       ) : (
         /* Recipes grid */
-        <div className="grid grid-cols-3 gap-4 overflow-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 overflow-auto">
           {recipes.map((recipe) => (
             <motion.div
               key={recipe.id}

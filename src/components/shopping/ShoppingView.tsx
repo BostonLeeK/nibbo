@@ -75,14 +75,14 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
     ? Math.round((checkedItems.length / currentList.items.length) * 100) : 0;
 
   return (
-    <div className="h-full flex gap-6">
-      {/* List sidebar */}
-      <div className="w-56 flex flex-col gap-3">
+    <div className="h-full flex flex-col md:flex-row gap-4 md:gap-6">
+      <div className="w-full md:w-56">
+        <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-visible pb-1 md:pb-0">
         {lists.map((list) => (
           <motion.button key={list.id} whileHover={{ x: 4 }}
             onClick={() => setActiveList(list.id)}
             className={cn(
-              "flex items-center gap-3 p-3 rounded-2xl text-left transition-all",
+              "shrink-0 min-w-[180px] md:min-w-0 flex items-center gap-3 p-3 rounded-2xl text-left transition-all",
               activeList === list.id ? "bg-white shadow-cozy text-warm-800" : "text-warm-500 hover:bg-white/50"
             )}>
             <span className="text-xl">{list.emoji}</span>
@@ -94,23 +94,22 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
         ))}
         <motion.button whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
           onClick={() => setShowAddList(true)}
-          className="flex items-center gap-2 p-3 rounded-2xl text-warm-400 hover:text-rose-500 border-2 border-dashed border-warm-200 hover:border-rose-300 transition-all">
+          className="shrink-0 min-w-[180px] md:min-w-0 flex items-center gap-2 p-3 rounded-2xl text-warm-400 hover:text-rose-500 border-2 border-dashed border-warm-200 hover:border-rose-300 transition-all">
           <Plus size={16} />
           <span className="text-sm font-medium">Новий список</span>
         </motion.button>
+        </div>
       </div>
 
-      {/* Main content */}
       {currentList ? (
-        <div className="flex-1 flex flex-col">
-          {/* Progress */}
+        <div className="flex-1 flex flex-col min-w-0">
           <div className="bg-white/80 rounded-3xl p-5 shadow-cozy border border-warm-100 mb-4">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between gap-2 mb-3">
               <div>
-                <h2 className="text-xl font-bold text-warm-800">{currentList.emoji} {currentList.name}</h2>
+                <h2 className="text-lg md:text-xl font-bold text-warm-800">{currentList.emoji} {currentList.name}</h2>
                 <p className="text-sm text-warm-400">{checkedItems.length} з {currentList.items.length} куплено</p>
               </div>
-              <div className="text-3xl font-bold text-rose-500">{progress}%</div>
+              <div className="text-2xl md:text-3xl font-bold text-rose-500">{progress}%</div>
             </div>
             <div className="h-2 bg-warm-100 rounded-full overflow-hidden">
               <motion.div
@@ -122,25 +121,23 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
             </div>
           </div>
 
-          {/* Add item form */}
           <div className="bg-white/70 rounded-3xl p-4 shadow-cozy border border-warm-100 mb-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input value={newItem.name} onChange={(e) => setNewItem((p) => ({ ...p, name: e.target.value }))}
                 onKeyDown={(e) => e.key === "Enter" && handleAddItem()}
                 placeholder="Додати товар..." className="flex-1 bg-warm-50 rounded-xl px-4 py-2.5 text-sm outline-none border border-warm-200 focus:border-rose-300" />
               <input value={newItem.quantity} onChange={(e) => setNewItem((p) => ({ ...p, quantity: e.target.value }))}
-                placeholder="К-сть" className="w-20 bg-warm-50 rounded-xl px-3 py-2.5 text-sm outline-none border border-warm-200 focus:border-rose-300" />
+                placeholder="К-сть" className="w-full sm:w-20 bg-warm-50 rounded-xl px-3 py-2.5 text-sm outline-none border border-warm-200 focus:border-rose-300" />
               <input value={newItem.unit} onChange={(e) => setNewItem((p) => ({ ...p, unit: e.target.value }))}
-                placeholder="Од." className="w-16 bg-warm-50 rounded-xl px-3 py-2.5 text-sm outline-none border border-warm-200 focus:border-rose-300" />
+                placeholder="Од." className="w-full sm:w-16 bg-warm-50 rounded-xl px-3 py-2.5 text-sm outline-none border border-warm-200 focus:border-rose-300" />
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={handleAddItem}
-                className="px-4 py-2.5 bg-rose-500 text-white rounded-xl text-sm font-medium hover:bg-rose-600 transition-colors">
+                className="w-full sm:w-auto px-4 py-2.5 bg-rose-500 text-white rounded-xl text-sm font-medium hover:bg-rose-600 transition-colors">
                 <Plus size={18} />
               </motion.button>
             </div>
           </div>
 
-          {/* Items list */}
           <div className="flex-1 overflow-y-auto space-y-2">
             {uncheckedItems.map((item) => (
               <div
@@ -158,7 +155,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
                     {item.category && <span className="text-xs text-warm-400">{item.category}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-white"
                     style={{ backgroundColor: item.addedBy.color }}>
                     {item.addedBy.emoji || item.addedBy.name?.[0]}
@@ -170,7 +167,6 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
               </div>
             ))}
 
-            {/* Checked items */}
             {checkedItems.length > 0 && (
               <div className="mt-4">
                 <p className="text-xs font-semibold text-warm-400 mb-2 px-1">✅ КУПЛЕНО ({checkedItems.length})</p>
@@ -186,7 +182,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
                       <p className="font-medium text-warm-500 text-sm line-through">{item.name}</p>
                     </div>
                     <button onClick={() => handleDeleteItem(item.id)}
-                      className="opacity-0 group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all">
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all">
                       <Trash2 size={14} />
                     </button>
                   </div>

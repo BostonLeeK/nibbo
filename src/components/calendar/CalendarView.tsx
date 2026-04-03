@@ -109,12 +109,10 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
   };
 
   return (
-    <div className="h-full flex gap-6">
-      {/* Calendar grid */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+    <div className="h-full flex flex-col md:flex-row gap-4 md:gap-6">
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+          <div className="flex items-center justify-between sm:justify-start gap-3">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -123,7 +121,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
             >
               <ChevronLeft size={18} />
             </motion.button>
-            <h2 className="text-xl font-bold text-warm-800 capitalize min-w-48 text-center">
+            <h2 className="text-lg md:text-xl font-bold text-warm-800 capitalize text-center min-w-0 sm:min-w-48">
               {format(currentMonth, "LLLL yyyy", { locale: uk })}
             </h2>
             <motion.button
@@ -140,68 +138,68 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
             whileHover={{ scale: 1.05, y: -1 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => { setNewEvent((p) => ({ ...p, startDate: format(new Date(), "yyyy-MM-dd") })); setShowAddEvent(true); }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-lavender-500 to-lavender-400 text-white rounded-2xl text-sm font-medium shadow-cozy"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-lavender-500 to-lavender-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto"
           >
             <Plus size={16} /> Нова подія
           </motion.button>
         </div>
 
-        {/* Weekday headers */}
-        <div className="grid grid-cols-7 mb-2">
-          {WEEKDAYS.map((d) => (
-            <div key={d} className="text-center text-xs font-semibold text-warm-400 py-2">{d}</div>
-          ))}
-        </div>
+        <div className="overflow-x-auto pb-1">
+          <div className="min-w-[640px]">
+            <div className="grid grid-cols-7 mb-2">
+              {WEEKDAYS.map((d) => (
+                <div key={d} className="text-center text-xs font-semibold text-warm-400 py-2">{d}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1 flex-1">
+              {days.map((day) => {
+                const dayEvents = getEventsForDay(day);
+                const isSelected = selectedDay && isSameDay(day, selectedDay);
+                const todayDay = isToday(day);
+                const inMonth = isSameMonth(day, currentMonth);
 
-        {/* Days grid */}
-        <div className="grid grid-cols-7 gap-1 flex-1">
-          {days.map((day) => {
-            const dayEvents = getEventsForDay(day);
-            const isSelected = selectedDay && isSameDay(day, selectedDay);
-            const todayDay = isToday(day);
-            const inMonth = isSameMonth(day, currentMonth);
-
-            return (
-              <motion.div
-                key={day.toISOString()}
-                whileHover={{ scale: 1.02 }}
-                onClick={() => setSelectedDay(day)}
-                className={cn(
-                  "rounded-2xl p-1.5 cursor-pointer transition-all min-h-[70px]",
-                  !inMonth && "opacity-30",
-                  isSelected && "bg-lavender-50 ring-2 ring-lavender-400",
-                  todayDay && !isSelected && "bg-rose-50 ring-2 ring-rose-300",
-                  !isSelected && !todayDay && "hover:bg-warm-50"
-                )}
-              >
-                <div className={cn(
-                  "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-1",
-                  todayDay ? "bg-rose-500 text-white" : "text-warm-600"
-                )}>
-                  {format(day, "d")}
-                </div>
-                <div className="space-y-0.5">
-                  {dayEvents.slice(0, 2).map((e) => (
-                    <div
-                      key={e.id}
-                      className="text-xs px-1.5 py-0.5 rounded-md text-white truncate"
-                      style={{ backgroundColor: e.color }}
-                    >
-                      {e.emoji} {e.title}
+                return (
+                  <motion.div
+                    key={day.toISOString()}
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => setSelectedDay(day)}
+                    className={cn(
+                      "rounded-2xl p-1.5 cursor-pointer transition-all min-h-[70px]",
+                      !inMonth && "opacity-30",
+                      isSelected && "bg-lavender-50 ring-2 ring-lavender-400",
+                      todayDay && !isSelected && "bg-rose-50 ring-2 ring-rose-300",
+                      !isSelected && !todayDay && "hover:bg-warm-50"
+                    )}
+                  >
+                    <div className={cn(
+                      "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-1",
+                      todayDay ? "bg-rose-500 text-white" : "text-warm-600"
+                    )}>
+                      {format(day, "d")}
                     </div>
-                  ))}
-                  {dayEvents.length > 2 && (
-                    <div className="text-xs text-warm-400 px-1">+{dayEvents.length - 2}</div>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
+                    <div className="space-y-0.5">
+                      {dayEvents.slice(0, 2).map((e) => (
+                        <div
+                          key={e.id}
+                          className="text-xs px-1.5 py-0.5 rounded-md text-white truncate"
+                          style={{ backgroundColor: e.color }}
+                        >
+                          {e.emoji} {e.title}
+                        </div>
+                      ))}
+                      {dayEvents.length > 2 && (
+                        <div className="text-xs text-warm-400 px-1">+{dayEvents.length - 2}</div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Side panel */}
-      <div className="w-72 flex flex-col gap-4">
+      <div className="w-full md:w-72 flex flex-col gap-4">
         {selectedDay ? (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
