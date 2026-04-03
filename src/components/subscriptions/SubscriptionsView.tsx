@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CalendarClock, Plus, Trash2, UserRound, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
+import { ExchangeRates } from "@/lib/exchange-rates";
 
 type FamilyRole = "OWNER" | "MEMBER";
 type BillingCycle = "MONTHLY" | "YEARLY";
@@ -74,15 +75,14 @@ const subscriptionCategories = [
 const currencyOptions = ["UAH", "USD", "EUR"];
 
 function formatAmount(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat("uk-UA", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${amount.toFixed(2)} ${currency}`;
-  }
+  const fixed = Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
+  const [intPartRaw, decimalPart] = fixed.split(".");
+  const sign = intPartRaw.startsWith("-") ? "-" : "";
+  const intPart = sign ? intPartRaw.slice(1) : intPartRaw;
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const formattedNumber = `${sign}${grouped},${decimalPart}`;
+  const suffix = currency === "UAH" ? "грн" : currency;
+  return `${formattedNumber} ${suffix}`;
 }
 
 function toInputDate(date: string | Date | null | undefined) {
@@ -97,6 +97,11 @@ function toInputDate(date: string | Date | null | undefined) {
 
 function toMonthlyAmount(amount: number, billingCycle: BillingCycle) {
   return billingCycle === "YEARLY" ? amount / 12 : amount;
+}
+
+function toUah(amount: number, currency: string, exchangeRates: ExchangeRates) {
+  const rate = exchangeRates[currency as keyof ExchangeRates] ?? 1;
+  return amount * rate;
 }
 
 function toForm(item: SubscriptionItem): FormState {
@@ -137,10 +142,12 @@ export default function SubscriptionsView({
   initialItems,
   members,
   currentUserRole,
+  exchangeRates,
 }: {
   initialItems: SubscriptionItem[];
   members: User[];
   currentUserRole: FamilyRole;
+  exchangeRates: ExchangeRates;
 }) {
   const owner = currentUserRole === "OWNER";
   const [items, setItems] = useState(initialItems);
@@ -162,7 +169,7 @@ export default function SubscriptionsView({
   const summary = useMemo(() => {
     const monthlyTotal = items.reduce((sum, item) => {
       if (item.status !== "ACTIVE") return sum;
-      return sum + toMonthlyAmount(item.amount, item.billingCycle);
+      return sum + toUah(toMonthlyAmount(item.amount, item.billingCycle), item.currency, exchangeRates);
     }, 0);
     const now = new Date();
     const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -176,7 +183,7 @@ export default function SubscriptionsView({
       activeCount: items.filter((item) => item.status === "ACTIVE").length,
       upcomingCount,
     };
-  }, [items]);
+  }, [exchangeRates, items]);
 
   const openCreate = () => {
     setEditingId(null);

@@ -1,5 +1,6 @@
 import SubscriptionsView from "@/components/subscriptions/SubscriptionsView";
 import { auth } from "@/lib/auth";
+import { getNbuExchangeRates } from "@/lib/exchange-rates";
 import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -10,7 +11,7 @@ export default async function SubscriptionsPage() {
   const familyId = await ensureUserFamily(session.user.id);
   if (!familyId) redirect("/login");
 
-  const [currentUser, items, members] = await Promise.all([
+  const [currentUser, items, members, exchangeRates] = await Promise.all([
     prisma.user.findFirst({
       where: { id: session.user.id, familyId },
       select: { familyRole: true },
@@ -33,6 +34,7 @@ export default async function SubscriptionsPage() {
       select: { id: true, name: true, email: true, image: true, color: true, emoji: true, familyRole: true },
       orderBy: { name: "asc" },
     }),
+    getNbuExchangeRates(),
   ]);
 
   if (!currentUser) redirect("/login");
@@ -48,6 +50,7 @@ export default async function SubscriptionsPage() {
       initialItems={initialItems}
       members={members}
       currentUserRole={currentUser.familyRole}
+      exchangeRates={exchangeRates}
     />
   );
 }

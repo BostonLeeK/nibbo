@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { getNbuExchangeRates } from "@/lib/exchange-rates";
 import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
 import { SubscriptionBillingCycle, SubscriptionMemberRole, SubscriptionStatus } from "@prisma/client";
@@ -17,6 +18,11 @@ async function getCurrentFamilyUser(userId: string, familyId: string) {
 function toMonthlyAmount(amount: number, billingCycle: SubscriptionBillingCycle) {
   if (billingCycle === "YEARLY") return amount / 12;
   return amount;
+}
+
+function toUah(amount: number, currency: string, exchangeRates: Record<string, number>) {
+  const rate = exchangeRates[currency] ?? 1;
+  return amount * rate;
 }
 
 function parseDate(value: unknown) {
@@ -64,7 +70,7 @@ export async function GET(req: NextRequest) {
       : undefined,
   };
 
-  const [items, members] = await Promise.all([
+  const [items, members, exchangeRates] = await Promise.all([
     prisma.familySubscription.findMany({
       where,
       include: {
@@ -83,11 +89,12 @@ export async function GET(req: NextRequest) {
       select: { id: true, name: true, email: true, color: true, emoji: true, image: true, familyRole: true },
       orderBy: { name: "asc" },
     }),
+    getNbuExchangeRates(),
   ]);
 
   const monthlyTotal = items.reduce((sum, item) => {
     if (item.status !== "ACTIVE") return sum;
-    return sum + toMonthlyAmount(item.amount, item.billingCycle);
+    return sum + toUah(toMonthlyAmount(item.amount, item.billingCycle), item.currency, exchangeRates);
   }, 0);
 
   const now = new Date();
@@ -103,6 +110,7 @@ export async function GET(req: NextRequest) {
       activeCount: items.filter((item) => item.status === "ACTIVE").length,
       upcomingCount,
     },
+    exchangeRates,
   });
 }
 
