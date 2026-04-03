@@ -188,12 +188,14 @@ model Event {
   weeklyDay    Int?
   location    String?
   assigneeId  String?
+  subscriptionId String?
   familyId    String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   family   Family? @relation(fields: [familyId], references: [id], onDelete: Cascade)
   assignee User? @relation("EventAssignee", fields: [assigneeId], references: [id])
+  subscription FamilySubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 }
 
 // --- MEAL PLANNER ---
@@ -373,6 +375,7 @@ model FamilySubscription {
   family          Family                 @relation(fields: [familyId], references: [id], onDelete: Cascade)
   ownerUser       User?                  @relation("SubscriptionOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
   members         FamilySubscriptionMember[]
+  events          Event[]
 }
 
 model FamilySubscriptionMember {

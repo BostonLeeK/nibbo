@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     },
     include: {
       assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+      subscription: { select: { id: true, title: true } },
     },
     orderBy: { startDate: "asc" },
   });
@@ -42,6 +43,13 @@ export async function POST(req: NextRequest) {
     });
     if (!assignee) return NextResponse.json({ error: "Assignee not found" }, { status: 404 });
   }
+  if (body.subscriptionId) {
+    const subscription = await prisma.familySubscription.findFirst({
+      where: { id: body.subscriptionId, familyId },
+      select: { id: true },
+    });
+    if (!subscription) return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
+  }
 
   const event = await prisma.event.create({
     data: {
@@ -56,10 +64,12 @@ export async function POST(req: NextRequest) {
       weeklyDay: body.weeklyRepeat ? Number(body.weeklyDay) : null,
       location: body.location,
       assigneeId: body.assigneeId || undefined,
+      subscriptionId: body.subscriptionId || undefined,
       familyId,
     },
     include: {
       assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+      subscription: { select: { id: true, title: true } },
     },
   });
 

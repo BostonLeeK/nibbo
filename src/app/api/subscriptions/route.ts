@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { getNbuExchangeRates } from "@/lib/exchange-rates";
 import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
+import { syncSubscriptionBillingEvents } from "@/lib/subscription-calendar";
 import { SubscriptionBillingCycle, SubscriptionMemberRole, SubscriptionStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -201,6 +202,15 @@ export async function POST(req: NextRequest) {
         orderBy: { createdAt: "asc" },
       },
     },
+  });
+
+  await syncSubscriptionBillingEvents({
+    subscriptionId: created.id,
+    familyId: created.familyId,
+    title: created.title,
+    billingCycle: created.billingCycle,
+    nextBillingDate: created.nextBillingDate,
+    status: created.status,
   });
 
   return NextResponse.json(created);

@@ -14,12 +14,14 @@ import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
+interface Subscription { id: string; title: string; }
 interface Event {
   id: string; title: string; description: string | null;
   emoji: string; color: string;
   startDate: string | Date; endDate: string | Date;
   allDay: boolean; location: string | null; assignee: User | null;
   weeklyRepeat: boolean; weeklyDay: number | null;
+  subscription: Subscription | null;
 }
 
 const EVENT_COLORS = [
@@ -44,10 +46,11 @@ const MONTH_COZY_BACKGROUNDS = [
   "url('/calendar/cozy-winter.svg')",
 ];
 
-export default function CalendarView({ initialEvents, users, currentUserId }: {
+export default function CalendarView({ initialEvents, users, currentUserId, subscriptions }: {
   initialEvents: Event[];
   users: User[];
   currentUserId: string;
+  subscriptions: Subscription[];
 }) {
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -57,6 +60,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
     title: "", description: "", emoji: "📅", color: "#8b5cf6",
     startDate: "", startTime: "10:00", endTime: "11:00",
     allDay: false, location: "", assigneeId: "",
+    subscriptionId: "",
     weeklyRepeat: false, weeklyDay: 1,
   });
 
@@ -109,6 +113,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
         allDay: newEvent.allDay,
         location: newEvent.location,
         assigneeId: newEvent.assigneeId || undefined,
+        subscriptionId: newEvent.subscriptionId || undefined,
         weeklyRepeat: newEvent.weeklyRepeat,
         weeklyDay: newEvent.weeklyRepeat ? newEvent.weeklyDay : null,
       }),
@@ -117,7 +122,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
     const event = await res.json();
     setEvents((prev) => [...prev, event]);
     setShowAddEvent(false);
-    setNewEvent({ title: "", description: "", emoji: "📅", color: "#8b5cf6", startDate: "", startTime: "10:00", endTime: "11:00", allDay: false, location: "", assigneeId: "", weeklyRepeat: false, weeklyDay: 1 });
+    setNewEvent({ title: "", description: "", emoji: "📅", color: "#8b5cf6", startDate: "", startTime: "10:00", endTime: "11:00", allDay: false, location: "", assigneeId: "", subscriptionId: "", weeklyRepeat: false, weeklyDay: 1 });
     toast.success("Подію додано! 📅");
   };
 
@@ -234,6 +239,9 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
                           <p className="text-xs text-warm-500 mt-1">
                             {formatTime(event.startDate)} — {formatTime(event.endDate)}
                           </p>
+                        )}
+                        {event.subscription && (
+                          <p className="text-xs text-lavender-600 mt-1">Підписка: {event.subscription.title}</p>
                         )}
                       </div>
                       <button
@@ -356,6 +364,9 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
                         )}
                         {event.location && (
                           <p className="text-xs text-warm-400 mt-1">📍 {event.location}</p>
+                        )}
+                        {event.subscription && (
+                          <p className="text-xs text-lavender-600 mt-1">Підписка: {event.subscription.title}</p>
                         )}
                         {event.assignee && (
                           <div className="flex items-center gap-1 mt-2">
@@ -490,6 +501,11 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400">
                     <option value="">{"👤 Відповідальний (необов'язково)"}</option>
                     {users.map((u) => <option key={u.id} value={u.id}>{u.emoji} {u.name}</option>)}
+                  </select>
+                  <select value={newEvent.subscriptionId} onChange={(e) => setNewEvent((p) => ({ ...p, subscriptionId: e.target.value }))}
+                    className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400">
+                    <option value="">{"🔗 Підписка (необов'язково)"}</option>
+                    {subscriptions.map((subscription) => <option key={subscription.id} value={subscription.id}>{subscription.title}</option>)}
                   </select>
 
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}

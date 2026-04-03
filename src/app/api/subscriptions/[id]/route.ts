@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
+import { clearSubscriptionBillingEvents, syncSubscriptionBillingEvents } from "@/lib/subscription-calendar";
 import { SubscriptionBillingCycle, SubscriptionMemberRole, SubscriptionStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -134,6 +135,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
   });
 
+  await syncSubscriptionBillingEvents({
+    subscriptionId: updated.id,
+    familyId: updated.familyId,
+    title: updated.title,
+    billingCycle: updated.billingCycle,
+    nextBillingDate: updated.nextBillingDate,
+    status: updated.status,
+  });
+
   return NextResponse.json(updated);
 }
 
@@ -155,6 +165,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   });
   if (!existing) return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
 
+  await clearSubscriptionBillingEvents(id);
   await prisma.familySubscription.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

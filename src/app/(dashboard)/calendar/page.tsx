@@ -9,18 +9,31 @@ export default async function CalendarPage() {
   const familyId = await ensureUserFamily(session.user.id);
   if (!familyId) return null;
 
-  const [events, users] = await Promise.all([
+  const [events, users, subscriptions] = await Promise.all([
     prisma.event.findMany({
       where: { familyId },
-      include: { assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } } },
+      include: {
+        assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+        subscription: { select: { id: true, title: true } },
+      },
       orderBy: { startDate: "asc" },
     }),
     prisma.user.findMany({ where: { familyId }, select: { id: true, name: true, image: true, color: true, emoji: true } }),
+    prisma.familySubscription.findMany({
+      where: { familyId },
+      select: { id: true, title: true },
+      orderBy: { title: "asc" },
+    }),
   ]);
 
   return (
     <div className="h-full">
-      <CalendarView initialEvents={events} users={users} currentUserId={session.user.id} />
+      <CalendarView
+        initialEvents={events}
+        users={users}
+        currentUserId={session.user.id}
+        subscriptions={subscriptions}
+      />
     </div>
   );
 }

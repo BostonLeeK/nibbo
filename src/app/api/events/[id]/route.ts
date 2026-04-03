@@ -20,6 +20,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
     if (!assignee) return NextResponse.json({ error: "Assignee not found" }, { status: 404 });
   }
+  if (body.subscriptionId) {
+    const subscription = await prisma.familySubscription.findFirst({
+      where: { id: body.subscriptionId, familyId },
+      select: { id: true },
+    });
+    if (!subscription) return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
+  }
 
   const event = await prisma.event.update({
     where: { id },
@@ -40,9 +47,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             : null,
       location: body.location,
       assigneeId: body.assigneeId || undefined,
+      subscriptionId: body.subscriptionId || undefined,
     },
     include: {
       assignee: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+      subscription: { select: { id: true, title: true } },
     },
   });
 

@@ -411,6 +411,7 @@ export default function SubscriptionsView({
                   </div>
 
                   {item.note && <p className="text-sm text-warm-600">{item.note}</p>}
+                  <p className="text-xs text-lavender-600">Списання автоматично синхронізуються з календарем</p>
 
                   <div className="flex items-center justify-end gap-2">
                     <button
