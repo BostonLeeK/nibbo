@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { useCozyConfig } from "@/hooks/useCozyConfig";
 
 interface TaskTamagotchi3DProps {
   doneToday: number;
@@ -43,7 +44,7 @@ function resolveMood(doneToday: number, doneWeek: number) {
   if (doneToday >= 2 || doneWeek >= 8) {
     return {
       title: "Гарний ритм",
-      subtitle: "Nibbo стає сильнішим з кожною закритою задачею",
+      subtitle: "Nibby стає сильнішим з кожною закритою задачею",
       face: "smile" as const,
       body: "#0ea5e9",
       glow: "#38bdf8",
@@ -80,7 +81,7 @@ function resolveMood(doneToday: number, doneWeek: number) {
   }
   return {
     title: "Хоче руху",
-    subtitle: "Закрий хоча б одну задачу і Nibbo оживе",
+    subtitle: "Закрий хоча б одну задачу і Nibby оживе",
     face: "sleepy" as const,
     body: "#94a3b8",
     glow: "#cbd5e1",
@@ -114,6 +115,8 @@ function pickClipName(face: "happy" | "smile" | "neutral" | "sleepy", names: str
 }
 
 export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTotal }: TaskTamagotchi3DProps) {
+  const { config } = useCozyConfig();
+  const mascotName = config.mascot.slice(0, 1).toUpperCase() + config.mascot.slice(1);
   const mood = resolveMood(doneToday, doneWeek);
   const dayProgress = clamp((doneToday / DAY_TARGET) * 100);
   const weekProgress = clamp((doneWeek / WEEK_TARGET) * 100);
@@ -170,7 +173,7 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
       size: 0.055 + activityLevel * 0.07,
       color: new THREE.Color(mood.glow),
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.45 + config.intensity * 0.4,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -257,7 +260,7 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
       const t = (now - start) / 1000;
       const delta = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
-      const s = mood.speed;
+      const s = mood.speed * config.speed;
       sparkles.rotation.y = t * 0.25;
       if (modelRoot) {
         modelRoot.rotation.y = Math.sin(t * 0.3 * s) * 0.2;
@@ -308,6 +311,8 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
     mood.modelYOffset,
     mood.speed,
     mood.face,
+    config.speed,
+    config.intensity,
   ]);
 
   return (
@@ -315,7 +320,7 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
       <div className={`absolute inset-0 bg-gradient-to-br ${mood.bloom} pointer-events-none`} />
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="relative z-10">
-          <h3 className="font-semibold text-warm-800 text-sm">Nibbo</h3>
+          <h3 className="font-semibold text-warm-800 text-sm">{mascotName}</h3>
           <p className="text-xs text-warm-500 mt-1">{mood.subtitle}</p>
         </div>
         <div className="text-xl relative z-10">{mood.emoji}</div>
@@ -377,7 +382,7 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
           </div>
 
           <p className="text-xs text-warm-500">
-            Виконання задач змінює настрій і енергію Nibbo.
+            Виконання задач змінює настрій і енергію Nibby.
           </p>
           <motion.div
             initial={{ width: 0 }}

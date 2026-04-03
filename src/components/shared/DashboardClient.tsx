@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { formatDate, formatTime, PRIORITY_CONFIG } from "@/lib/utils";
+import { useCozyConfig } from "@/hooks/useCozyConfig";
 
 const TaskTamagotchi3D = dynamic(() => import("./TaskTamagotchi3D"), {
   ssr: false,
@@ -25,6 +26,7 @@ export default function DashboardClient({
 }: DashboardClientProps) {
   const [show3D, setShow3D] = useState(false);
   const modelRef = useRef<HTMLDivElement | null>(null);
+  const { motion: cozyMotion } = useCozyConfig();
 
   useEffect(() => {
     let timeoutId = 0;
@@ -78,7 +80,7 @@ export default function DashboardClient({
         <h2 className="text-xl md:text-2xl font-bold text-warm-800">
           Фокус дня 🌸
         </h2>
-        <p className="text-warm-500 text-sm mt-1">Nibbo росте, коли ти закриваєш задачі</p>
+        <p className="text-warm-500 text-sm mt-1">Nibby росте, коли ти закриваєш задачі</p>
       </div>
 
       <div ref={modelRef} className="min-h-[360px]">
@@ -98,8 +100,9 @@ export default function DashboardClient({
         {statCards.map((card) => (
           <Link key={card.href} href={card.href}>
             <motion.div
-              whileHover={{ y: -4, scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ y: -2, scale: cozyMotion.hoverScale }}
+              whileTap={{ scale: cozyMotion.tapScale }}
+              transition={{ duration: cozyMotion.duration }}
               className={`bg-gradient-to-br ${card.color} rounded-3xl p-4 md:p-6 text-white shadow-cozy cursor-pointer`}
             >
               <div className="text-3xl md:text-4xl mb-2 md:mb-3">{card.emoji}</div>
@@ -116,8 +119,9 @@ export default function DashboardClient({
           {quickLinks.map((link) => (
             <Link key={link.href} href={link.href}>
               <motion.div
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={{ y: -1, scale: cozyMotion.hoverScale }}
+                whileTap={{ scale: cozyMotion.tapScale }}
+                transition={{ duration: cozyMotion.duration }}
                 className={`${link.color} border rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer transition-all`}
               >
                 <span className="text-xl">{link.emoji}</span>
