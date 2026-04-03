@@ -104,6 +104,32 @@ function toUah(amount: number, currency: string, exchangeRates: ExchangeRates) {
   return amount * rate;
 }
 
+function getCategoryEmoji(category: string | null) {
+  if (!category) return "✨";
+  if (category.includes("Відео")) return "🎬";
+  if (category.includes("Музика")) return "🎧";
+  if (category.includes("Ігри")) return "🎮";
+  if (category.includes("Освіта")) return "📚";
+  if (category.includes("Хмара")) return "☁️";
+  if (category.includes("Продуктивність")) return "🗂️";
+  if (category.includes("Безпека")) return "🛡️";
+  if (category.includes("Здоров")) return "💪";
+  if (category.includes("Транспорт")) return "🚗";
+  return "💳";
+}
+
+function getDueInfo(nextBillingDate: string) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(nextBillingDate);
+  due.setHours(0, 0, 0, 0);
+  const days = Math.round((due.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+  if (days < 0) return { label: `Прострочено на ${Math.abs(days)} дн`, className: "bg-rose-100 text-rose-700 border-rose-200" };
+  if (days === 0) return { label: "Сьогодні", className: "bg-amber-100 text-amber-700 border-amber-200" };
+  if (days <= 3) return { label: `Через ${days} дн`, className: "bg-peach-100 text-peach-700 border-peach-200" };
+  return { label: `Через ${days} дн`, className: "bg-sage-100 text-sage-700 border-sage-200" };
+}
+
 function toForm(item: SubscriptionItem): FormState {
   const memberUserIds = item.members.map((member) => member.userId);
   const payer = item.members.find((member) => member.role === "PAYER");
@@ -363,62 +389,75 @@ export default function SubscriptionsView({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {filteredItems.map((item) => {
               const payer = item.members.find((member) => member.role === "PAYER")?.user;
+              const dueInfo = getDueInfo(item.nextBillingDate);
+              const categoryEmoji = getCategoryEmoji(item.category);
               return (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-warm-100 bg-white p-4 space-y-3"
+                  whileHover={{ y: -2 }}
+                  className="relative overflow-hidden rounded-3xl border border-warm-100/80 bg-gradient-to-br from-white via-rose-50/20 to-lavender-50/30 p-4 md:p-5 space-y-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_28px_rgba(15,23,42,0.08)] transition-shadow"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-warm-500">{item.category || "Без категорії"}</p>
-                      <h4 className="font-semibold text-warm-800">{item.title}</h4>
+                  <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-lavender-100/35 blur-2xl" />
+                  <div className="absolute -bottom-10 -left-8 w-24 h-24 rounded-full bg-peach-100/30 blur-2xl" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-white/90 border border-warm-100 flex items-center justify-center text-lg shadow-sm">
+                        {categoryEmoji}
+                      </div>
+                      <div>
+                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">{item.category || "Без категорії"}</p>
+                      <h4 className="font-bold text-warm-800 text-lg leading-tight mt-0.5">{item.title}</h4>
+                      </div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusConfig[item.status].className}`}>
-                      {statusConfig[item.status].label}
-                    </span>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm ${statusConfig[item.status].className}`}>
+                        {statusConfig[item.status].label}
+                      </span>
+                      <span className={`text-[11px] px-2 py-1 rounded-full border font-semibold ${dueInfo.className}`}>
+                        {dueInfo.label}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-xl bg-warm-50 border border-warm-100 px-3 py-2">
-                      <p className="text-xs text-warm-500">Сума</p>
-                      <p className="text-sm font-semibold text-warm-800">{formatAmount(item.amount, item.currency)}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="rounded-2xl bg-white border border-warm-100 px-3 py-2.5">
+                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">Сума</p>
+                      <p className="text-base font-bold text-warm-800 mt-0.5">{formatAmount(item.amount, item.currency)}</p>
                       <p className="text-xs text-warm-400">{item.billingCycle === "MONTHLY" ? "Щомісяця" : "Щороку"}</p>
                     </div>
-                    <div className="rounded-xl bg-warm-50 border border-warm-100 px-3 py-2">
-                      <p className="text-xs text-warm-500">Наступне списання</p>
-                      <p className="text-sm font-semibold text-warm-800">{new Date(item.nextBillingDate).toLocaleDateString("uk-UA")}</p>
+                    <div className="rounded-2xl bg-white border border-warm-100 px-3 py-2.5">
+                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">Наступне списання</p>
+                      <p className="text-base font-bold text-warm-800 mt-0.5">{new Date(item.nextBillingDate).toLocaleDateString("uk-UA")}</p>
                       {item.trialEndsAt && (
                         <p className="text-xs text-warm-400">Тріал до {new Date(item.trialEndsAt).toLocaleDateString("uk-UA")}</p>
                       )}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <p className="text-xs text-warm-500">Користувачі</p>
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="space-y-2.5">
+                    <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">Користувачі</p>
+                    <div className="flex flex-wrap gap-1.5 min-h-7">
                       {item.members.length === 0 && <span className="text-xs text-warm-400">Нікого не призначено</span>}
                       {item.members.map((member) => (
-                        <span key={member.id} className="text-xs px-2 py-1 rounded-full bg-warm-100 text-warm-700">
+                        <span key={member.id} className="text-xs px-2.5 py-1 rounded-full bg-warm-100 text-warm-700 border border-warm-200/70">
                           {member.user.emoji} {member.user.name || member.user.email || "Учасник"}
                         </span>
                       ))}
                     </div>
-                    <p className="text-xs text-warm-500">
-                      Платник: {payer ? `${payer.emoji} ${payer.name || payer.email || "Учасник"}` : "не вказано"}
+                    <p className="text-sm text-warm-600">
+                      <span className="text-warm-500">Платник:</span> {payer ? `${payer.emoji} ${payer.name || payer.email || "Учасник"}` : "не вказано"}
                     </p>
                   </div>
 
-                  {item.note && <p className="text-sm text-warm-600">{item.note}</p>}
-                  <p className="text-xs text-lavender-600">Списання автоматично синхронізуються з календарем</p>
-
-                  <div className="flex items-center justify-end gap-2">
+                  {item.note && <p className="text-sm text-warm-600 bg-white/80 border border-warm-100 rounded-xl px-3 py-2">{item.note}</p>}
+                  <div className="flex items-center justify-end gap-2 pt-1">
                     <button
                       type="button"
                       disabled={!owner || busy}
                       onClick={() => openEdit(item)}
-                      className="px-3 py-1.5 rounded-lg bg-warm-100 hover:bg-warm-200 text-warm-700 text-xs font-medium disabled:opacity-60"
+                      className="px-3.5 py-2 rounded-xl bg-white border border-warm-200 hover:bg-warm-50 text-warm-700 text-xs font-semibold disabled:opacity-60"
                     >
                       Редагувати
                     </button>
@@ -426,7 +465,7 @@ export default function SubscriptionsView({
                       type="button"
                       disabled={!owner || busy}
                       onClick={() => removeItem(item.id)}
-                      className="px-3 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-medium disabled:opacity-60 flex items-center gap-1"
+                      className="px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-semibold disabled:opacity-60 flex items-center gap-1.5"
                     >
                       <Trash2 size={13} />
                       Видалити
