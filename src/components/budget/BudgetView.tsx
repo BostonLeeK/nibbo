@@ -74,58 +74,60 @@ export default function BudgetView({ initialCategories, initialExpenses, current
   };
 
   return (
-    <div className="space-y-5 md:space-y-6 max-w-5xl">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl p-4 md:p-6 text-white shadow-cozy">
-        <p className="text-sage-100 text-sm mb-1">Витрачено цього місяця</p>
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">{formatCurrency(totalSpent)}</h2>
-        <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
-          <div className="bg-white/20 rounded-2xl px-4 py-2">
-            <p className="text-xs text-sage-100">Транзакцій</p>
-            <p className="font-bold">{expenses.length}</p>
+    <div className="w-full space-y-5 md:space-y-6 xl:space-y-0 xl:grid xl:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] xl:gap-6 2xl:gap-8">
+      <div className="space-y-5 md:space-y-6 xl:sticky xl:top-4 self-start">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl p-4 md:p-6 text-white shadow-cozy">
+          <p className="text-sage-100 text-sm mb-1">Витрачено цього місяця</p>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{formatCurrency(totalSpent)}</h2>
+          <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
+            <div className="bg-white/20 rounded-2xl px-4 py-2">
+              <p className="text-xs text-sage-100">Транзакцій</p>
+              <p className="font-bold">{expenses.length}</p>
+            </div>
+            <div className="bg-white/20 rounded-2xl px-4 py-2">
+              <p className="text-xs text-sage-100">Категорій</p>
+              <p className="font-bold">{categories.length}</p>
+            </div>
           </div>
-          <div className="bg-white/20 rounded-2xl px-4 py-2">
-            <p className="text-xs text-sage-100">Категорій</p>
-            <p className="font-bold">{categories.length}</p>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-warm-800">Категорії 📊</h3>
-          <button onClick={() => setShowAddCategory(true)} className="text-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1">
-            <Plus size={14} /> Категорія
-          </button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          {byCategory.map((cat) => {
-            const pct = cat.budget ? Math.min((cat.spent / cat.budget) * 100, 100) : 0;
-            const overBudget = cat.budget && cat.spent > cat.budget;
-            return (
-              <motion.div key={cat.id} whileHover={{ y: -2 }}
-                className="bg-white/80 rounded-2xl p-4 shadow-cozy border border-warm-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">{cat.emoji}</span>
-                  <span className="text-xs font-semibold text-warm-700 truncate">{cat.name}</span>
-                </div>
-                <p className="text-lg font-bold text-warm-800">{formatCurrency(cat.spent)}</p>
-                {cat.budget && (
-                  <>
-                    <p className="text-xs text-warm-400 mb-2">з {formatCurrency(cat.budget)}</p>
-                    <div className="h-1.5 bg-warm-100 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: overBudget ? "#f43f5e" : cat.color }} />
-                    </div>
-                    {overBudget && <p className="text-xs text-rose-500 mt-1">⚠️ Перевищено</p>}
-                  </>
-                )}
-              </motion.div>
-            );
-          })}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-warm-800">Категорії 📊</h3>
+            <button onClick={() => setShowAddCategory(true)} className="text-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1">
+              <Plus size={14} /> Категорія
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3">
+            {byCategory.map((cat) => {
+              const pct = cat.budget ? Math.min((cat.spent / cat.budget) * 100, 100) : 0;
+              const overBudget = cat.budget && cat.spent > cat.budget;
+              return (
+                <motion.div key={cat.id} whileHover={{ y: -2 }}
+                  className="bg-white/80 rounded-2xl p-4 shadow-cozy border border-warm-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{cat.emoji}</span>
+                    <span className="text-xs font-semibold text-warm-700 truncate">{cat.name}</span>
+                  </div>
+                  <p className="text-lg font-bold text-warm-800">{formatCurrency(cat.spent)}</p>
+                  {cat.budget && (
+                    <>
+                      <p className="text-xs text-warm-400 mb-2">з {formatCurrency(cat.budget)}</p>
+                      <div className="h-1.5 bg-warm-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: overBudget ? "#f43f5e" : cat.color }} />
+                      </div>
+                      {overBudget && <p className="text-xs text-rose-500 mt-1">⚠️ Перевищено</p>}
+                    </>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <h3 className="font-bold text-warm-800">Транзакції цього місяця</h3>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}

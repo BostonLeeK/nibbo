@@ -18,5 +18,9 @@ export default async function CalendarPage() {
     prisma.user.findMany({ where: { familyId }, select: { id: true, name: true, image: true, color: true, emoji: true } }),
   ]);
 
-  return <CalendarView initialEvents={events} users={users} currentUserId={session.user.id} />;
+  return (
+    <div className="h-full">
+      <CalendarView initialEvents={events} users={users} currentUserId={session.user.id} />
+    </div>
+  );
 }

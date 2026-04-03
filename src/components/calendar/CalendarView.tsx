@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { CSSProperties, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
@@ -29,6 +29,20 @@ const EVENT_COLORS = [
 
 const EVENT_EMOJIS = ["📅", "🎉", "🏃", "💊", "🍽️", "✈️", "🎂", "🎓", "💼", "🌟"];
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+const MONTH_COZY_BACKGROUNDS = [
+  "url('/calendar/cozy-winter.svg')",
+  "url('/calendar/cozy-winter.svg')",
+  "url('/calendar/cozy-spring.svg')",
+  "url('/calendar/cozy-spring.svg')",
+  "url('/calendar/cozy-spring.svg')",
+  "url('/calendar/cozy-summer.svg')",
+  "url('/calendar/cozy-summer.svg')",
+  "url('/calendar/cozy-summer.svg')",
+  "url('/calendar/cozy-autumn.svg')",
+  "url('/calendar/cozy-autumn.svg')",
+  "url('/calendar/cozy-autumn.svg')",
+  "url('/calendar/cozy-winter.svg')",
+];
 
 export default function CalendarView({ initialEvents, users, currentUserId }: {
   initialEvents: Event[];
@@ -56,6 +70,9 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
     const day = d.getDay();
     return day === 0 ? 7 : day;
   };
+  const getMonthBackgroundStyle = (day: Date): CSSProperties => ({
+    "--calendar-cozy-bg": MONTH_COZY_BACKGROUNDS[day.getMonth()],
+  } as CSSProperties);
 
   const getEventsForDay = (day: Date) =>
     events.filter((e) => {
@@ -112,7 +129,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
 
   return (
     <div className="h-full flex flex-col md:flex-row gap-4 md:gap-6">
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 md:min-h-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
           <div className="flex items-center justify-between sm:justify-start gap-3">
             <motion.button
@@ -233,14 +250,14 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
           </div>
         )}
 
-        <div className="hidden md:block overflow-x-auto pb-1">
-          <div className="min-w-[640px]">
+        <div className="hidden md:flex flex-1 min-w-0 min-h-0">
+          <div className="w-full h-full flex flex-col">
             <div className="grid grid-cols-7 mb-2">
               {WEEKDAYS.map((d) => (
-                <div key={d} className="text-center text-xs font-semibold text-warm-400 py-2">{d}</div>
+                <div key={d} className="text-center text-xs font-semibold text-warm-500 py-2">{d}</div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1 flex-1">
+            <div className="grid grid-cols-7 auto-rows-fr gap-1 md:gap-1.5 flex-1 p-1 min-h-0">
               {days.map((day) => {
                 const dayEvents = getEventsForDay(day);
                 const isSelected = selectedDay && isSameDay(day, selectedDay);
@@ -250,15 +267,15 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
                 return (
                   <motion.div
                     key={day.toISOString()}
-                    whileHover={{ scale: 1.02 }}
                     onClick={() => setSelectedDay(day)}
                     className={cn(
-                      "rounded-2xl p-1.5 cursor-pointer transition-all min-h-[70px]",
-                      !inMonth && "opacity-30",
-                      isSelected && "bg-lavender-50 ring-2 ring-lavender-400",
-                      todayDay && !isSelected && "bg-rose-50 ring-2 ring-rose-300",
-                      !isSelected && !todayDay && "hover:bg-warm-50"
+                      "calendar-cozy-card rounded-2xl p-2 cursor-pointer transition-all h-full min-h-[clamp(92px,11vh,150px)] border border-warm-100 bg-white/70",
+                      !inMonth && "opacity-45",
+                      isSelected && "bg-lavender-50 border-lavender-300 ring-2 ring-lavender-300",
+                      todayDay && !isSelected && "bg-rose-50 border-rose-200 ring-1 ring-rose-200",
+                      !isSelected && !todayDay && "calendar-cozy-card-hover hover:bg-warm-50 hover:border-warm-200"
                     )}
+                    style={getMonthBackgroundStyle(day)}
                   >
                     <div className={cn(
                       "text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-1",
