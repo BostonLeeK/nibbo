@@ -11,7 +11,7 @@ import { MEAL_TYPE_CONFIG } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 function isLocalUpload(src: string | null | undefined) {
-  return Boolean(src?.startsWith("/uploads/"));
+  return Boolean(src?.startsWith("/uploads/") || src?.startsWith("/api/recipes/image/"));
 }
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
@@ -777,8 +777,8 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                     onChange={(e) => {
                       const f = e.target.files?.[0];
                       if (!f) return;
-                      if (f.size > 4 * 1024 * 1024) {
-                        toast.error("Максимум 4 МБ");
+                      if (f.size > 5 * 1024 * 1024) {
+                        toast.error("Максимум 5 МБ");
                         e.target.value = "";
                         return;
                       }

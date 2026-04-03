@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // --- AUTH ---
@@ -44,18 +45,22 @@ model User {
   image         String?
   color         String    @default("#f43f5e")
   emoji         String    @default("🌸")
+  familyId      String?
+  familyRole    FamilyRole @default(MEMBER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts     Account[]
-  sessions     Session[]
-  tasks        Task[]           @relation("TaskAssignee")
-  createdTasks Task[]           @relation("TaskCreator")
-  events       Event[]          @relation("EventAssignee")
-  mealCooks    MealPlan[]       @relation("MealCook")
-  notes        Note[]
-  expenses     Expense[]
+  family        Family?         @relation(fields: [familyId], references: [id])
+  accounts      Account[]
+  sessions      Session[]
+  tasks         Task[]          @relation("TaskAssignee")
+  createdTasks  Task[]          @relation("TaskCreator")
+  events        Event[]         @relation("EventAssignee")
+  mealCooks     MealPlan[]      @relation("MealCook")
+  notes         Note[]
+  expenses      Expense[]
   shoppingItems ShoppingItem[]
+  sentInvites   FamilyInvitation[] @relation("FamilyInviteSender")
 }
 
 model VerificationToken {
@@ -64,6 +69,44 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Family {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members           User[]
+  invitations       FamilyInvitation[]
+  taskBoards        TaskBoard[]
+  events            Event[]
+  recipes           Recipe[]
+  mealPlans         MealPlan[]
+  notes             Note[]
+  noteCategories    NoteCategory[]
+  expenseCategories ExpenseCategory[]
+  expenses          Expense[]
+  shoppingLists     ShoppingList[]
+}
+
+model FamilyInvitation {
+  id          String   @id @default(cuid())
+  email       String
+  familyId    String
+  invitedById String
+  createdAt   DateTime @default(now())
+  acceptedAt  DateTime?
+
+  family    Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  invitedBy User   @relation("FamilyInviteSender", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, email])
+}
+
+enum FamilyRole {
+  OWNER
+  MEMBER
 }
 
 // --- TASKS ---
@@ -75,9 +118,11 @@ model TaskBoard {
   emoji       String   @default("📋")
   color       String   @default("#f43f5e")
   order       Int      @default(0)
+  familyId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  family  Family?      @relation(fields: [familyId], references: [id], onDelete: Cascade)
   columns TaskColumn[]
 }
 
@@ -138,9 +183,11 @@ model Event {
   weeklyDay    Int?
   location    String?
   assigneeId  String?
+  familyId    String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  family   Family? @relation(fields: [familyId], references: [id], onDelete: Cascade)
   assignee User? @relation("EventAssignee", fields: [assigneeId], references: [id])
 }
 
@@ -156,9 +203,11 @@ model Recipe {
   servings    Int      @default(4)
   category    String   @default("Обід")
   imageUrl    String?
+  familyId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  family      Family?      @relation(fields: [familyId], references: [id], onDelete: Cascade)
   ingredients Ingredient[]
   mealPlans   MealPlan[]
 }
@@ -180,8 +229,10 @@ model MealPlan {
   recipeId String?
   cookId   String?
   note     String?
+  familyId String?
   createdAt DateTime @default(now())
 
+  family Family? @relation(fields: [familyId], references: [id], onDelete: Cascade)
   recipe Recipe? @relation(fields: [recipeId], references: [id])
   cook   User?   @relation("MealCook", fields: [cookId], references: [id])
 }
@@ -203,11 +254,13 @@ model Note {
   color     String   @default("#faf3e0")
   pinned    Boolean  @default(false)
   authorId  String
+  familyId  String?
   categoryId String?
   tags      String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  family   Family?        @relation(fields: [familyId], references: [id], onDelete: Cascade)
   author   User          @relation(fields: [authorId], references: [id])
   category NoteCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 }
@@ -218,9 +271,11 @@ model NoteCategory {
   emoji     String         @default("📂")
   color     String         @default("#f5f3ff")
   parentId  String?
+  familyId  String?
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
+  family   Family?        @relation(fields: [familyId], references: [id], onDelete: Cascade)
   parent   NoteCategory?   @relation("NoteCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
   children NoteCategory[]  @relation("NoteCategoryTree")
   notes    Note[]
@@ -234,6 +289,8 @@ model ExpenseCategory {
   emoji    String    @default("💰")
   color    String    @default("#4ade80")
   budget   Float?
+  familyId String?
+  family   Family?   @relation(fields: [familyId], references: [id], onDelete: Cascade)
   expenses Expense[]
 }
 
@@ -244,9 +301,11 @@ model Expense {
   date        DateTime @default(now())
   categoryId  String?
   userId      String
+  familyId    String?
   note        String?
   createdAt   DateTime @default(now())
 
+  family   Family?          @relation(fields: [familyId], references: [id], onDelete: Cascade)
   category ExpenseCategory? @relation(fields: [categoryId], references: [id])
   user     User             @relation(fields: [userId], references: [id])
 }
@@ -257,9 +316,11 @@ model ShoppingList {
   id        String   @id @default(cuid())
   name      String
   emoji     String   @default("🛒")
+  familyId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  family Family? @relation(fields: [familyId], references: [id], onDelete: Cascade)
   items ShoppingItem[]
 }
 

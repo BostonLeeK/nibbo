@@ -2,16 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
-
-function allowedEmailSet(): Set<string> | null {
-  const raw = process.env.AUTH_ALLOWED_EMAILS?.trim();
-  if (!raw) return null;
-  const list = raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return list.length ? new Set(list) : null;
-}
+import { ensureUserFamily } from "./family";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -25,19 +16,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
-      const allow = allowedEmailSet();
-      if (!allow) return true;
-      const email = user.email?.trim().toLowerCase();
-      if (!email) return false;
-      return allow.has(email);
+    async signIn() {
+      return true;
     },
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
         token.picture = user.image;
+      }
+      const isEdgeRuntime =
+        typeof (globalThis as { EdgeRuntime?: string }).EdgeRuntime === "string" ||
+        process.env.NEXT_RUNTIME === "edge";
+      if (isEdgeRuntime) {
+        return token;
+      }
+      const userId = String(token.id ?? token.sub ?? "");
+      if (userId) {
+        token.id = userId;
+        let familyId = await ensureUserFamily(userId);
+        const email = typeof token.email === "string" ? token.email.trim().toLowerCase() : null;
+        if (familyId && email) {
+          const invite = await prisma.familyInvitation.findFirst({
+            where: { email, acceptedAt: null },
+            orderBy: { createdAt: "desc" },
+          });
+          if (invite && invite.familyId !== familyId) {
+            await prisma.user.update({
+              where: { id: userId },
+              data: { familyId: invite.familyId, familyRole: "MEMBER" },
+            });
+            await prisma.familyInvitation.update({
+              where: { id: invite.id },
+              data: { acceptedAt: new Date() },
+            });
+            familyId = invite.familyId;
+          }
+        }
+        token.familyId = familyId ?? null;
       }
       return token;
     },
@@ -51,6 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           (typeof token.email === "string" ? token.email : prev?.email) ?? "",
         image: (token.picture as string | null | undefined) ?? prev?.image ?? null,
         emailVerified: prev?.emailVerified ?? null,
+        familyId: (token.familyId as string | null | undefined) ?? null,
       };
       return session;
     },

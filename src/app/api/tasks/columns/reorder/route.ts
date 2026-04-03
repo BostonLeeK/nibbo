@@ -1,10 +1,13 @@
 import { auth } from "@/lib/auth";
+import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const boardId = body.boardId as string | undefined;
@@ -14,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   const columns = await prisma.taskColumn.findMany({
-    where: { boardId },
+    where: { boardId, board: { familyId } },
     select: { id: true },
   });
   const allowed = new Set(columns.map((c) => c.id));

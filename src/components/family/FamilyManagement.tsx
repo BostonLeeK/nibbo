@@ -1,0 +1,227 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
+type Member = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  color: string;
+  emoji: string;
+  familyRole: "OWNER" | "MEMBER";
+};
+
+type Invite = { id: string; email: string; createdAt: string };
+
+type Payload = {
+  family: { id: string; name: string } | null;
+  members: Member[];
+  invitations: Invite[];
+  currentUserRole: "OWNER" | "MEMBER";
+  currentUserId: string;
+};
+
+export default function FamilyManagement() {
+  const [data, setData] = useState<Payload | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/family/members");
+      if (!res.ok) throw new Error("fail");
+      const payload = (await res.json()) as Payload;
+      setData(payload);
+    } catch {
+      toast.error("Не вдалося завантажити родину");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const invite = async () => {
+    const email = inviteEmail.trim().toLowerCase();
+    if (!email) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error("fail");
+      setInviteEmail("");
+      toast.success("Запрошення надіслано");
+      await load();
+    } catch {
+      toast.error("Не вдалося запросити");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeInvite = async (inviteId: string) => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviteId }),
+      });
+      if (!res.ok) throw new Error("fail");
+      toast.success("Запрошення скасовано");
+      await load();
+    } catch {
+      toast.error("Не вдалося скасувати");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeMember = async (memberId: string) => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      if (!res.ok) throw new Error("fail");
+      toast.success("Учасника видалено з родини");
+      await load();
+    } catch {
+      toast.error("Не вдалося видалити");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const transferOwnership = async (ownerId: string) => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ownerId }),
+      });
+      if (!res.ok) throw new Error("fail");
+      toast.success("Передано права власника");
+      await load();
+    } catch {
+      toast.error("Не вдалося передати права");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const owner = data?.currentUserRole === "OWNER";
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-warm-800">Керування родиною</h2>
+        <p className="text-sm text-warm-500 mt-1">
+          {data?.family?.name || "Родина"} • тільки члени родини мають доступ до ваших даних і файлів
+        </p>
+      </div>
+
+      <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-4">
+        <h3 className="font-semibold text-warm-800 text-sm">Запросити рідного</h3>
+        <div className="flex gap-2">
+          <input
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="email"
+            className="flex-1 bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 border border-warm-200 outline-none focus:border-rose-300"
+          />
+          <button
+            type="button"
+            disabled={!owner || busy}
+            onClick={invite}
+            className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm disabled:opacity-60"
+          >
+            Запросити
+          </button>
+        </div>
+        {!owner && <p className="text-xs text-warm-400">Тільки власник сім’ї може запрошувати.</p>}
+      </div>
+
+      <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-3">
+        <h3 className="font-semibold text-warm-800 text-sm">Члени родини</h3>
+        {loading ? (
+          <p className="text-sm text-warm-400">Завантаження...</p>
+        ) : (
+          (data?.members || []).map((m) => (
+            <div key={m.id} className="flex items-center justify-between gap-3 bg-warm-50 rounded-2xl px-3 py-2">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-white"
+                  style={{ backgroundColor: m.color || "#f43f5e" }}
+                >
+                  {m.emoji || "🌸"}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-warm-800">{m.name || m.email || "Учасник"}</p>
+                  <p className="text-xs text-warm-400">{m.familyRole === "OWNER" ? "Власник" : "Учасник"}</p>
+                </div>
+              </div>
+              {owner && m.id !== data?.currentUserId && (
+                <div className="flex gap-2">
+                  {m.familyRole !== "OWNER" && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => transferOwnership(m.id)}
+                      className="px-3 py-1.5 text-xs rounded-lg bg-lavender-500 hover:bg-lavender-600 text-white disabled:opacity-60"
+                    >
+                      Зробити власником
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => removeMember(m.id)}
+                    className="px-3 py-1.5 text-xs rounded-lg bg-warm-200 hover:bg-warm-300 text-warm-700 disabled:opacity-60"
+                  >
+                    Видалити
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-3">
+        <h3 className="font-semibold text-warm-800 text-sm">Очікують запрошення</h3>
+        {(data?.invitations || []).length === 0 ? (
+          <p className="text-sm text-warm-400">Немає очікуючих запрошень</p>
+        ) : (
+          (data?.invitations || []).map((inv) => (
+            <div key={inv.id} className="flex items-center justify-between bg-warm-50 rounded-2xl px-3 py-2">
+              <p className="text-sm text-warm-700">{inv.email}</p>
+              {owner && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => removeInvite(inv.id)}
+                  className="px-3 py-1.5 text-xs rounded-lg bg-warm-200 hover:bg-warm-300 text-warm-700 disabled:opacity-60"
+                >
+                  Скасувати
+                </button>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}

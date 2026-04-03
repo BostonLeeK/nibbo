@@ -5,6 +5,7 @@ import Sidebar from "@/components/shared/Sidebar";
 import Header from "@/components/shared/Header";
 import { dashboardHeaderLabels } from "@/lib/utils";
 import { POINTS_PER_TASK_COMPLETION } from "@/lib/task-points";
+import { ensureUserFamily } from "@/lib/family";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -16,8 +17,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect("/login");
 
   const userId = session.user.id;
+  const familyId = await ensureUserFamily(userId);
+  if (!familyId) redirect("/login");
   const mine = { OR: [{ assigneeId: userId }, { creatorId: userId }] };
-  const doneTotal = await prisma.task.count({ where: { ...mine, completed: true } });
+  const doneTotal = await prisma.task.count({
+    where: { ...mine, completed: true, column: { board: { familyId } } },
+  });
   const points = doneTotal * POINTS_PER_TASK_COMPLETION;
 
   const { greeting, dateLabel } = dashboardHeaderLabels();

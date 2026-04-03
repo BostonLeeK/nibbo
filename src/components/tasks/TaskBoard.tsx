@@ -414,7 +414,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
               } bg-white border border-lavender-200 shadow-cozy rounded-2xl px-4 py-3`}
             >
               <p className="text-sm font-semibold text-warm-800">🎉 Вітаємо! +{task.awardedPoints} XP</p>
-              <p className="text-xs text-warm-500 mt-1">Ще один крок до супер форми тамагочі</p>
+              <p className="text-xs text-warm-500 mt-1">Ще один крок до супер форми Nibbo</p>
             </div>
           ),
           { duration: 2200 }
@@ -448,7 +448,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
             } bg-white border border-lavender-200 shadow-cozy rounded-2xl px-4 py-3`}
           >
             <p className="text-sm font-semibold text-warm-800">🎉 Вітаємо! +{task.awardedPoints} XP</p>
-            <p className="text-xs text-warm-500 mt-1">Тамагочі радіє кожному завершенню задачі</p>
+            <p className="text-xs text-warm-500 mt-1">Nibbo радіє кожному завершенню задачі</p>
           </div>
         ),
         { duration: 2200 }

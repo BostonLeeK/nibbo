@@ -8,6 +8,7 @@ import Image from "next/image";
 
 const navItems = [
   { href: "/dashboard", label: "Головна", emoji: "🏠" },
+  { href: "/family", label: "Родина", emoji: "👨‍👩‍👧‍👦" },
   { href: "/tasks", label: "Задачі", emoji: "📋" },
   { href: "/calendar", label: "Календар", emoji: "📅" },
   { href: "/menu", label: "Меню", emoji: "🍽️" },
@@ -37,8 +38,8 @@ export default function Sidebar({ user: u }: SidebarProps) {
         <div className="flex items-center gap-3">
           <span className="text-3xl">🏠</span>
           <div>
-            <h1 className="font-bold text-warm-800 text-lg leading-tight">Цифровий дім</h1>
-            <p className="text-xs text-warm-400">Родинний простір</p>
+            <h1 className="font-bold text-warm-800 text-lg leading-tight">Nibbo</h1>
+            <p className="text-xs text-warm-400">Ваш цифровий дім</p>
           </div>
         </div>
       </div>

@@ -1,10 +1,13 @@
 import { auth } from "@/lib/auth";
+import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
   const body = await req.json();
@@ -12,6 +15,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const type = searchParams.get("type");
 
   if (type === "recipe") {
+    const exists = await prisma.recipe.findFirst({ where: { id, familyId }, select: { id: true } });
+    if (!exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const data: {
       name?: string;
       description?: string | null;
@@ -53,6 +58,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json(recipe);
   }
 
+  const planExists = await prisma.mealPlan.findFirst({ where: { id, familyId }, select: { id: true } });
+  if (!planExists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (body.recipeId) {
+    const recipeExists = await prisma.recipe.findFirst({
+      where: { id: body.recipeId, familyId },
+      select: { id: true },
+    });
+    if (!recipeExists) return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+  }
+  if (body.cookId) {
+    const cookExists = await prisma.user.findFirst({
+      where: { id: body.cookId, familyId },
+      select: { id: true },
+    });
+    if (!cookExists) return NextResponse.json({ error: "Cook not found" }, { status: 404 });
+  }
   const plan = await prisma.mealPlan.update({
     where: { id },
     data: {
@@ -72,6 +93,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
   const { searchParams } = new URL(req.url);
@@ -79,11 +102,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   if (type === "recipe") {
     await prisma.mealPlan.updateMany({
-      where: { recipeId: id },
+      where: { familyId, recipeId: id },
       data: { recipeId: null },
     });
+    const exists = await prisma.recipe.findFirst({ where: { id, familyId }, select: { id: true } });
+    if (!exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
     await prisma.recipe.delete({ where: { id } });
   } else {
+    const exists = await prisma.mealPlan.findFirst({ where: { id, familyId }, select: { id: true } });
+    if (!exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
     await prisma.mealPlan.delete({ where: { id } });
   }
 

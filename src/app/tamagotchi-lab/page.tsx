@@ -34,8 +34,8 @@ export default function TamagotchiLabPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-warm-800">Tamagotchi Lab</h1>
-            <p className="text-sm text-warm-500 mt-1">Тестова сторінка для перегляду всіх станів</p>
+            <h1 className="text-3xl font-bold text-warm-800">Nibbo Lab</h1>
+            <p className="text-sm text-warm-500 mt-1">Тестова сторінка для перегляду всіх станів Nibbo</p>
             <p className="text-xs text-warm-400 mt-2">Файл моделі: public/models/water-sprite.glb</p>
           </div>
           <Link

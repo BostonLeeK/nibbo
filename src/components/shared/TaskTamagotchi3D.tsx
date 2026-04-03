@@ -43,7 +43,7 @@ function resolveMood(doneToday: number, doneWeek: number) {
   if (doneToday >= 2 || doneWeek >= 8) {
     return {
       title: "Гарний ритм",
-      subtitle: "Він стає сильнішим з кожною закритою задачею",
+      subtitle: "Nibbo стає сильнішим з кожною закритою задачею",
       face: "smile" as const,
       body: "#0ea5e9",
       glow: "#38bdf8",
@@ -80,7 +80,7 @@ function resolveMood(doneToday: number, doneWeek: number) {
   }
   return {
     title: "Хоче руху",
-    subtitle: "Закрий хоча б одну задачу і він оживе",
+    subtitle: "Закрий хоча б одну задачу і Nibbo оживе",
     face: "sleepy" as const,
     body: "#94a3b8",
     glow: "#cbd5e1",
@@ -315,7 +315,7 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
       <div className={`absolute inset-0 bg-gradient-to-br ${mood.bloom} pointer-events-none`} />
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="relative z-10">
-          <h3 className="font-semibold text-warm-800 text-sm">Task Tamagotchi 3D</h3>
+          <h3 className="font-semibold text-warm-800 text-sm">Nibbo</h3>
           <p className="text-xs text-warm-500 mt-1">{mood.subtitle}</p>
         </div>
         <div className="text-xl relative z-10">{mood.emoji}</div>
@@ -377,7 +377,7 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
           </div>
 
           <p className="text-xs text-warm-500">
-            Виконання задач змінює настрій і енергію персонажа.
+            Виконання задач змінює настрій і енергію Nibbo.
           </p>
           <motion.div
             initial={{ width: 0 }}

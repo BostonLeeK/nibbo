@@ -1,14 +1,17 @@
 import { auth } from "@/lib/auth";
+import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, email: true, image: true, color: true, emoji: true },
+    select: { id: true, name: true, email: true, image: true, color: true, emoji: true, familyId: true },
   });
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(user);
@@ -17,6 +20,8 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const user = await prisma.user.update({
@@ -27,7 +32,7 @@ export async function PATCH(req: NextRequest) {
       ...(body.color !== undefined && { color: String(body.color) }),
       ...(body.image !== undefined && { image: body.image ? String(body.image) : null }),
     },
-    select: { id: true, name: true, email: true, image: true, color: true, emoji: true },
+    select: { id: true, name: true, email: true, image: true, color: true, emoji: true, familyId: true },
   });
 
   return NextResponse.json(user);

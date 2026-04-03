@@ -10,7 +10,6 @@ interface DashboardClientProps {
   personalTaskStats: { myOpen: number; doneToday: number; doneWeek: number; doneTotal: number };
   upcomingEvents: any[];
   recentTasks: any[];
-  userName: string;
 }
 
 export default function DashboardClient({
@@ -18,7 +17,6 @@ export default function DashboardClient({
   personalTaskStats,
   upcomingEvents,
   recentTasks,
-  userName,
 }: DashboardClientProps) {
   const statCards = [
     { label: "Активних задач", value: stats.taskCount, emoji: "📋", color: "from-rose-400 to-rose-500", href: "/tasks" },
@@ -40,9 +38,9 @@ export default function DashboardClient({
       {/* Welcome */}
       <div>
         <h2 className="text-2xl font-bold text-warm-800">
-          Що нового, <span className="text-rose-500">{userName.split(" ")[0]}</span>? 🌸
+          Фокус дня 🌸
         </h2>
-        <p className="text-warm-500 text-sm mt-1">Твій родинний простір готовий до роботи</p>
+        <p className="text-warm-500 text-sm mt-1">Nibbo росте, коли ти закриваєш задачі</p>
       </div>
 
       <TaskTamagotchi3D

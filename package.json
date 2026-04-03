@@ -1,5 +1,5 @@
 {
-  "name": "home-crm",
+  "name": "nibbo",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -34,6 +34,7 @@
     "@radix-ui/react-switch": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.4",
+    "@vercel/blob": "^2.3.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

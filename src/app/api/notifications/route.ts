@@ -1,19 +1,23 @@
 import { auth } from "@/lib/auth";
+import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-const notificationWhere = (userId: string) => ({
+const notificationWhere = (userId: string, familyId: string) => ({
   assigneeId: userId,
   assigneeSeenAt: null,
   creatorId: { not: userId },
   completed: false,
+  column: { board: { familyId } },
 });
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const where = notificationWhere(session.user.id);
+  const where = notificationWhere(session.user.id, familyId);
   const [count, tasks] = await Promise.all([
     prisma.task.count({ where }),
     prisma.task.findMany({
@@ -50,12 +54,14 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
 
   if (body.markAll === true) {
     await prisma.task.updateMany({
-      where: notificationWhere(session.user.id),
+      where: notificationWhere(session.user.id, familyId),
       data: { assigneeSeenAt: new Date() },
     });
     return NextResponse.json({ ok: true });
@@ -70,6 +76,7 @@ export async function POST(req: NextRequest) {
     where: {
       id: taskId,
       assigneeId: session.user.id,
+      column: { board: { familyId } },
     },
     data: { assigneeSeenAt: new Date() },
   });

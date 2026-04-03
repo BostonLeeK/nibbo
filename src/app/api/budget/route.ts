@@ -1,16 +1,20 @@
 import { auth } from "@/lib/auth";
+import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
 
   if (type === "categories") {
     const categories = await prisma.expenseCategory.findMany({
+      where: { familyId },
       include: { expenses: true },
       orderBy: { name: "asc" },
     });
@@ -22,6 +26,7 @@ export async function GET(req: NextRequest) {
 
   const expenses = await prisma.expense.findMany({
     where: {
+      familyId,
       date: {
         gte: from ? new Date(from) : undefined,
         lte: to ? new Date(to) : undefined,
@@ -40,6 +45,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
 
@@ -50,9 +57,18 @@ export async function POST(req: NextRequest) {
         emoji: body.emoji || "💰",
         color: body.color || "#4ade80",
         budget: body.budget,
+        familyId,
       },
     });
     return NextResponse.json(category);
+  }
+
+  if (body.categoryId) {
+    const category = await prisma.expenseCategory.findFirst({
+      where: { id: body.categoryId, familyId },
+      select: { id: true },
+    });
+    if (!category) return NextResponse.json({ error: "Category not found" }, { status: 404 });
   }
 
   const expense = await prisma.expense.create({
@@ -62,6 +78,7 @@ export async function POST(req: NextRequest) {
       date: body.date ? new Date(body.date) : new Date(),
       categoryId: body.categoryId || undefined,
       userId: session.user.id,
+      familyId,
       note: body.note,
     },
     include: {

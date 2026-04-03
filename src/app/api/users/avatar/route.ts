@@ -1,13 +1,14 @@
 import { auth } from "@/lib/auth";
+import { encodeBlobPath } from "@/lib/blob-path";
+import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 4 * 1024 * 1024;
+const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = new Map<string, string>([
   ["image/jpeg", ".jpg"],
   ["image/png", ".png"],
@@ -18,21 +19,21 @@ const ALLOWED = new Map<string, string>([
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const form = await req.formData();
   const file = form.get("file");
   if (!file || !(file instanceof Blob)) return NextResponse.json({ error: "No file" }, { status: 400 });
-  if (file.size > MAX_BYTES) return NextResponse.json({ error: "File too large (max 4 MB)" }, { status: 400 });
+  if (file.size > MAX_BYTES) return NextResponse.json({ error: "File too large (max 5 MB)" }, { status: 400 });
 
   const ext = ALLOWED.get(file.type);
   if (!ext) return NextResponse.json({ error: "Only JPEG, PNG, WebP, GIF" }, { status: 400 });
 
-  const filename = `${randomUUID()}${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "avatars");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), Buffer.from(await file.arrayBuffer()));
-
-  const image = `/api/users/avatar/${filename}`;
+  const pathname = `avatars/${familyId}/${session.user.id}/${randomUUID()}${ext}`;
+  const blob = await put(pathname, file, { access: "private" });
+  const token = encodeBlobPath(blob.pathname);
+  const image = `/api/users/avatar/${token}`;
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: { image },

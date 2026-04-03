@@ -57,7 +57,7 @@ export default function LoginPage() {
             🏠
           </motion.div>
 
-          <h1 className="text-3xl font-bold text-warm-800 mb-2">Цифровий дім</h1>
+          <h1 className="text-3xl font-bold text-warm-800 mb-2">Nibbo</h1>
           <p className="text-warm-500 mb-8 text-sm">
             Затишне місце для вашої родини 🌸
           </p>
@@ -111,7 +111,7 @@ export default function LoginPage() {
           </motion.button>
 
           <p className="text-xs text-warm-400 mt-4">
-            Лише авторизовані Google-акаунти мають доступ
+            Тут ви можете організувати свою родину та управляти домашніми справами
           </p>
         </div>
       </motion.div>

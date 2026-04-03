@@ -1,55 +1,38 @@
 import { auth } from "@/lib/auth";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { decodeBlobPath } from "@/lib/blob-path";
+import { ensureUserFamily } from "@/lib/family";
 import { NextRequest, NextResponse } from "next/server";
+import { head } from "@vercel/blob";
 
 export const runtime = "nodejs";
-
-const SAFE_NAME =
-  /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.(jpe?g|png|webp|gif)$/i;
-
-const MIME: Record<string, string> = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".webp": "image/webp",
-  ".gif": "image/gif",
-};
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const session = await auth();
-  if (!session) {
+  if (!session?.user?.id) {
     return new NextResponse(null, { status: 401 });
   }
+  const familyId = await ensureUserFamily(session.user.id);
+  if (!familyId) return new NextResponse(null, { status: 401 });
 
   const { filename } = await params;
-  const decoded = decodeURIComponent(filename);
-  if (!SAFE_NAME.test(decoded) || decoded.includes("..") || decoded.includes("/") || decoded.includes("\\")) {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  const ext = path.extname(decoded).toLowerCase();
-  const contentType = MIME[ext];
-  if (!contentType) {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  const filePath = path.join(process.cwd(), "public", "uploads", "recipes", decoded);
-  const resolved = path.resolve(filePath);
-  const root = path.resolve(process.cwd(), "public", "uploads", "recipes");
-  if (!resolved.startsWith(root + path.sep) && resolved !== root) {
-    return new NextResponse(null, { status: 404 });
-  }
+  const pathname = decodeBlobPath(filename);
+  if (!pathname) return new NextResponse(null, { status: 404 });
+  const segments = pathname.split("/");
+  if (segments.length < 4 || segments[0] !== "recipes") return new NextResponse(null, { status: 404 });
+  if (segments[1] !== familyId) return new NextResponse(null, { status: 403 });
 
   try {
-    const buf = await readFile(resolved);
+    const info = await head(pathname);
+    const response = await fetch(info.url, { cache: "no-store" });
+    if (!response.ok) return new NextResponse(null, { status: 404 });
+    const buf = Buffer.from(await response.arrayBuffer());
     return new NextResponse(buf, {
       status: 200,
       headers: {
-        "Content-Type": contentType,
+        "Content-Type": info.contentType || "application/octet-stream",
         "Cache-Control": "private, max-age=3600",
       },
     });
