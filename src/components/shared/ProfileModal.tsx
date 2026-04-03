@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload } from "lucide-react";
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import { USER_COLORS, USER_EMOJIS } from "@/lib/utils";
 
 interface UserProfile {
@@ -34,6 +35,11 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
     { id: string; name: string | null; email: string | null; emoji: string; color: string }[]
   >([]);
   const [pendingInvites, setPendingInvites] = useState<{ id: string; email: string }[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -113,7 +119,9 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -244,6 +252,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

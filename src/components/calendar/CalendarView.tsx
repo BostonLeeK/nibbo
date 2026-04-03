@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
@@ -11,6 +11,7 @@ import { uk } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { createPortal } from "react-dom";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface Event {
@@ -38,6 +39,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [showAddEvent, setShowAddEvent] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "", description: "", emoji: "📅", color: "#8b5cf6",
     startDate: "", startTime: "10:00", endTime: "11:00",
@@ -71,6 +73,10 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
 
   const selectedDayEvents = selectedDay ? getEventsForDay(selectedDay) : [];
   const monthDays = days.filter((day) => isSameMonth(day, currentMonth));
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleAddEvent = async () => {
     if (!newEvent.title || !newEvent.startDate) return;
@@ -372,9 +378,10 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
       </div>
 
       {/* Add Event Modal */}
-      <AnimatePresence>
-        {showAddEvent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {mounted && createPortal(
+        <AnimatePresence>
+          {showAddEvent && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -481,9 +488,11 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
                 </div>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

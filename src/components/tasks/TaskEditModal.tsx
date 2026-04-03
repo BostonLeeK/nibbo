@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import toast from "react-hot-toast";
+import { createPortal } from "react-dom";
 import { PRIORITY_CONFIG } from "@/lib/utils";
 import type { TaskBoardTask, TaskBoardUser } from "@/lib/task-board";
 
@@ -25,6 +26,11 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
   const [priority, setPriority] = useState<TaskBoardTask["priority"]>("MEDIUM");
   const [assigneeId, setAssigneeId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!task) return;
@@ -56,9 +62,9 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
     }
   };
 
-  if (!task) return null;
+  if (!task || !mounted) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -162,6 +168,7 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

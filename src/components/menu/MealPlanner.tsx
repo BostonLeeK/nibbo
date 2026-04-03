@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays, startOfWeek } from "date-fns";
@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Plus, X, Copy, ClipboardList, ImagePlus, Pencil, Trash2, Eye } from "lucide-react";
 import { MEAL_TYPE_CONFIG } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { createPortal } from "react-dom";
 
 function isLocalUpload(src: string | null | undefined) {
   return Boolean(src?.startsWith("/uploads/") || src?.startsWith("/api/recipes/image/"));
@@ -63,11 +64,16 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
   const [editInitialImageUrl, setEditInitialImageUrl] = useState<string | null>(null);
   const [viewRecipe, setViewRecipe] = useState<Recipe | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [newRecipe, setNewRecipe] = useState({
     name: "", description: "", emoji: "🍽️", category: "Обід",
     prepTime: "", cookTime: "", servings: "4",
     ingredients: [{ name: "", amount: "", unit: "" }],
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const clearBlobOnly = () => {
     if (recipeImagePreview) URL.revokeObjectURL(recipeImagePreview);
@@ -616,9 +622,10 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
         </div>
       )}
 
-      <AnimatePresence>
-        {showAddMeal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {mounted && createPortal(
+        <AnimatePresence>
+          {showAddMeal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -661,13 +668,16 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                 </div>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <AnimatePresence>
-        {viewRecipe && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {mounted && createPortal(
+        <AnimatePresence>
+          {viewRecipe && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -768,13 +778,16 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                 </motion.button>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <AnimatePresence>
-        {showAddRecipe && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {mounted && createPortal(
+        <AnimatePresence>
+          {showAddRecipe && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -905,13 +918,16 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                 </div>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <AnimatePresence>
-        {showShopModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {mounted && createPortal(
+        <AnimatePresence>
+          {showShopModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -980,9 +996,11 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
                 </Link>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

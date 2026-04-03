@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { createPortal } from "react-dom";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface Category { id: string; name: string; emoji: string; color: string; budget: number | null; }
@@ -24,6 +25,11 @@ export default function BudgetView({ initialCategories, initialExpenses, current
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
   const [newCat, setNewCat] = useState({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
 
@@ -172,9 +178,10 @@ export default function BudgetView({ initialCategories, initialExpenses, current
         </div>
       </div>
 
-      <AnimatePresence>
-        {showAddExpense && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {mounted && createPortal(
+        <AnimatePresence>
+          {showAddExpense && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowAddExpense(false)} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -205,13 +212,16 @@ export default function BudgetView({ initialCategories, initialExpenses, current
                 </div>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <AnimatePresence>
-        {showAddCategory && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {mounted && createPortal(
+        <AnimatePresence>
+          {showAddCategory && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowAddCategory(false)} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -249,9 +259,11 @@ export default function BudgetView({ initialCategories, initialExpenses, current
                 </div>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

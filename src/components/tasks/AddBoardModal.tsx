@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 const EMOJIS = ["📋", "🏠", "💼", "🎯", "🌟", "🛠️", "📚", "🎨", "🌱", "🚀"];
 const COLORS = ["#f43f5e", "#fb923c", "#facc15", "#4ade80", "#38bdf8", "#818cf8", "#c084fc", "#f472b6"];
@@ -27,6 +28,7 @@ export default function AddBoardModal({
   const [name, setName] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("📋");
   const [selectedColor, setSelectedColor] = useState("#f43f5e");
+  const [mounted, setMounted] = useState(false);
 
   const isEdit = Boolean(editBoard);
 
@@ -43,6 +45,10 @@ export default function AddBoardModal({
     }
   }, [open, editBoard]);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleSubmit = () => {
     if (!name.trim()) return;
     if (isEdit && editBoard && onUpdate) {
@@ -57,7 +63,9 @@ export default function AddBoardModal({
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -158,6 +166,7 @@ export default function AddBoardModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

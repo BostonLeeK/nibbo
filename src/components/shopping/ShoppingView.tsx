@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Check, X, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { createPortal } from "react-dom";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface ShoppingItem { id: string; name: string; quantity: string | null; unit: string | null; checked: boolean; category: string | null; addedBy: User; }
@@ -20,6 +21,11 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
   const [newListName, setNewListName] = useState("");
   const [newListEmoji, setNewListEmoji] = useState("🛒");
   const [newItem, setNewItem] = useState({ name: "", quantity: "", unit: "", category: "" });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const currentList = lists.find((l) => l.id === activeList);
   const checkedItems = currentList?.items.filter((i) => i.checked) || [];
@@ -214,9 +220,10 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
       )}
 
       {/* Add List Modal */}
-      <AnimatePresence>
-        {showAddList && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {mounted && createPortal(
+        <AnimatePresence>
+          {showAddList && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowAddList(false)} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -246,9 +253,11 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
                 </div>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
