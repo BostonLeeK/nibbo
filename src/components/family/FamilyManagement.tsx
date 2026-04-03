@@ -17,7 +17,7 @@ type Invite = { id: string; email: string; createdAt: string };
 type IncomingInvite = { id: string; email: string; createdAt: string; familyId: string; family: { name: string } };
 
 type Payload = {
-  family: { id: string; name: string } | null;
+  family: { id: string; name: string; shareInLeaderboard: boolean } | null;
   members: Member[];
   invitations: Invite[];
   incomingInvitations: IncomingInvite[];
@@ -30,6 +30,8 @@ export default function FamilyManagement() {
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
   const [busy, setBusy] = useState(false);
+  const [familyName, setFamilyName] = useState("");
+  const [shareInLeaderboard, setShareInLeaderboard] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -38,6 +40,8 @@ export default function FamilyManagement() {
       if (!res.ok) throw new Error("fail");
       const payload = (await res.json()) as Payload;
       setData(payload);
+      setFamilyName(payload.family?.name || "");
+      setShareInLeaderboard(Boolean(payload.family?.shareInLeaderboard));
     } catch {
       toast.error("Не вдалося завантажити родину");
     } finally {
@@ -151,6 +155,35 @@ export default function FamilyManagement() {
 
   const owner = data?.currentUserRole === "OWNER";
 
+  const saveFamilySettings = async () => {
+    if (!familyName.trim()) {
+      toast.error("Вкажи назву родини");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "settings",
+          name: familyName.trim(),
+          shareInLeaderboard,
+        }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({} as { error?: string }));
+        throw new Error(errorData.error || "fail");
+      }
+      toast.success("Налаштування родини збережено");
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Не вдалося зберегти");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const leaveFamily = async () => {
     const ok = confirm(
       owner
@@ -182,6 +215,41 @@ export default function FamilyManagement() {
         <p className="text-sm text-warm-500 mt-1">
           {data?.family?.name || "Родина"} • тільки члени родини мають доступ до ваших даних і файлів
         </p>
+      </div>
+
+      <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-4">
+        <h3 className="font-semibold text-warm-800 text-sm">Налаштування родини</h3>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <p className="text-xs text-warm-500">Назва родини</p>
+            <input
+              value={familyName}
+              onChange={(e) => setFamilyName(e.target.value)}
+              placeholder="Наша родина"
+              disabled={!owner || busy}
+              className="w-full bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 border border-warm-200 outline-none focus:border-rose-300 disabled:opacity-60"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-warm-700">
+            <input
+              type="checkbox"
+              checked={shareInLeaderboard}
+              onChange={(e) => setShareInLeaderboard(e.target.checked)}
+              disabled={!owner || busy}
+              className="accent-rose-500"
+            />
+            Показувати родину в XP-рейтингу
+          </label>
+          <button
+            type="button"
+            disabled={!owner || busy}
+            onClick={saveFamilySettings}
+            className="px-4 py-2 rounded-xl bg-sage-500 hover:bg-sage-600 text-white text-sm disabled:opacity-60"
+          >
+            Зберегти
+          </button>
+          {!owner && <p className="text-xs text-warm-400">Тільки власник сім’ї може змінювати налаштування.</p>}
+        </div>
       </div>
 
       <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-4">
@@ -305,7 +373,7 @@ export default function FamilyManagement() {
           onClick={leaveFamily}
           className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm disabled:opacity-60"
         >
-          Вийти із сім'ї
+          Вийти із сім’ї
         </button>
       </div>
     </div>

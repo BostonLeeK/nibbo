@@ -75,6 +75,7 @@ model VerificationToken {
 model Family {
   id          String   @id @default(cuid())
   name        String
+  shareInLeaderboard Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

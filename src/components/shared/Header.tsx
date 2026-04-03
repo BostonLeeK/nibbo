@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
@@ -75,10 +76,13 @@ export default function Header({ user: u, greeting, dateLabel, initialPoints, is
       </div>
 
       <div className="flex items-center gap-1.5 md:gap-2">
-        <div className="h-8 md:h-9 px-2.5 md:px-3 rounded-xl bg-gradient-to-r from-lavender-100 to-rose-100 border border-lavender-200 flex items-center gap-1.5 md:gap-2">
+        <Link
+          href="/achievements"
+          className="h-8 md:h-9 px-2.5 md:px-3 rounded-xl bg-gradient-to-r from-lavender-100 to-rose-100 border border-lavender-200 flex items-center gap-1.5 md:gap-2 hover:from-lavender-200 hover:to-rose-200 transition-colors"
+        >
           <Sparkles size={14} className="text-lavender-500" />
           <span className="text-xs font-semibold text-warm-700">{points} XP</span>
-        </div>
+        </Link>
         <NotificationBell />
 
         <motion.button

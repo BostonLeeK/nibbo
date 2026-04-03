@@ -322,7 +322,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                       onClick={leaveFamily}
                       className="mt-2 w-full px-3 py-2 text-xs rounded-xl bg-rose-500 hover:bg-rose-600 text-white disabled:opacity-60"
                     >
-                      Вийти із сім'ї
+                      Вийти із сім’ї
                     </button>
                   ) : (
                     <div className="mt-2 h-8 rounded-xl bg-warm-50 border border-warm-100" />

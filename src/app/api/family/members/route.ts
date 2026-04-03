@@ -20,7 +20,7 @@ export async function GET() {
 
   const family = await prisma.family.findUnique({
     where: { id: familyId },
-    select: { id: true, name: true },
+    select: { id: true, name: true, shareInLeaderboard: true },
   });
 
   const me = await prisma.user.findUnique({
@@ -236,6 +236,22 @@ export async function PATCH(req: NextRequest) {
   }
 
   const currentUser = await getCurrentFamilyUser(session.user.id, familyId);
+  if (body.type === "settings") {
+    if (!currentUser || currentUser.familyRole !== "OWNER") {
+      return NextResponse.json({ error: "Only owner can update settings" }, { status: 403 });
+    }
+    const name = String(body.name || "").trim();
+    if (!name) return NextResponse.json({ error: "Family name required" }, { status: 400 });
+    if (name.length > 64) return NextResponse.json({ error: "Family name is too long" }, { status: 400 });
+    const shareInLeaderboard = Boolean(body.shareInLeaderboard);
+    const family = await prisma.family.update({
+      where: { id: familyId },
+      data: { name, shareInLeaderboard },
+      select: { id: true, name: true, shareInLeaderboard: true },
+    });
+    return NextResponse.json({ success: true, family });
+  }
+
   if (!currentUser || currentUser.familyRole !== "OWNER") {
     return NextResponse.json({ error: "Only owner can transfer ownership" }, { status: 403 });
   }
