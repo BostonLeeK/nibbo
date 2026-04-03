@@ -95,12 +95,23 @@ export async function DELETE(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const familyId = await ensureUserFamily(session.user.id);
   if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await req.json().catch(() => ({} as Record<string, unknown>));
   const currentUser = await getCurrentFamilyUser(session.user.id, familyId);
+  if (body.memberId && String(body.memberId) === session.user.id) {
+    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (currentUser.familyRole === "OWNER") {
+      return NextResponse.json({ error: "Owner cannot leave family" }, { status: 400 });
+    }
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { familyId: null, familyRole: "MEMBER" },
+    });
+    return NextResponse.json({ success: true });
+  }
+
   if (!currentUser || currentUser.familyRole !== "OWNER") {
     return NextResponse.json({ error: "Only owner can manage family" }, { status: 403 });
   }
-
-  const body = await req.json();
   if (body.inviteId) {
     await prisma.familyInvitation.deleteMany({
       where: { id: String(body.inviteId), familyId, acceptedAt: null },

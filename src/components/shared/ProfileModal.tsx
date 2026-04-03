@@ -35,6 +35,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
     { id: string; name: string | null; email: string | null; emoji: string; color: string }[]
   >([]);
   const [pendingInvites, setPendingInvites] = useState<{ id: string; email: string }[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<"OWNER" | "MEMBER" | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +54,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
         const data = await res.json();
         setFamilyMembers(data.members || []);
         setPendingInvites(data.invitations || []);
+        setCurrentUserRole(data.currentUserRole || null);
       } finally {
         setFamilyBusy(false);
       }
@@ -93,6 +95,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
   };
 
   const invite = async () => {
+    if (currentUserRole !== "OWNER") return;
     const email = inviteEmail.trim().toLowerCase();
     if (!email) return;
     setFamilyBusy(true);
@@ -109,6 +112,27 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
       const data = await listRes.json();
       setFamilyMembers(data.members || []);
       setPendingInvites(data.invitations || []);
+    } finally {
+      setFamilyBusy(false);
+    }
+  };
+
+  const leaveFamily = async () => {
+    if (currentUserRole !== "MEMBER") return;
+    if (!confirm("Вийти з цієї сім'ї?")) return;
+    setFamilyBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: user.id }),
+      });
+      if (!res.ok) return;
+      const meRes = await fetch("/api/users/me");
+      if (!meRes.ok) return;
+      const next = await meRes.json();
+      onSaved(next);
+      onClose();
     } finally {
       setFamilyBusy(false);
     }
@@ -225,22 +249,35 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                       <p className="text-xs text-warm-400 px-1">Поки тільки ти в родині</p>
                     )}
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="email рідного"
-                      className="flex-1 bg-warm-50 rounded-xl px-3 py-2 text-xs text-warm-800 border border-warm-200 outline-none focus:border-rose-300"
-                    />
+                  {currentUserRole === "OWNER" ? (
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="email рідного"
+                        className="flex-1 bg-warm-50 rounded-xl px-3 py-2 text-xs text-warm-800 border border-warm-200 outline-none focus:border-rose-300"
+                      />
+                      <button
+                        type="button"
+                        disabled={familyBusy}
+                        onClick={invite}
+                        className="px-3 py-2 text-xs rounded-xl bg-lavender-500 hover:bg-lavender-600 text-white disabled:opacity-60"
+                      >
+                        Додати
+                      </button>
+                    </div>
+                  ) : currentUserRole === "MEMBER" ? (
                     <button
                       type="button"
                       disabled={familyBusy}
-                      onClick={invite}
-                      className="px-3 py-2 text-xs rounded-xl bg-lavender-500 hover:bg-lavender-600 text-white disabled:opacity-60"
+                      onClick={leaveFamily}
+                      className="mt-2 w-full px-3 py-2 text-xs rounded-xl bg-rose-500 hover:bg-rose-600 text-white disabled:opacity-60"
                     >
-                      Додати
+                      Вийти із сім'ї
                     </button>
-                  </div>
+                  ) : (
+                    <div className="mt-2 h-8 rounded-xl bg-warm-50 border border-warm-100" />
+                  )}
                 </div>
               </div>
             </div>
