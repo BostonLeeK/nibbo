@@ -18,11 +18,12 @@ type FamilyInfoRow = {
 };
 
 const achievements = [
-  { id: "first-steps", title: "Перші кроки", threshold: 50 },
-  { id: "warm-routine", title: "Тепла рутина", threshold: 150 },
-  { id: "cozy-family", title: "Cozy Family", threshold: 300 },
-  { id: "task-masters", title: "Task Masters", threshold: 600 },
-  { id: "legend", title: "Nibbo Legend", threshold: 1000 },
+  { id: "first-steps", title: "Перша іскра", threshold: 50 },
+  { id: "warm-routine", title: "Домашній ритм", threshold: 300 },
+  { id: "cozy-family", title: "Серце дому", threshold: 600 },
+  { id: "task-masters", title: "Майстер справ", threshold: 1200 },
+  { id: "legend", title: "Хранитель затишку", threshold: 2500 },
+  { id: "master-of-nibbo", title: "Легенда оселі", threshold: 5000 },
 ];
 
 export default async function AchievementsPage() {

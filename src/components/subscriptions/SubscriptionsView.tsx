@@ -58,6 +58,21 @@ const statusConfig: Record<SubscriptionStatus, { label: string; className: strin
   CANCELLED: { label: "Скасована", className: "bg-warm-200 text-warm-700" },
 };
 
+const subscriptionCategories = [
+  "Відео та стримінг",
+  "Музика",
+  "Ігри",
+  "Освіта",
+  "Хмара та зберігання",
+  "Продуктивність",
+  "Безпека",
+  "Здоров'я та спорт",
+  "Транспорт",
+  "Інше",
+];
+
+const currencyOptions = ["UAH", "USD", "EUR"];
+
 function formatAmount(amount: number, currency: string) {
   try {
     return new Intl.NumberFormat("uk-UA", {
@@ -452,12 +467,18 @@ export default function SubscriptionsView({
                         placeholder="Назва сервісу"
                         className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       />
-                      <input
+                      <select
                         value={form.category}
                         onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-                        placeholder="Категорія"
                         className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
-                      />
+                      >
+                        <option value="">Без категорії</option>
+                        {subscriptionCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
                       <input
                         value={form.amount}
                         onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
@@ -467,13 +488,17 @@ export default function SubscriptionsView({
                         placeholder="Сума"
                         className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       />
-                      <input
+                      <select
                         value={form.currency}
-                        onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value.toUpperCase() }))}
-                        placeholder="Валюта (UAH, USD)"
-                        maxLength={3}
-                        className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none uppercase"
-                      />
+                        onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value }))}
+                        className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
+                      >
+                        {currencyOptions.map((currency) => (
+                          <option key={currency} value={currency}>
+                            {currency}
+                          </option>
+                        ))}
+                      </select>
                       <select
                         value={form.billingCycle}
                         onChange={(e) => setForm((prev) => ({ ...prev, billingCycle: e.target.value as BillingCycle }))}

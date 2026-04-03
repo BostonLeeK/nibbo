@@ -128,7 +128,9 @@ export async function POST(req: NextRequest) {
   const nextBillingDate = parseDate(body.nextBillingDate);
   const trialEndsAt = body.trialEndsAt ? parseDate(body.trialEndsAt) : null;
   const ownerUserId = body.ownerUserId ? String(body.ownerUserId) : null;
-  const memberUserIds = Array.isArray(body.memberUserIds) ? body.memberUserIds.map((id) => String(id)) : [];
+  const memberUserIds: string[] = Array.isArray(body.memberUserIds)
+    ? body.memberUserIds.map((id: unknown) => String(id))
+    : [];
   const payerUserId = body.payerUserId ? String(body.payerUserId) : null;
 
   if (!title) return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -150,7 +152,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Owner user must be from your family" }, { status: 400 });
   }
 
-  const normalizedMembers = Array.from(new Set(memberUserIds.filter((id) => validIds.has(id))));
+  const normalizedMembers = Array.from(new Set(memberUserIds.filter((id: string) => validIds.has(id))));
   if (payerUserId) {
     if (!validIds.has(payerUserId)) {
       return NextResponse.json({ error: "Payer must be from your family" }, { status: 400 });
@@ -173,10 +175,12 @@ export async function POST(req: NextRequest) {
       ownerUserId: ownerUserId || null,
       members: normalizedMembers.length
         ? {
-            create: normalizedMembers.map((userId) => ({
-              userId,
-              role: payerUserId === userId ? SubscriptionMemberRole.PAYER : SubscriptionMemberRole.USER,
-            })),
+            createMany: {
+              data: normalizedMembers.map((userId: string) => ({
+                userId,
+                role: payerUserId === userId ? SubscriptionMemberRole.PAYER : SubscriptionMemberRole.USER,
+              })),
+            },
           }
         : undefined,
     },

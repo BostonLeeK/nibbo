@@ -50,9 +50,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const nextBillingDate = body.nextBillingDate !== undefined ? parseDate(body.nextBillingDate) : undefined;
   const trialEndsAt = body.trialEndsAt !== undefined ? (body.trialEndsAt ? parseDate(body.trialEndsAt) : null) : undefined;
   const ownerUserId = body.ownerUserId !== undefined ? (body.ownerUserId ? String(body.ownerUserId) : null) : undefined;
-  const memberUserIds =
+  const memberUserIds: string[] | undefined =
     body.memberUserIds !== undefined && Array.isArray(body.memberUserIds)
-      ? body.memberUserIds.map((item) => String(item))
+      ? body.memberUserIds.map((item: unknown) => String(item))
       : undefined;
   const payerUserId = body.payerUserId !== undefined ? (body.payerUserId ? String(body.payerUserId) : null) : undefined;
 
@@ -91,6 +91,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (normalizedMembers && payerUserId && !normalizedMembers.includes(payerUserId)) {
     normalizedMembers.push(payerUserId);
   }
+  const nextBillingDateValue = nextBillingDate === undefined ? undefined : nextBillingDate || undefined;
+  const trialEndsAtValue = trialEndsAt === undefined ? undefined : trialEndsAt || undefined;
 
   const updated = await prisma.$transaction(async (tx) => {
     if (normalizedMembers) {
@@ -116,8 +118,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         billingCycle,
         status,
         amount,
-        nextBillingDate: nextBillingDate === undefined ? undefined : nextBillingDate,
-        trialEndsAt: trialEndsAt === undefined ? undefined : trialEndsAt,
+        nextBillingDate: nextBillingDateValue,
+        trialEndsAt: trialEndsAtValue,
         ownerUserId,
       },
       include: {
