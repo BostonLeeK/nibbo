@@ -39,7 +39,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
       <aside className="md:hidden bg-white/85 backdrop-blur-md border-b border-warm-100 px-3 py-2 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🏠</span>
+            <Image src="/favicon.svg" alt="Nibbo logo" width={24} height={24} />
             <h1 className="font-bold text-warm-800 text-base leading-tight">Nibbo</h1>
           </div>
           <button
@@ -63,7 +63,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
             <div className="h-full flex flex-col p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl">🏠</span>
+                  <Image src="/favicon.svg" alt="Nibbo logo" width={30} height={30} />
                   <h2 className="text-xl font-bold text-warm-800">Меню</h2>
                 </div>
                 <button
@@ -128,7 +128,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
       <aside className="hidden md:flex w-64 h-full bg-white/80 backdrop-blur-md border-r border-warm-100 flex-col shadow-cozy z-10">
         <div className="p-6 border-b border-warm-100">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">🏠</span>
+            <Image src="/favicon.svg" alt="Nibbo logo" width={32} height={32} />
             <div>
               <h1 className="font-bold text-warm-800 text-lg leading-tight">Nibbo</h1>
               <p className="text-xs text-warm-400">Ваш цифровий дім</p>

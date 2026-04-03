@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -52,9 +53,9 @@ export default function LoginPage() {
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="text-7xl mb-6"
+            className="mb-6 flex items-center justify-center"
           >
-            🏠
+            <Image src="/favicon.svg" alt="Nibbo logo" width={84} height={84} />
           </motion.div>
 
           <h1 className="text-3xl font-bold text-warm-800 mb-2">Nibbo</h1>
