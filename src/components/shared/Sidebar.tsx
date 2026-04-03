@@ -16,6 +16,7 @@ const navItems = [
   { href: "/menu", label: "Меню", emoji: "🍽️" },
   { href: "/notes", label: "Нотатки", emoji: "📓" },
   { href: "/budget", label: "Бюджет", emoji: "💰" },
+  { href: "/subscriptions", label: "Підписки", emoji: "📺" },
   { href: "/shopping", label: "Покупки", emoji: "🛒" },
 ];
 

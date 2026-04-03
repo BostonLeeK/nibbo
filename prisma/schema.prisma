@@ -59,6 +59,8 @@ model User {
   mealCooks     MealPlan[]      @relation("MealCook")
   notes         Note[]
   expenses      Expense[]
+  ownedSubscriptions FamilySubscription[] @relation("SubscriptionOwner")
+  subscriptionMembers FamilySubscriptionMember[]
   shoppingItems ShoppingItem[]
   sentInvites   FamilyInvitation[] @relation("FamilyInviteSender")
   adminProfile  Admin?
@@ -89,6 +91,7 @@ model Family {
   noteCategories    NoteCategory[]
   expenseCategories ExpenseCategory[]
   expenses          Expense[]
+  subscriptions     FamilySubscription[]
   shoppingLists     ShoppingList[]
 }
 
@@ -349,6 +352,56 @@ model Expense {
   family   Family?          @relation(fields: [familyId], references: [id], onDelete: Cascade)
   category ExpenseCategory? @relation(fields: [categoryId], references: [id])
   user     User             @relation(fields: [userId], references: [id])
+}
+
+model FamilySubscription {
+  id              String                 @id @default(cuid())
+  title           String
+  category        String?
+  billingCycle    SubscriptionBillingCycle
+  amount          Float
+  currency        String                 @default("UAH")
+  nextBillingDate DateTime
+  trialEndsAt     DateTime?
+  status          SubscriptionStatus     @default(ACTIVE)
+  note            String?
+  familyId        String
+  ownerUserId     String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  family          Family                 @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  ownerUser       User?                  @relation("SubscriptionOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  members         FamilySubscriptionMember[]
+}
+
+model FamilySubscriptionMember {
+  id             String             @id @default(cuid())
+  subscriptionId String
+  userId         String
+  role           SubscriptionMemberRole @default(USER)
+  createdAt      DateTime           @default(now())
+
+  subscription   FamilySubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, userId])
+}
+
+enum SubscriptionBillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum SubscriptionMemberRole {
+  USER
+  PAYER
 }
 
 // --- SHOPPING ---
