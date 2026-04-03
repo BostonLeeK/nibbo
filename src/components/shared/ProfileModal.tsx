@@ -35,11 +35,6 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
     { id: string; name: string | null; email: string | null; emoji: string; color: string }[]
   >([]);
   const [pendingInvites, setPendingInvites] = useState<{ id: string; email: string }[]>([]);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -119,7 +114,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
     }
   };
 
-  if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <AnimatePresence>

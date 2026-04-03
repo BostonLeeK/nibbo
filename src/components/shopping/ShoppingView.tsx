@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Check, X, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,11 +21,6 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
   const [newListName, setNewListName] = useState("");
   const [newListEmoji, setNewListEmoji] = useState("🛒");
   const [newItem, setNewItem] = useState({ name: "", quantity: "", unit: "", category: "" });
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const currentList = lists.find((l) => l.id === activeList);
   const checkedItems = currentList?.items.filter((i) => i.checked) || [];
@@ -220,7 +215,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
       )}
 
       {/* Add List Modal */}
-      {mounted && createPortal(
+      {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showAddList && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

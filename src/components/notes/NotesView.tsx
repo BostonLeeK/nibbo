@@ -199,6 +199,18 @@ export default function NotesView({
     toast.success("Нотатку видалено");
   };
 
+  const openAddNote = () => {
+    setNewNote({
+      title: "",
+      content: "",
+      emoji: "📓",
+      color: "#faf3e0",
+      tags: "",
+      categoryId: selectedCategoryId ?? "",
+    });
+    setShowAdd(true);
+  };
+
   const NoteCard = ({ note }: { note: Note }) => (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -280,7 +292,7 @@ export default function NotesView({
             placeholder="Пошук нотаток..." className="w-full pl-10 pr-4 py-2.5 bg-white/80 rounded-2xl border border-warm-200 text-sm outline-none focus:border-rose-300 shadow-sm" />
         </div>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          onClick={() => setShowAdd(true)}
+          onClick={openAddNote}
           className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cream-400 to-cream-300 text-warm-800 rounded-2xl text-sm font-medium shadow-cozy border border-cream-300">
           <Plus size={16} /> Нова нотатка
         </motion.button>

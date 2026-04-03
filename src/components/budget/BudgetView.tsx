@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
@@ -25,11 +25,6 @@ export default function BudgetView({ initialCategories, initialExpenses, current
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
   const [newCat, setNewCat] = useState({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
 
@@ -178,7 +173,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
         </div>
       </div>
 
-      {mounted && createPortal(
+      {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showAddExpense && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -218,7 +213,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
         document.body
       )}
 
-      {mounted && createPortal(
+      {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showAddCategory && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

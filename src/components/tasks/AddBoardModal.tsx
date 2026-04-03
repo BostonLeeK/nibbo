@@ -28,7 +28,6 @@ export default function AddBoardModal({
   const [name, setName] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("📋");
   const [selectedColor, setSelectedColor] = useState("#f43f5e");
-  const [mounted, setMounted] = useState(false);
 
   const isEdit = Boolean(editBoard);
 
@@ -45,10 +44,6 @@ export default function AddBoardModal({
     }
   }, [open, editBoard]);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const handleSubmit = () => {
     if (!name.trim()) return;
     if (isEdit && editBoard && onUpdate) {
@@ -63,7 +58,7 @@ export default function AddBoardModal({
     }
   };
 
-  if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <AnimatePresence>

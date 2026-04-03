@@ -26,11 +26,6 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
   const [priority, setPriority] = useState<TaskBoardTask["priority"]>("MEDIUM");
   const [assigneeId, setAssigneeId] = useState("");
   const [saving, setSaving] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!task) return;
@@ -62,7 +57,7 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
     }
   };
 
-  if (!task || !mounted) return null;
+  if (!task || typeof document === "undefined") return null;
 
   return createPortal(
     <AnimatePresence>

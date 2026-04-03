@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays, startOfWeek } from "date-fns";
@@ -64,16 +64,11 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
   const [editInitialImageUrl, setEditInitialImageUrl] = useState<string | null>(null);
   const [viewRecipe, setViewRecipe] = useState<Recipe | null>(null);
-  const [mounted, setMounted] = useState(false);
   const [newRecipe, setNewRecipe] = useState({
     name: "", description: "", emoji: "🍽️", category: "Обід",
     prepTime: "", cookTime: "", servings: "4",
     ingredients: [{ name: "", amount: "", unit: "" }],
   });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const clearBlobOnly = () => {
     if (recipeImagePreview) URL.revokeObjectURL(recipeImagePreview);
@@ -622,7 +617,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
         </div>
       )}
 
-      {mounted && createPortal(
+      {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showAddMeal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -674,7 +669,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
         document.body
       )}
 
-      {mounted && createPortal(
+      {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {viewRecipe && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -784,7 +779,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
         document.body
       )}
 
-      {mounted && createPortal(
+      {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showAddRecipe && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -924,7 +919,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
         document.body
       )}
 
-      {mounted && createPortal(
+      {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showShopModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

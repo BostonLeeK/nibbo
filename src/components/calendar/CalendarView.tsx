@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
@@ -39,7 +39,6 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [showAddEvent, setShowAddEvent] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "", description: "", emoji: "📅", color: "#8b5cf6",
     startDate: "", startTime: "10:00", endTime: "11:00",
@@ -73,10 +72,6 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
 
   const selectedDayEvents = selectedDay ? getEventsForDay(selectedDay) : [];
   const monthDays = days.filter((day) => isSameMonth(day, currentMonth));
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleAddEvent = async () => {
     if (!newEvent.title || !newEvent.startDate) return;
@@ -378,7 +373,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
       </div>
 
       {/* Add Event Modal */}
-      {mounted && createPortal(
+      {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showAddEvent && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
