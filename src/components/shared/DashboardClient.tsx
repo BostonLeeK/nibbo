@@ -34,10 +34,9 @@ export default function DashboardClient({
   ];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Welcome */}
+    <div className="space-y-5 md:space-y-6 max-w-6xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold text-warm-800">
+        <h2 className="text-xl md:text-2xl font-bold text-warm-800">
           Фокус дня 🌸
         </h2>
         <p className="text-warm-500 text-sm mt-1">Nibbo росте, коли ти закриваєш задачі</p>
@@ -50,27 +49,25 @@ export default function DashboardClient({
         doneTotal={personalTaskStats.doneTotal}
       />
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
         {statCards.map((card) => (
           <Link key={card.href} href={card.href}>
             <motion.div
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              className={`bg-gradient-to-br ${card.color} rounded-3xl p-6 text-white shadow-cozy cursor-pointer`}
+              className={`bg-gradient-to-br ${card.color} rounded-3xl p-4 md:p-6 text-white shadow-cozy cursor-pointer`}
             >
-              <div className="text-4xl mb-3">{card.emoji}</div>
-              <div className="text-3xl font-bold">{card.value}</div>
+              <div className="text-3xl md:text-4xl mb-2 md:mb-3">{card.emoji}</div>
+              <div className="text-2xl md:text-3xl font-bold">{card.value}</div>
               <div className="text-sm opacity-90 mt-1">{card.label}</div>
             </motion.div>
           </Link>
         ))}
       </div>
 
-      {/* Quick links */}
       <div>
         <h3 className="font-semibold text-warm-700 mb-3 text-sm">Швидкий доступ ✨</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {quickLinks.map((link) => (
             <Link key={link.href} href={link.href}>
               <motion.div
@@ -86,10 +83,8 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {/* Content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upcoming events */}
-        <div className="bg-white/70 rounded-3xl p-5 shadow-cozy border border-warm-100">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        <div className="bg-white/70 rounded-3xl p-4 md:p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
               <span>📅</span> Майбутні події
@@ -136,8 +131,7 @@ export default function DashboardClient({
           </div>
         </div>
 
-        {/* Recent tasks */}
-        <div className="bg-white/70 rounded-3xl p-5 shadow-cozy border border-warm-100">
+        <div className="bg-white/70 rounded-3xl p-4 md:p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
               <span>📋</span> Твої активні задачі

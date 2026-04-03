@@ -343,11 +343,85 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
 
   const FOOD_EMOJIS = ["🍽️", "🥗", "🍝", "🥘", "🍲", "🥩", "🍳", "🥐", "🍕", "🥪", "🍜", "🥑", "🍱", "🥦", "🍰"];
   const CATEGORIES = ["Сніданок", "Обід", "Вечеря", "Перекус", "Суп", "Салат", "Десерт"];
+  const renderMealSlot = (day: Date, mealType: "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK") => {
+    const config = MEAL_TYPE_CONFIG[mealType];
+    const meal = getMealForSlot(day, mealType);
+    const dateStr = format(day, "yyyy-MM-dd");
+
+    if (meal) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          role={meal.recipe ? "button" : undefined}
+          tabIndex={meal.recipe ? 0 : undefined}
+          onClick={() => meal.recipe && setViewRecipe(meal.recipe)}
+          onKeyDown={(e) => {
+            if (!meal.recipe) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setViewRecipe(meal.recipe);
+            }
+          }}
+          className={`${config.color} rounded-2xl p-3 h-full min-h-[80px] relative group border border-warm-100 ${
+            meal.recipe ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-peach-400" : ""
+          }`}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteMeal(meal.id);
+            }}
+            className="absolute top-2 right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 w-5 h-5 rounded-full bg-white/80 text-warm-400 hover:text-rose-500 flex items-center justify-center transition-all z-20"
+          >
+            <X size={10} />
+          </button>
+          {meal.recipe?.imageUrl ? (
+            <div className="relative w-full h-12 rounded-xl overflow-hidden mb-1.5 bg-warm-100">
+              <Image
+                src={meal.recipe.imageUrl}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="120px"
+                unoptimized={isLocalUpload(meal.recipe.imageUrl)}
+              />
+            </div>
+          ) : (
+            <div className="text-lg mb-1">{meal.recipe?.emoji || "🍽️"}</div>
+          )}
+          <p className="text-xs font-semibold text-warm-800 leading-tight line-clamp-2">
+            {meal.recipe?.name || meal.note || "—"}
+          </p>
+          {meal.cook && (
+            <div className="flex items-center gap-1 mt-1.5">
+              <div className="w-4 h-4 rounded-full flex items-center justify-center text-xs text-white"
+                style={{ backgroundColor: meal.cook.color }}>
+                {meal.cook.emoji || meal.cook.name?.[0]}
+              </div>
+              <span className="text-xs text-warm-400 truncate">{meal.cook.name}</span>
+            </div>
+          )}
+        </motion.div>
+      );
+    }
+
+    return (
+      <motion.button
+        whileHover={{ scale: 1.02, y: -1 }}
+        onClick={() => setShowAddMeal({ date: dateStr, mealType })}
+        className="w-full h-full min-h-[80px] rounded-2xl border-2 border-dashed border-warm-200 hover:border-peach-300 hover:bg-peach-50/50 text-warm-300 hover:text-peach-400 flex items-center justify-center transition-all"
+      >
+        <Plus size={18} />
+      </motion.button>
+    );
+  };
 
   return (
     <div className="h-full flex flex-col">
       {/* Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 md:mb-6">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {[{ id: "planner", label: "Тижневе меню", emoji: "📅" }, { id: "recipes", label: "Рецепти", emoji: "📖" }].map((t) => (
             <motion.button key={t.id} whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}
@@ -360,7 +434,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
           ))}
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="grid grid-cols-1 sm:flex gap-2">
           {tab === "planner" && (
             <motion.button
               type="button"
@@ -368,7 +442,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
               whileTap={{ scale: 0.98 }}
               onClick={openShopFromMenu}
               title="Зібрати інгредієнти з усіх страв у тижневому плані"
-              className="flex items-center gap-2 px-4 py-2.5 bg-sage-100 hover:bg-sage-200 text-sage-800 rounded-2xl text-sm font-medium transition-all border border-sage-200/60"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-sage-100 hover:bg-sage-200 text-sage-800 rounded-2xl text-sm font-medium transition-all border border-sage-200/60 w-full sm:w-auto"
             >
               <ClipboardList size={16} />
               <span className="hidden sm:inline">Інгредієнти з плану</span>
@@ -380,7 +454,7 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={openNewRecipeModal}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl text-sm font-medium shadow-cozy"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto"
           >
             <Plus size={16} /> {tab === "planner" ? "Новий рецепт" : "Новий рецепт"}
           </motion.button>
@@ -388,111 +462,67 @@ export default function MealPlanner({ initialRecipes, initialMealPlans, users, c
       </div>
 
       {tab === "planner" ? (
-        /* Weekly planner grid */
-        <div className="overflow-auto flex-1">
-          <div className="min-w-[800px]">
-            {/* Header row */}
-            <div className="grid grid-cols-8 gap-2 mb-3">
-              <div className="text-xs font-semibold text-warm-400 pt-2 pl-2">Прийом їжі</div>
-              {weekDays.map((day) => (
-                <div key={day.toISOString()} className="text-center">
-                  <div className="text-xs text-warm-400 font-medium capitalize">
-                    {format(day, "EEE", { locale: uk })}
-                  </div>
-                  <div className={`text-lg font-bold mt-0.5 ${
-                    format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
-                      ? "text-peach-500" : "text-warm-700"
-                  }`}>
-                    {format(day, "d")}
-                  </div>
+        <div className="flex-1 min-h-0">
+          <div className="md:hidden space-y-3 overflow-y-auto pb-2">
+            {weekDays.map((day) => (
+              <div key={day.toISOString()} className="bg-white/70 rounded-3xl border border-warm-100 p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold text-warm-800 capitalize">
+                    {format(day, "EEEE, d MMMM", { locale: uk })}
+                  </p>
                 </div>
-              ))}
-            </div>
-
-            {/* Meal type rows */}
-            {mealTypes.map((mealType) => {
-              const config = MEAL_TYPE_CONFIG[mealType];
-              return (
-                <div key={mealType} className="grid grid-cols-8 gap-2 mb-3">
-                  <div className={`rounded-2xl p-3 text-center ${config.color} flex flex-col items-center justify-center`}>
-                    <span className="text-xl mb-1">{config.emoji}</span>
-                    <span className="text-xs font-semibold text-warm-600">{config.label}</span>
-                  </div>
-                  {weekDays.map((day) => {
-                    const meal = getMealForSlot(day, mealType);
-                    const dateStr = format(day, "yyyy-MM-dd");
+                <div className="space-y-2">
+                  {mealTypes.map((mealType) => {
+                    const config = MEAL_TYPE_CONFIG[mealType];
                     return (
-                      <div key={dateStr}>
-                        {meal ? (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            role={meal.recipe ? "button" : undefined}
-                            tabIndex={meal.recipe ? 0 : undefined}
-                            onClick={() => meal.recipe && setViewRecipe(meal.recipe)}
-                            onKeyDown={(e) => {
-                              if (!meal.recipe) return;
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                setViewRecipe(meal.recipe);
-                              }
-                            }}
-                            className={`${config.color} rounded-2xl p-3 h-full min-h-[80px] relative group border border-warm-100 ${
-                              meal.recipe ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-peach-400" : ""
-                            }`}
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteMeal(meal.id);
-                              }}
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full bg-white/80 text-warm-400 hover:text-rose-500 flex items-center justify-center transition-all z-20"
-                            >
-                              <X size={10} />
-                            </button>
-                            {meal.recipe?.imageUrl ? (
-                              <div className="relative w-full h-12 rounded-xl overflow-hidden mb-1.5 bg-warm-100">
-                                <Image
-                                  src={meal.recipe.imageUrl}
-                                  alt=""
-                                  fill
-                                  className="object-cover"
-                                  sizes="120px"
-                                  unoptimized={isLocalUpload(meal.recipe.imageUrl)}
-                                />
-                              </div>
-                            ) : (
-                              <div className="text-lg mb-1">{meal.recipe?.emoji || "🍽️"}</div>
-                            )}
-                            <p className="text-xs font-semibold text-warm-800 leading-tight line-clamp-2">
-                              {meal.recipe?.name || meal.note || "—"}
-                            </p>
-                            {meal.cook && (
-                              <div className="flex items-center gap-1 mt-1.5">
-                                <div className="w-4 h-4 rounded-full flex items-center justify-center text-xs text-white"
-                                  style={{ backgroundColor: meal.cook.color }}>
-                                  {meal.cook.emoji || meal.cook.name?.[0]}
-                                </div>
-                                <span className="text-xs text-warm-400 truncate">{meal.cook.name}</span>
-                              </div>
-                            )}
-                          </motion.div>
-                        ) : (
-                          <motion.button
-                            whileHover={{ scale: 1.02, y: -1 }}
-                            onClick={() => setShowAddMeal({ date: dateStr, mealType })}
-                            className="w-full h-full min-h-[80px] rounded-2xl border-2 border-dashed border-warm-200 hover:border-peach-300 hover:bg-peach-50/50 text-warm-300 hover:text-peach-400 flex items-center justify-center transition-all"
-                          >
-                            <Plus size={18} />
-                          </motion.button>
-                        )}
+                      <div key={mealType} className="grid grid-cols-[84px_1fr] gap-2 items-stretch">
+                        <div className={`rounded-2xl px-2 py-3 text-center ${config.color} flex flex-col items-center justify-center`}>
+                          <span className="text-lg">{config.emoji}</span>
+                          <span className="text-[11px] font-semibold text-warm-600">{config.label}</span>
+                        </div>
+                        {renderMealSlot(day, mealType)}
                       </div>
                     );
                   })}
                 </div>
-              );
-            })}
+              </div>
+            ))}
+          </div>
+          <div className="hidden md:block overflow-auto h-full">
+            <div className="min-w-[720px] md:min-w-[800px]">
+              <div className="grid grid-cols-8 gap-2 mb-3">
+                <div className="text-xs font-semibold text-warm-400 pt-2 pl-2">Прийом їжі</div>
+                {weekDays.map((day) => (
+                  <div key={day.toISOString()} className="text-center">
+                    <div className="text-xs text-warm-400 font-medium capitalize">
+                      {format(day, "EEE", { locale: uk })}
+                    </div>
+                    <div className={`text-lg font-bold mt-0.5 ${
+                      format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
+                        ? "text-peach-500" : "text-warm-700"
+                    }`}>
+                      {format(day, "d")}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {mealTypes.map((mealType) => {
+                const config = MEAL_TYPE_CONFIG[mealType];
+                return (
+                  <div key={mealType} className="grid grid-cols-8 gap-2 mb-3">
+                    <div className={`rounded-2xl p-3 text-center ${config.color} flex flex-col items-center justify-center`}>
+                      <span className="text-xl mb-1">{config.emoji}</span>
+                      <span className="text-xs font-semibold text-warm-600">{config.label}</span>
+                    </div>
+                    {weekDays.map((day) => (
+                      <div key={`${mealType}-${format(day, "yyyy-MM-dd")}`}>
+                        {renderMealSlot(day, mealType)}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       ) : (

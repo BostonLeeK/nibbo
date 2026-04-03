@@ -72,7 +72,7 @@ export default function TaskCard({
         <div
           {...attributes}
           {...listeners}
-          className="mt-0.5 text-warm-300 hover:text-warm-500 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          className="mt-0.5 text-warm-300 hover:text-warm-500 cursor-grab active:cursor-grabbing opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0"
         >
           <GripVertical size={14} />
         </div>
@@ -161,7 +161,7 @@ export default function TaskCard({
                   }}
                   className={cn(
                     "w-6 h-6 rounded-lg bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center transition-[opacity,transform,background-color] ml-1",
-                    showActions ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
+                    showActions ? "opacity-100 scale-100 pointer-events-auto" : "opacity-100 md:opacity-0 scale-100 md:scale-95 md:pointer-events-none"
                   )}
                 >
                   <Pencil size={11} />
@@ -173,7 +173,7 @@ export default function TaskCard({
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
                   className={cn(
                     "w-6 h-6 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-400 hover:text-rose-600 flex items-center justify-center transition-[opacity,transform,background-color] ml-1",
-                    showActions ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
+                    showActions ? "opacity-100 scale-100 pointer-events-auto" : "opacity-100 md:opacity-0 scale-100 md:scale-95 md:pointer-events-none"
                   )}
                 >
                   <Trash2 size={11} />

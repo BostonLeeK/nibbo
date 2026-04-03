@@ -70,6 +70,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
     });
 
   const selectedDayEvents = selectedDay ? getEventsForDay(selectedDay) : [];
+  const monthDays = days.filter((day) => isSameMonth(day, currentMonth));
 
   const handleAddEvent = async () => {
     if (!newEvent.title || !newEvent.startDate) return;
@@ -144,7 +145,94 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
           </motion.button>
         </div>
 
-        <div className="overflow-x-auto pb-1">
+        <div className="md:hidden space-y-2">
+          {monthDays.map((day) => {
+            const dayEvents = getEventsForDay(day);
+            const isSelected = selectedDay && isSameDay(day, selectedDay);
+            const todayDay = isToday(day);
+            return (
+              <button
+                key={day.toISOString()}
+                type="button"
+                onClick={() => setSelectedDay(day)}
+                className={cn(
+                  "w-full text-left rounded-2xl p-3 border transition-colors",
+                  isSelected
+                    ? "bg-lavender-50 border-lavender-300"
+                    : "bg-white/70 border-warm-100"
+                )}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <p className={cn("text-sm font-semibold", todayDay ? "text-rose-600" : "text-warm-800")}>
+                    {format(day, "d MMMM, EEE", { locale: uk })}
+                  </p>
+                  <span className="text-xs text-warm-500">{dayEvents.length} подій</span>
+                </div>
+                {dayEvents.length === 0 ? (
+                  <p className="text-xs text-warm-400">Немає подій</p>
+                ) : (
+                  <div className="space-y-1">
+                    {dayEvents.slice(0, 2).map((event) => (
+                      <div key={event.id} className="text-xs text-warm-700 truncate">
+                        {event.emoji} {event.title}
+                      </div>
+                    ))}
+                    {dayEvents.length > 2 && (
+                      <p className="text-xs text-warm-400">+{dayEvents.length - 2} ще</p>
+                    )}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {selectedDay && (
+          <div className="md:hidden mt-3 bg-white/80 rounded-3xl shadow-cozy border border-warm-100 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-warm-800">
+                {format(selectedDay, "d MMMM", { locale: uk })}
+              </h3>
+              <button
+                onClick={() => { setNewEvent((p) => ({ ...p, startDate: format(selectedDay, "yyyy-MM-dd") })); setShowAddEvent(true); }}
+                className="w-7 h-7 rounded-xl bg-lavender-100 hover:bg-lavender-200 text-lavender-600 flex items-center justify-center transition-colors"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+            {selectedDayEvents.length === 0 ? (
+              <p className="text-sm text-warm-400">Нічого не заплановано</p>
+            ) : (
+              <div className="space-y-2">
+                {selectedDayEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="p-3 rounded-2xl border"
+                    style={{ borderColor: event.color + "40", backgroundColor: event.color + "10" }}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-warm-800">{event.emoji} {event.title}</p>
+                        {!event.allDay && (
+                          <p className="text-xs text-warm-500 mt-1">
+                            {formatTime(event.startDate)} — {formatTime(event.endDate)}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteEvent(event.id)}
+                        className="text-warm-300 hover:text-rose-500 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="hidden md:block overflow-x-auto pb-1">
           <div className="min-w-[640px]">
             <div className="grid grid-cols-7 mb-2">
               {WEEKDAYS.map((d) => (
@@ -199,7 +287,7 @@ export default function CalendarView({ initialEvents, users, currentUserId }: {
         </div>
       </div>
 
-      <div className="w-full md:w-72 flex flex-col gap-4">
+      <div className="hidden md:flex w-full md:w-72 flex-col gap-4">
         {selectedDay ? (
           <motion.div
             initial={{ opacity: 0, x: 20 }}

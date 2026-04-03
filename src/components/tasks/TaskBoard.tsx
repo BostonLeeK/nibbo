@@ -105,7 +105,7 @@ function SortableBoardTab({
     >
       <button
         type="button"
-        className="px-1.5 py-2 text-warm-300 hover:text-warm-500 cursor-grab active:cursor-grabbing touch-none"
+        className="hidden md:block px-1.5 py-2 text-warm-300 hover:text-warm-500 cursor-grab active:cursor-grabbing touch-none"
         aria-label="Перетягнути дошку"
         {...attributes}
         {...listeners}
@@ -138,6 +138,8 @@ function SortableBoardTab({
 export default function TaskBoard({ initialBoards, users, currentUserId }: TaskBoardProps) {
   const [boards, setBoards] = useState<TaskBoardBoard[]>(initialBoards);
   const [activeBoard, setActiveBoard] = useState(initialBoards[0]?.id ?? "");
+  const [activeMobileColumn, setActiveMobileColumn] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
   const [activeTask, setActiveTask] = useState<TaskBoardTask | null>(null);
   const [activeColumn, setActiveColumn] = useState<TaskBoardColumn | null>(null);
   const [showAddBoard, setShowAddBoard] = useState(false);
@@ -148,6 +150,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   const currentBoard = boards.find((b) => b.id === activeBoard);
+  const mobileColumn = currentBoard?.columns.find((c) => c.id === activeMobileColumn) ?? currentBoard?.columns[0];
 
   const reloadBoards = useCallback(async () => {
     const next = await fetchBoards();
@@ -167,6 +170,24 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
     prevActiveBoardRef.current = activeBoard;
     void reloadBoards();
   }, [activeBoard, reloadBoards]);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    if (!currentBoard) {
+      setActiveMobileColumn("");
+      return;
+    }
+    setActiveMobileColumn((prev) => {
+      if (currentBoard.columns.some((c) => c.id === prev)) return prev;
+      return currentBoard.columns[0]?.id ?? "";
+    });
+  }, [currentBoard]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const id = String(event.active.id);
@@ -546,14 +567,14 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col min-w-0">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex items-center gap-2 mb-4 md:mb-6 overflow-x-auto pb-2 scrollbar-hide">
           <SortableContext items={boards.map((b) => b.id)} strategy={horizontalListSortingStrategy}>
             {boards.map((board) => (
               <SortableBoardTab
@@ -577,42 +598,84 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
 
         {currentBoard ? (
           <>
-            <div className="flex gap-4 overflow-x-auto pb-4 flex-1 scrollbar-hide">
-              <SortableContext
-                items={currentBoard.columns.map((c) => c.id)}
-                strategy={horizontalListSortingStrategy}
-              >
-                {currentBoard.columns.map((column) => (
-                  <TaskColumn
-                    key={column.id}
-                    column={column}
-                    users={users}
-                    onAddTask={(columnId, title, assigneeId, priority) =>
-                      addTask(currentBoard.id, columnId, title, assigneeId, priority)
-                    }
-                    onDeleteTask={deleteTask}
-                    onAssigneeChange={updateTaskAssignee}
-                    onPriorityChange={updateTaskPriority}
-                    onCompletedChange={(taskId, completed) => updateTaskCompleted(taskId, completed)}
-                    onRenameColumn={renameColumn}
-                    onDeleteColumn={deleteColumn}
-                    onEditTask={setEditTask}
-                  />
-                ))}
-              </SortableContext>
-              <AddColumnButton
-                onAdd={(name, emoji, color) => addColumn(currentBoard.id, name, emoji, color)}
-              />
-            </div>
+            {isMobile ? (
+              <div className="flex flex-col gap-3 pb-4 flex-1 min-w-0">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                  {currentBoard.columns.map((column) => (
+                    <button
+                      key={column.id}
+                      type="button"
+                      onClick={() => setActiveMobileColumn(column.id)}
+                      className={`shrink-0 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
+                        mobileColumn?.id === column.id
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-white text-warm-600 border border-warm-200"
+                      }`}
+                    >
+                      {column.emoji} {column.name} ({column.tasks.length})
+                    </button>
+                  ))}
+                </div>
+                {mobileColumn && (
+                  <SortableContext items={[mobileColumn.id]} strategy={horizontalListSortingStrategy}>
+                    <TaskColumn
+                      column={mobileColumn}
+                      users={users}
+                      onAddTask={(columnId, title, assigneeId, priority) =>
+                        addTask(currentBoard.id, columnId, title, assigneeId, priority)
+                      }
+                      onDeleteTask={deleteTask}
+                      onAssigneeChange={updateTaskAssignee}
+                      onPriorityChange={updateTaskPriority}
+                      onCompletedChange={(taskId, completed) => updateTaskCompleted(taskId, completed)}
+                      onRenameColumn={renameColumn}
+                      onDeleteColumn={deleteColumn}
+                      onEditTask={setEditTask}
+                    />
+                  </SortableContext>
+                )}
+                <AddColumnButton
+                  onAdd={(name, emoji, color) => addColumn(currentBoard.id, name, emoji, color)}
+                />
+              </div>
+            ) : (
+              <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 flex-1 scrollbar-hide snap-x snap-mandatory">
+                <SortableContext
+                  items={currentBoard.columns.map((c) => c.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {currentBoard.columns.map((column) => (
+                    <TaskColumn
+                      key={column.id}
+                      column={column}
+                      users={users}
+                      onAddTask={(columnId, title, assigneeId, priority) =>
+                        addTask(currentBoard.id, columnId, title, assigneeId, priority)
+                      }
+                      onDeleteTask={deleteTask}
+                      onAssigneeChange={updateTaskAssignee}
+                      onPriorityChange={updateTaskPriority}
+                      onCompletedChange={(taskId, completed) => updateTaskCompleted(taskId, completed)}
+                      onRenameColumn={renameColumn}
+                      onDeleteColumn={deleteColumn}
+                      onEditTask={setEditTask}
+                    />
+                  ))}
+                </SortableContext>
+                <AddColumnButton
+                  onAdd={(name, emoji, color) => addColumn(currentBoard.id, name, emoji, color)}
+                />
+              </div>
+            )}
 
             <DragOverlay>
               {activeTask && (
-                <div className="rotate-2 opacity-90 w-72">
+                <div className="rotate-2 opacity-90 w-[calc(100vw-2.5rem)] sm:w-72">
                   <TaskCard task={activeTask} users={users} isDragging />
                 </div>
               )}
               {activeColumn && (
-                <div className="w-72 opacity-90 rotate-1">
+                <div className="w-[calc(100vw-2.5rem)] sm:w-72 opacity-90 rotate-1">
                   <div className="bg-white/90 rounded-3xl border border-rose-200 shadow-cozy p-4">
                     <span className="text-lg mr-2">{activeColumn.emoji}</span>
                     <span className="font-semibold text-warm-800">{activeColumn.name}</span>
@@ -631,7 +694,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowAddBoard(true)}
-                className="px-6 py-3 bg-rose-500 text-white rounded-2xl font-medium hover:bg-rose-600 transition-colors"
+                className="px-6 py-3 bg-rose-500 text-white rounded-2xl font-medium hover:bg-rose-600 transition-colors w-full sm:w-auto"
               >
                 Створити дошку 🎉
               </motion.button>
@@ -679,7 +742,7 @@ function AddColumnButton({ onAdd }: { onAdd: (name: string, emoji: string, color
   };
 
   return (
-    <div className="w-72 flex-shrink-0">
+    <div className="w-[calc(100vw-2.5rem)] sm:w-72 flex-shrink-0 snap-start">
       {isAdding ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}

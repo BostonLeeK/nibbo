@@ -73,13 +73,12 @@ export default function BudgetView({ initialCategories, initialExpenses, current
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Summary card */}
+    <div className="space-y-5 md:space-y-6 max-w-5xl">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl p-6 text-white shadow-cozy">
+        className="bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl p-4 md:p-6 text-white shadow-cozy">
         <p className="text-sage-100 text-sm mb-1">Витрачено цього місяця</p>
-        <h2 className="text-4xl font-bold mb-4">{formatCurrency(totalSpent)}</h2>
-        <div className="flex gap-4">
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">{formatCurrency(totalSpent)}</h2>
+        <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
           <div className="bg-white/20 rounded-2xl px-4 py-2">
             <p className="text-xs text-sage-100">Транзакцій</p>
             <p className="font-bold">{expenses.length}</p>
@@ -91,7 +90,6 @@ export default function BudgetView({ initialCategories, initialExpenses, current
         </div>
       </motion.div>
 
-      {/* Categories */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-warm-800">Категорії 📊</h3>
@@ -99,7 +97,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
             <Plus size={14} /> Категорія
           </button>
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           {byCategory.map((cat) => {
             const pct = cat.budget ? Math.min((cat.spent / cat.budget) * 100, 100) : 0;
             const overBudget = cat.budget && cat.spent > cat.budget;
@@ -126,13 +124,12 @@ export default function BudgetView({ initialCategories, initialExpenses, current
         </div>
       </div>
 
-      {/* Transactions */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <h3 className="font-bold text-warm-800">Транзакції цього місяця</h3>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             onClick={() => setShowAddExpense(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl text-sm font-medium shadow-cozy">
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto">
             <Plus size={14} /> Додати витрату
           </motion.button>
         </div>
@@ -147,14 +144,14 @@ export default function BudgetView({ initialCategories, initialExpenses, current
             <div className="divide-y divide-warm-50">
               {expenses.map((expense) => (
                 <motion.div key={expense.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="flex items-center gap-4 px-5 py-3 hover:bg-warm-50/50 transition-colors group">
+                  className="flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 hover:bg-warm-50/50 transition-colors group">
                   <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
                     style={{ backgroundColor: (expense.category?.color || "#e7e5e4") + "20" }}>
                     {expense.category?.emoji || "💰"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-warm-800 text-sm">{expense.title}</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {expense.category && <span className="text-xs text-warm-400">{expense.category.name}</span>}
                       <span className="text-xs text-warm-300">•</span>
                       <span className="text-xs text-warm-400">{formatDate(expense.date)}</span>
@@ -162,9 +159,9 @@ export default function BudgetView({ initialCategories, initialExpenses, current
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-warm-800">{formatCurrency(expense.amount)}</span>
+                    <span className="font-bold text-sm md:text-base text-warm-800">{formatCurrency(expense.amount)}</span>
                     <button onClick={() => handleDeleteExpense(expense.id)}
-                      className="opacity-0 group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all">
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -175,7 +172,6 @@ export default function BudgetView({ initialCategories, initialExpenses, current
         </div>
       </div>
 
-      {/* Add Expense Modal */}
       <AnimatePresence>
         {showAddExpense && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -184,7 +180,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
             <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               className="relative z-10 w-full max-w-md">
-              <div className="bg-white rounded-3xl shadow-cozy-lg p-6">
+              <div className="bg-white rounded-3xl shadow-cozy-lg p-4 md:p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-warm-800">Нова витрата 💰</h2>
                   <button onClick={() => setShowAddExpense(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
@@ -213,7 +209,6 @@ export default function BudgetView({ initialCategories, initialExpenses, current
         )}
       </AnimatePresence>
 
-      {/* Add Category Modal */}
       <AnimatePresence>
         {showAddCategory && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -222,7 +217,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
             <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               className="relative z-10 w-full max-w-sm">
-              <div className="bg-white rounded-3xl shadow-cozy-lg p-6">
+              <div className="bg-white rounded-3xl shadow-cozy-lg p-4 md:p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-warm-800">Нова категорія</h2>
                   <button onClick={() => setShowAddCategory(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
