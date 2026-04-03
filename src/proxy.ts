@@ -23,6 +23,6 @@ export const proxy = auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|.*\\..*).*)",
+    "/((?!api|_next/static|_next/image|.*\\..*).*)",
   ],
 };

@@ -75,7 +75,6 @@ export default function NotificationBell() {
     setOpen(false);
     await load();
     router.push("/tasks");
-    router.refresh();
   };
 
   const markAll = async () => {
@@ -85,7 +84,6 @@ export default function NotificationBell() {
       body: JSON.stringify({ markAll: true }),
     });
     await load();
-    router.refresh();
   };
 
   return (

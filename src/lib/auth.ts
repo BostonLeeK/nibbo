@@ -33,29 +33,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
       const userId = String(token.id ?? token.sub ?? "");
-      if (userId) {
-        token.id = userId;
-        let familyId = await ensureUserFamily(userId);
-        const email = typeof token.email === "string" ? token.email.trim().toLowerCase() : null;
-        if (familyId && email) {
-          const invite = await prisma.familyInvitation.findFirst({
-            where: { email, acceptedAt: null },
-            orderBy: { createdAt: "desc" },
+      if (!userId) return token;
+      token.id = userId;
+      if (!user && token.familyId) return token;
+      let familyId = await ensureUserFamily(userId);
+      const email = typeof token.email === "string" ? token.email.trim().toLowerCase() : null;
+      if (familyId && email) {
+        const invite = await prisma.familyInvitation.findFirst({
+          where: { email, acceptedAt: null },
+          orderBy: { createdAt: "desc" },
+        });
+        if (invite && invite.familyId !== familyId) {
+          await prisma.user.update({
+            where: { id: userId },
+            data: { familyId: invite.familyId, familyRole: "MEMBER" },
           });
-          if (invite && invite.familyId !== familyId) {
-            await prisma.user.update({
-              where: { id: userId },
-              data: { familyId: invite.familyId, familyRole: "MEMBER" },
-            });
-            await prisma.familyInvitation.update({
-              where: { id: invite.id },
-              data: { acceptedAt: new Date() },
-            });
-            familyId = invite.familyId;
-          }
+          await prisma.familyInvitation.update({
+            where: { id: invite.id },
+            data: { acceptedAt: new Date() },
+          });
+          familyId = invite.familyId;
         }
-        token.familyId = familyId ?? null;
       }
+      token.familyId = familyId ?? null;
       return token;
     },
     session({ session, token }) {

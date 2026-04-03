@@ -35,6 +35,18 @@ export default function Header({ user: u, greeting, dateLabel, initialPoints }: 
   }, [initialPoints]);
 
   useEffect(() => {
+    const loadPoints = async () => {
+      try {
+        const res = await fetch("/api/users/points");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (typeof data.points === "number") setPoints(data.points);
+      } catch {}
+    };
+    void loadPoints();
+  }, []);
+
+  useEffect(() => {
     const onAwarded = (event: Event) => {
       const detail = (event as CustomEvent<{ points?: number }>).detail;
       const awarded = detail?.points ?? 0;

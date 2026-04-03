@@ -1,9 +1,14 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { formatDate, formatTime, PRIORITY_CONFIG } from "@/lib/utils";
-import TaskTamagotchi3D from "./TaskTamagotchi3D";
+
+const TaskTamagotchi3D = dynamic(() => import("./TaskTamagotchi3D"), {
+  ssr: false,
+});
 
 interface DashboardClientProps {
   stats: { taskCount: number; eventCount: number; shoppingCount: number };
@@ -18,6 +23,40 @@ export default function DashboardClient({
   upcomingEvents,
   recentTasks,
 }: DashboardClientProps) {
+  const [show3D, setShow3D] = useState(false);
+  const modelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let timeoutId = 0;
+    let idleId = 0;
+    const trigger = () => setShow3D(true);
+    if (typeof window !== "undefined") {
+      timeoutId = window.setTimeout(trigger, 1200);
+      if ("requestIdleCallback" in window) {
+        idleId = window.requestIdleCallback(trigger, { timeout: 1200 });
+      }
+    }
+    const node = modelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShow3D(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px 0px" }
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      if (timeoutId) window.clearTimeout(timeoutId);
+      if (idleId && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+    };
+  }, []);
+
   const statCards = [
     { label: "Активних задач", value: stats.taskCount, emoji: "📋", color: "from-rose-400 to-rose-500", href: "/tasks" },
     { label: "Майбутніх подій", value: stats.eventCount, emoji: "📅", color: "from-lavender-400 to-lavender-500", href: "/calendar" },
@@ -42,12 +81,18 @@ export default function DashboardClient({
         <p className="text-warm-500 text-sm mt-1">Nibbo росте, коли ти закриваєш задачі</p>
       </div>
 
-      <TaskTamagotchi3D
-        doneToday={personalTaskStats.doneToday}
-        doneWeek={personalTaskStats.doneWeek}
-        myOpen={personalTaskStats.myOpen}
-        doneTotal={personalTaskStats.doneTotal}
-      />
+      <div ref={modelRef} className="min-h-[360px]">
+        {show3D ? (
+          <TaskTamagotchi3D
+            doneToday={personalTaskStats.doneToday}
+            doneWeek={personalTaskStats.doneWeek}
+            myOpen={personalTaskStats.myOpen}
+            doneTotal={personalTaskStats.doneTotal}
+          />
+        ) : (
+          <div className="h-[360px] bg-white/75 rounded-3xl border border-warm-100 shadow-cozy animate-pulse" />
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
         {statCards.map((card) => (
