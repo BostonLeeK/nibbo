@@ -13,6 +13,9 @@ const publicSiteUrl =
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  turbopack: {
+    root: process.cwd(),
+  },
   env: {
     NEXT_PUBLIC_APP_URL: publicSiteUrl,
   },
