@@ -20,7 +20,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden">
       <Sidebar user={user} />
       <div className="flex-1 flex flex-col md:overflow-hidden">
-        <Header user={user} greeting={greeting} dateLabel={dateLabel} initialPoints={0} />
+        <Header
+          user={user}
+          greeting={greeting}
+          dateLabel={dateLabel}
+          initialPoints={0}
+          isAdmin={Boolean(session.user.isAdmin)}
+        />
         <main className="flex-1 overflow-y-auto p-3 md:p-6">
           {children}
         </main>

@@ -9,6 +9,7 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       familyId?: string | null;
+      isAdmin?: boolean;
     };
   }
 }
@@ -17,5 +18,6 @@ declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id?: string;
     familyId?: string | null;
+    isAdmin?: boolean;
   }
 }

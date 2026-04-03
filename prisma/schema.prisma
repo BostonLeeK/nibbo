@@ -61,6 +61,7 @@ model User {
   expenses      Expense[]
   shoppingItems ShoppingItem[]
   sentInvites   FamilyInvitation[] @relation("FamilyInviteSender")
+  adminProfile  Admin?
 }
 
 model VerificationToken {
@@ -202,6 +203,7 @@ model Recipe {
   cookTime    Int?
   servings    Int      @default(4)
   category    String   @default("Обід")
+  calories    Int?
   imageUrl    String?
   familyId    String?
   createdAt   DateTime @default(now())
@@ -210,6 +212,44 @@ model Recipe {
   family      Family?      @relation(fields: [familyId], references: [id], onDelete: Cascade)
   ingredients Ingredient[]
   mealPlans   MealPlan[]
+}
+
+model RecipeMarket {
+  id          String                   @id @default(cuid())
+  name        String
+  description String?
+  emoji       String                   @default("🍽️")
+  prepTime    Int?
+  cookTime    Int?
+  servings    Int                      @default(4)
+  category    String                   @default("Обід")
+  calories    Int?
+  imageUrl    String?
+  createdById String?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  createdBy   Admin?                   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  ingredients RecipeMarketIngredient[]
+}
+
+model RecipeMarketIngredient {
+  id             String       @id @default(cuid())
+  name           String
+  amount         String
+  unit           String?
+  recipeMarketId String
+
+  recipeMarket   RecipeMarket @relation(fields: [recipeMarketId], references: [id], onDelete: Cascade)
+}
+
+model Admin {
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  createdAt DateTime       @default(now())
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  markets   RecipeMarket[]
 }
 
 model Ingredient {

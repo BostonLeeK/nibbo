@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
         cookTime: body.cookTime,
         servings: body.servings || 4,
         category: body.category || "Обід",
+        calories: body.calories ?? null,
         familyId,
         imageUrl:
           typeof body.imageUrl === "string" && body.imageUrl.trim()

@@ -22,9 +22,10 @@ interface HeaderProps {
   greeting: string;
   dateLabel: string;
   initialPoints: number;
+  isAdmin?: boolean;
 }
 
-export default function Header({ user: u, greeting, dateLabel, initialPoints }: HeaderProps) {
+export default function Header({ user: u, greeting, dateLabel, initialPoints, isAdmin = false }: HeaderProps) {
   const router = useRouter();
   const [user, setUser] = useState(u);
   const [openProfile, setOpenProfile] = useState(false);
@@ -63,7 +64,14 @@ export default function Header({ user: u, greeting, dateLabel, initialPoints }: 
         <p className="text-xs md:text-sm font-semibold text-warm-700">
           {greeting}, <span className="text-rose-500">{user.name?.split(" ")[0] || "друже"}</span> 🌸
         </p>
-        <p className="hidden md:block text-xs text-warm-400">{dateLabel}</p>
+        <div className="hidden md:flex items-center gap-2">
+          <p className="text-xs text-warm-400">{dateLabel}</p>
+          {isAdmin && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-sage-100 text-sage-700 border border-sage-200">
+              ADMIN
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-1.5 md:gap-2">

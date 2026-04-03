@@ -4,6 +4,11 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
 import { ensureUserFamily } from "./family";
 
+const adminEmails = (process.env.ADMIN_EMAILS || "")
+  .split(",")
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   trustHost: true,
@@ -35,9 +40,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const userId = String(token.id ?? token.sub ?? "");
       if (!userId) return token;
       token.id = userId;
+      const normalizedEmail = typeof token.email === "string" ? token.email.trim().toLowerCase() : "";
+      if (normalizedEmail && adminEmails.includes(normalizedEmail)) {
+        await prisma.admin.upsert({
+          where: { userId },
+          update: {},
+          create: { userId },
+        });
+      }
+      const admin = await prisma.admin.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      token.isAdmin = Boolean(admin);
       if (!user && token.familyId) return token;
       let familyId = await ensureUserFamily(userId);
-      const email = typeof token.email === "string" ? token.email.trim().toLowerCase() : null;
+      const email = normalizedEmail || null;
       if (familyId && email) {
         const invite = await prisma.familyInvitation.findFirst({
           where: { email, acceptedAt: null },
@@ -69,6 +87,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         image: (token.picture as string | null | undefined) ?? prev?.image ?? null,
         emailVerified: prev?.emailVerified ?? null,
         familyId: (token.familyId as string | null | undefined) ?? null,
+        isAdmin: Boolean(token.isAdmin),
       };
       return session;
     },

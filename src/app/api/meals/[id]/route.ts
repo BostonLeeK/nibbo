@@ -23,6 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       emoji?: string;
       prepTime?: number | null;
       cookTime?: number | null;
+      calories?: number | null;
       servings?: number;
       category?: string;
       imageUrl?: string | null;
@@ -34,6 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.emoji !== undefined) data.emoji = body.emoji;
     if (body.prepTime !== undefined) data.prepTime = body.prepTime;
     if (body.cookTime !== undefined) data.cookTime = body.cookTime;
+    if (body.calories !== undefined) data.calories = body.calories;
     if (body.servings !== undefined) data.servings = body.servings;
     if (body.category !== undefined) data.category = body.category;
     if (body.imageUrl !== undefined) {
