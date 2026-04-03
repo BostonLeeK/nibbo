@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import AchievementsView from "@/components/achievements/AchievementsView";
+import { auth } from "@/lib/auth";
 import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
 import { POINTS_PER_TASK_COMPLETION } from "@/lib/task-points";
@@ -72,5 +72,13 @@ export default async function AchievementsPage() {
   }));
   const myRank = rows.find((row) => row.familyId === familyId) ?? null;
 
-  return <AchievementsView points={points} familyInfo={familyInfo} myRank={myRank} rows={rows} achievements={achievements} />;
+  return (
+    <AchievementsView
+      points={points}
+      familyInfo={familyInfo}
+      myRank={myRank}
+      rows={rows}
+      achievements={achievements}
+    />
+  );
 }
