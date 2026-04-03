@@ -14,11 +14,13 @@ type Member = {
 };
 
 type Invite = { id: string; email: string; createdAt: string };
+type IncomingInvite = { id: string; email: string; createdAt: string; familyId: string; family: { name: string } };
 
 type Payload = {
   family: { id: string; name: string } | null;
   members: Member[];
   invitations: Invite[];
+  incomingInvitations: IncomingInvite[];
   currentUserRole: "OWNER" | "MEMBER";
   currentUserId: string;
 };
@@ -104,6 +106,31 @@ export default function FamilyManagement() {
     }
   };
 
+  const acceptInvite = async (inviteId: string, familyName: string) => {
+    const ok = confirm(
+      `Прийняти запрошення до сім'ї «${familyName}»?\nТи вийдеш зі своєї поточної сім'ї. Якщо вона порожня, її буде видалено.`
+    );
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acceptInviteId: inviteId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({} as { error?: string }));
+        throw new Error(data.error || "fail");
+      }
+      toast.success("Запрошення прийнято");
+      window.location.reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не вдалося прийняти");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const transferOwnership = async (ownerId: string) => {
     setBusy(true);
     try {
@@ -123,6 +150,30 @@ export default function FamilyManagement() {
   };
 
   const owner = data?.currentUserRole === "OWNER";
+
+  const leaveFamily = async () => {
+    const ok = confirm(
+      owner
+        ? "Вийти із сім'ї? Якщо в сім'ї є інші учасники, власником стане перший з них. Тобі буде створено нову власну сім'ю."
+        : "Вийти із сім'ї? Тобі буде створено нову власну сім'ю."
+    );
+    if (!ok || !data) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: data.currentUserId }),
+      });
+      if (!res.ok) throw new Error("fail");
+      toast.success("Ти вийшов із сім'ї");
+      window.location.reload();
+    } catch {
+      toast.error("Не вдалося вийти із сім'ї");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -201,6 +252,30 @@ export default function FamilyManagement() {
       </div>
 
       <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-3">
+        <h3 className="font-semibold text-warm-800 text-sm">Вхідні запрошення</h3>
+        {(data?.incomingInvitations || []).length === 0 ? (
+          <p className="text-sm text-warm-400">Немає нових запрошень</p>
+        ) : (
+          (data?.incomingInvitations || []).map((inv) => (
+            <div key={inv.id} className="flex items-center justify-between bg-warm-50 rounded-2xl px-3 py-2 gap-3">
+              <div>
+                <p className="text-sm text-warm-700">{inv.family.name}</p>
+                <p className="text-xs text-warm-400">{inv.email}</p>
+              </div>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => acceptInvite(inv.id, inv.family.name)}
+                className="px-3 py-1.5 text-xs rounded-lg bg-sage-500 hover:bg-sage-600 text-white disabled:opacity-60"
+              >
+                Прийняти
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-3">
         <h3 className="font-semibold text-warm-800 text-sm">Очікують запрошення</h3>
         {(data?.invitations || []).length === 0 ? (
           <p className="text-sm text-warm-400">Немає очікуючих запрошень</p>
@@ -221,6 +296,17 @@ export default function FamilyManagement() {
             </div>
           ))
         )}
+      </div>
+
+      <div className="bg-white/80 rounded-3xl border border-warm-100 p-5">
+        <button
+          type="button"
+          disabled={busy || !data}
+          onClick={leaveFamily}
+          className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm disabled:opacity-60"
+        >
+          Вийти із сім'ї
+        </button>
       </div>
     </div>
   );

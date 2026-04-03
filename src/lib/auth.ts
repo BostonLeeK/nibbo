@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { randomUUID } from "crypto";
 import { prisma } from "./prisma";
 import { ensureUserFamily } from "./family";
 
@@ -42,37 +43,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       token.id = userId;
       const normalizedEmail = typeof token.email === "string" ? token.email.trim().toLowerCase() : "";
       if (normalizedEmail && adminEmails.includes(normalizedEmail)) {
-        await prisma.admin.upsert({
-          where: { userId },
-          update: {},
-          create: { userId },
-        });
+        const existingAdmin = await prisma.$queryRaw<{ id: string }[]>`
+          SELECT "id" FROM "Admin" WHERE "userId" = ${userId} LIMIT 1
+        `;
+        if (existingAdmin.length === 0) {
+          await prisma.$executeRaw`
+            INSERT INTO "Admin" ("id", "userId", "createdAt")
+            VALUES (${randomUUID()}, ${userId}, NOW())
+          `;
+        }
       }
-      const admin = await prisma.admin.findUnique({
-        where: { userId },
-        select: { id: true },
-      });
-      token.isAdmin = Boolean(admin);
+      const adminRows = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT "id" FROM "Admin" WHERE "userId" = ${userId} LIMIT 1
+      `;
+      token.isAdmin = adminRows.length > 0;
       if (!user && token.familyId) return token;
       let familyId = await ensureUserFamily(userId);
       const email = normalizedEmail || null;
-      if (familyId && email) {
-        const invite = await prisma.familyInvitation.findFirst({
-          where: { email, acceptedAt: null },
-          orderBy: { createdAt: "desc" },
-        });
-        if (invite && invite.familyId !== familyId) {
-          await prisma.user.update({
-            where: { id: userId },
-            data: { familyId: invite.familyId, familyRole: "MEMBER" },
-          });
-          await prisma.familyInvitation.update({
-            where: { id: invite.id },
-            data: { acceptedAt: new Date() },
-          });
-          familyId = invite.familyId;
-        }
-      }
       token.familyId = familyId ?? null;
       return token;
     },

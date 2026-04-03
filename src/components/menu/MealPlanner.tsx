@@ -57,7 +57,7 @@ interface MealPlannerProps {
   isAdmin: boolean;
 }
 
-type Tab = "planner" | "recipes";
+type Tab = "planner" | "recipes" | "market";
 
 function AnimatedRecipeImage({
   src,
@@ -129,6 +129,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
   const [editInitialImageUrl, setEditInitialImageUrl] = useState<string | null>(null);
   const [viewRecipe, setViewRecipe] = useState<Recipe | null>(null);
+  const [viewRecipeSource, setViewRecipeSource] = useState<"recipes" | "market">("recipes");
   const [marketLoadingId, setMarketLoadingId] = useState<string | null>(null);
   const [newRecipe, setNewRecipe] = useState({
     name: "", description: "", emoji: "🍽️", category: "Обід",
@@ -193,6 +194,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
 
   const openEditFromView = () => {
     if (!viewRecipe) return;
+    if (viewRecipeSource === "market") return;
     const r = viewRecipe;
     setViewRecipe(null);
     openEditRecipe(r);
@@ -487,11 +489,16 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
           animate={{ opacity: 1, scale: 1 }}
           role={meal.recipe ? "button" : undefined}
           tabIndex={meal.recipe ? 0 : undefined}
-          onClick={() => meal.recipe && setViewRecipe(meal.recipe)}
+          onClick={() => {
+            if (!meal.recipe) return;
+            setViewRecipeSource("recipes");
+            setViewRecipe(meal.recipe);
+          }}
           onKeyDown={(e) => {
             if (!meal.recipe) return;
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
+              setViewRecipeSource("recipes");
               setViewRecipe(meal.recipe);
             }
           }}
@@ -556,7 +563,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
       {/* Tabs */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 md:mb-6">
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {[{ id: "planner", label: "Тижневе меню", emoji: "📅" }, { id: "recipes", label: "Рецепти", emoji: "📖" }].map((t) => (
+          {[{ id: "planner", label: "Тижневе меню", emoji: "📅" }, { id: "recipes", label: "Рецепти", emoji: "📖" }, { id: "market", label: "Маркет рецептів", emoji: "🛍️" }].map((t) => (
             <motion.button key={t.id} whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}
               onClick={() => setTab(t.id as Tab)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${
@@ -582,15 +589,17 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <span className="sm:hidden">До покупок</span>
             </motion.button>
           )}
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={openNewRecipeModal}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto"
-          >
-            <Plus size={16} /> {tab === "planner" ? "Новий рецепт" : "Новий рецепт"}
-          </motion.button>
+          {tab !== "market" && (
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={openNewRecipeModal}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto"
+            >
+              <Plus size={16} /> Новий рецепт
+            </motion.button>
+          )}
         </div>
       </div>
 
@@ -672,9 +681,9 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
             </div>
           </div>
         </div>
-      ) : (
+      ) : tab === "recipes" ? (
         /* Recipes grid */
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 overflow-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto overflow-x-visible p-1 -m-1">
           {recipes.map((recipe) => (
             <motion.div
               key={recipe.id}
@@ -697,7 +706,10 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                 )}
                 <button
                   type="button"
-                  onClick={() => setViewRecipe(recipe)}
+                    onClick={() => {
+                      setViewRecipeSource("recipes");
+                      setViewRecipe(recipe);
+                    }}
                   className="w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-600 hover:text-sky-600 flex items-center justify-center"
                   title="Переглянути"
                 >
@@ -771,6 +783,9 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
             <span className="text-sm font-medium">Додати рецепт</span>
           </motion.button>
 
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto overflow-x-visible p-1 -m-1">
           {marketRecipes.map((recipe) => (
             <motion.div
               key={`market-${recipe.id}`}
@@ -792,6 +807,17 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               )}
               <div className="absolute top-3 left-3 text-[10px] font-semibold px-2 py-1 rounded-full bg-sage-100 text-sage-700">Маркет</div>
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-warm-100 mb-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewRecipeSource("market");
+                    setViewRecipe(recipe);
+                  }}
+                  className="absolute top-2 right-2 z-10 w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-600 hover:text-sky-600 flex items-center justify-center"
+                  title="Переглянути"
+                >
+                  <Eye size={15} />
+                </button>
                 {recipe.imageUrl ? (
                   <AnimatedRecipeImage
                     src={recipe.imageUrl}
@@ -824,6 +850,11 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               </motion.button>
             </motion.div>
           ))}
+          {marketRecipes.length === 0 && (
+            <div className="col-span-full rounded-3xl bg-white/70 border border-warm-100 p-8 text-center text-warm-500">
+              Маркет поки порожній
+            </div>
+          )}
         </div>
       )}
 
@@ -974,14 +1005,16 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                 >
                   Закрити
                 </button>
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.98 }}
-                  onClick={openEditFromView}
-                  className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-400 text-white font-semibold text-sm"
-                >
-                  Редагувати
-                </motion.button>
+                {viewRecipeSource !== "market" && (
+                  <motion.button
+                    type="button"
+                    whileTap={{ scale: 0.98 }}
+                    onClick={openEditFromView}
+                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-400 text-white font-semibold text-sm"
+                  >
+                    Редагувати
+                  </motion.button>
+                )}
               </div>
             </motion.div>
             </div>

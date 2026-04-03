@@ -35,6 +35,9 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
     { id: string; name: string | null; email: string | null; emoji: string; color: string }[]
   >([]);
   const [pendingInvites, setPendingInvites] = useState<{ id: string; email: string }[]>([]);
+  const [incomingInvites, setIncomingInvites] = useState<
+    { id: string; email: string; familyId: string; family: { name: string } }[]
+  >([]);
   const [currentUserRole, setCurrentUserRole] = useState<"OWNER" | "MEMBER" | null>(null);
 
   useEffect(() => {
@@ -54,6 +57,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
         const data = await res.json();
         setFamilyMembers(data.members || []);
         setPendingInvites(data.invitations || []);
+        setIncomingInvites(data.incomingInvitations || []);
         setCurrentUserRole(data.currentUserRole || null);
       } finally {
         setFamilyBusy(false);
@@ -118,8 +122,13 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
   };
 
   const leaveFamily = async () => {
-    if (currentUserRole !== "MEMBER") return;
-    if (!confirm("Вийти з цієї сім'ї?")) return;
+    if (currentUserRole !== "MEMBER" && currentUserRole !== "OWNER") return;
+    const ok = confirm(
+      currentUserRole === "OWNER"
+        ? "Вийти з цієї сім'ї? Якщо в сім'ї є інші учасники, власником стане перший з них. Тобі буде створено нову власну сім'ю."
+        : "Вийти з цієї сім'ї? Тобі буде створено нову власну сім'ю."
+    );
+    if (!ok) return;
     setFamilyBusy(true);
     try {
       const res = await fetch("/api/family/members", {
@@ -133,6 +142,30 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
       const next = await meRes.json();
       onSaved(next);
       onClose();
+    } finally {
+      setFamilyBusy(false);
+    }
+  };
+
+  const acceptInvite = async (inviteId: string, familyName: string) => {
+    const ok = confirm(
+      `Прийняти запрошення до сім'ї «${familyName}»?\nТи вийдеш зі своєї поточної сім'ї. Якщо вона порожня, її буде видалено.`
+    );
+    if (!ok) return;
+    setFamilyBusy(true);
+    try {
+      const res = await fetch("/api/family/members", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acceptInviteId: inviteId }),
+      });
+      if (!res.ok) return;
+      const meRes = await fetch("/api/users/me");
+      if (!meRes.ok) return;
+      const next = await meRes.json();
+      onSaved(next);
+      onClose();
+      window.location.reload();
     } finally {
       setFamilyBusy(false);
     }
@@ -243,6 +276,22 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                     {pendingInvites.map((i) => (
                       <div key={i.id} className="text-xs text-warm-400 px-1">
                         Запрошено: {i.email}
+                      </div>
+                    ))}
+                    {incomingInvites.map((i) => (
+                      <div key={i.id} className="flex items-center justify-between gap-2 bg-sage-50 rounded-xl px-2 py-1.5">
+                        <div className="min-w-0">
+                          <p className="text-xs text-sage-700 truncate">Запрошення в: {i.family.name}</p>
+                          <p className="text-[11px] text-sage-500 truncate">{i.email}</p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={familyBusy}
+                          onClick={() => acceptInvite(i.id, i.family.name)}
+                          className="px-2.5 py-1 text-[11px] rounded-lg bg-sage-500 hover:bg-sage-600 text-white disabled:opacity-60"
+                        >
+                          Прийняти
+                        </button>
                       </div>
                     ))}
                     {!familyBusy && familyMembers.length === 0 && (

@@ -23,7 +23,12 @@ export async function GET() {
     select: { id: true, name: true },
   });
 
-  const [members, invitations] = await Promise.all([
+  const me = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { email: true },
+  });
+
+  const [members, invitations, incomingInvitations] = await Promise.all([
     prisma.user.findMany({
       where: { familyId },
       select: { id: true, name: true, email: true, image: true, color: true, emoji: true, familyRole: true },
@@ -34,12 +39,26 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       select: { id: true, email: true, createdAt: true },
     }),
+    me?.email
+      ? prisma.familyInvitation.findMany({
+          where: { email: me.email.toLowerCase(), acceptedAt: null, NOT: { familyId } },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            email: true,
+            familyId: true,
+            createdAt: true,
+            family: { select: { name: true } },
+          },
+        })
+      : Promise.resolve([]),
   ]);
 
   return NextResponse.json({
     family,
     members,
     invitations,
+    incomingInvitations,
     currentUserRole: currentUser.familyRole,
     currentUserId: currentUser.id,
   });
@@ -65,8 +84,8 @@ export async function POST(req: NextRequest) {
     select: { id: true, familyId: true },
   });
 
-  if (existingUser?.familyId && existingUser.familyId !== familyId) {
-    return NextResponse.json({ error: "User already belongs to another family" }, { status: 409 });
+  if (existingUser?.familyId && existingUser.familyId === familyId) {
+    return NextResponse.json({ error: "User is already in your family" }, { status: 409 });
   }
 
   const invite = await prisma.familyInvitation.upsert({
@@ -75,17 +94,6 @@ export async function POST(req: NextRequest) {
     create: { familyId, invitedById: session.user.id, email },
     select: { id: true, email: true, createdAt: true },
   });
-
-  if (existingUser && !existingUser.familyId) {
-    await prisma.user.update({
-      where: { id: existingUser.id },
-      data: { familyId, familyRole: "MEMBER" },
-    });
-    await prisma.familyInvitation.update({
-      where: { id: invite.id },
-      data: { acceptedAt: new Date() },
-    });
-  }
 
   return NextResponse.json(invite);
 }
@@ -100,13 +108,33 @@ export async function DELETE(req: NextRequest) {
   if (body.memberId && String(body.memberId) === session.user.id) {
     if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (currentUser.familyRole === "OWNER") {
-      return NextResponse.json({ error: "Owner cannot leave family" }, { status: 400 });
+      const otherMembers = await prisma.user.findMany({
+        where: { familyId, id: { not: session.user.id } },
+        select: { id: true },
+        orderBy: { createdAt: "asc" },
+      });
+      await prisma.$transaction(async (tx) => {
+        if (otherMembers.length > 0) {
+          await tx.user.update({
+            where: { id: otherMembers[0].id },
+            data: { familyRole: "OWNER" },
+          });
+        }
+        await tx.user.update({
+          where: { id: session.user.id },
+          data: { familyId: null, familyRole: "MEMBER" },
+        });
+        if (otherMembers.length === 0) {
+          await tx.family.delete({ where: { id: familyId } });
+        }
+      });
+      return NextResponse.json({ success: true, ownerLeft: true, reassignedOwner: otherMembers[0]?.id ?? null });
     }
     await prisma.user.update({
       where: { id: session.user.id },
       data: { familyId: null, familyRole: "MEMBER" },
     });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, ownerLeft: false });
   }
 
   if (!currentUser || currentUser.familyRole !== "OWNER") {
@@ -143,12 +171,74 @@ export async function PATCH(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const familyId = await ensureUserFamily(session.user.id);
   if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await req.json();
+
+  if (body.acceptInviteId) {
+    const me = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, email: true, familyId: true, familyRole: true },
+    });
+    if (!me?.email) return NextResponse.json({ error: "User email required" }, { status: 400 });
+    const invite = await prisma.familyInvitation.findFirst({
+      where: { id: String(body.acceptInviteId), email: me.email.toLowerCase(), acceptedAt: null },
+      select: { id: true, familyId: true },
+    });
+    if (!invite) return NextResponse.json({ error: "Invite not found" }, { status: 404 });
+
+    if (me.familyId === invite.familyId) {
+      await prisma.familyInvitation.update({
+        where: { id: invite.id },
+        data: { acceptedAt: new Date() },
+      });
+      return NextResponse.json({ success: true, switched: false });
+    }
+
+    const currentFamilyId = me.familyId;
+    if (!currentFamilyId) {
+      await prisma.user.update({
+        where: { id: me.id },
+        data: { familyId: invite.familyId, familyRole: "MEMBER" },
+      });
+      await prisma.familyInvitation.update({
+        where: { id: invite.id },
+        data: { acceptedAt: new Date() },
+      });
+      return NextResponse.json({ success: true, switched: true, previousFamilyDeleted: false });
+    }
+
+    const [membersCount, isOwner] = await Promise.all([
+      prisma.user.count({ where: { familyId: currentFamilyId } }),
+      Promise.resolve(me.familyRole === "OWNER"),
+    ]);
+    if (isOwner && membersCount > 1) {
+      return NextResponse.json(
+        { error: "Ти власник сім'ї з іншими учасниками. Передай власність або видали учасників перед переходом." },
+        { status: 409 }
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: me.id },
+        data: { familyId: invite.familyId, familyRole: "MEMBER" },
+      });
+      await tx.familyInvitation.update({
+        where: { id: invite.id },
+        data: { acceptedAt: new Date() },
+      });
+      const leftMembers = await tx.user.count({ where: { familyId: currentFamilyId } });
+      if (leftMembers === 0) {
+        await tx.family.delete({ where: { id: currentFamilyId } });
+      }
+    });
+
+    return NextResponse.json({ success: true, switched: true });
+  }
+
   const currentUser = await getCurrentFamilyUser(session.user.id, familyId);
   if (!currentUser || currentUser.familyRole !== "OWNER") {
     return NextResponse.json({ error: "Only owner can transfer ownership" }, { status: 403 });
   }
-
-  const body = await req.json();
   const nextOwnerId = String(body.ownerId || "");
   if (!nextOwnerId) return NextResponse.json({ error: "ownerId required" }, { status: 400 });
   if (nextOwnerId === session.user.id) return NextResponse.json({ success: true });
