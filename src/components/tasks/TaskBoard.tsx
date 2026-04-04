@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   DndContext,
@@ -44,12 +44,25 @@ interface TaskBoardProps {
 }
 
 type TaskPatchResponse = TaskBoardTask & { awardedPoints?: number };
+type AssigneeFilter = "ALL" | "ME" | "UNASSIGNED" | `USER:${string}`;
 
 async function fetchBoards(): Promise<TaskBoardBoard[]> {
   const res = await fetch("/api/tasks");
   if (!res.ok) return [];
   const data = await res.json();
   return normalizeBoardsPayload(data);
+}
+
+function withAlpha(hex: string, alpha: string) {
+  return `${hex}${alpha}`;
+}
+
+function matchesAssigneeFilter(task: TaskBoardTask, filter: AssigneeFilter, currentUserId: string) {
+  if (filter === "ALL") return true;
+  if (filter === "ME") return task.assignee?.id === currentUserId;
+  if (filter === "UNASSIGNED") return !task.assignee;
+  if (filter.startsWith("USER:")) return task.assignee?.id === filter.slice(5);
+  return true;
 }
 
 function mergeTaskIntoBoards(prev: TaskBoardBoard[], task: TaskBoardTask): TaskBoardBoard[] {
@@ -91,6 +104,12 @@ function SortableBoardTab({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.45 : 1,
+    ...(active
+      ? {
+          backgroundColor: withAlpha(board.color, "1F"),
+          borderColor: withAlpha(board.color, "66"),
+        }
+      : {}),
   };
 
   return (
@@ -99,7 +118,7 @@ function SortableBoardTab({
       style={style}
       className={`flex items-center rounded-xl flex-shrink-0 border transition-all ${
         active
-          ? "bg-white shadow-cozy text-warm-800 border-warm-100"
+          ? "shadow-cozy text-warm-800"
           : "border-transparent text-warm-500 hover:text-warm-700 hover:bg-white/50"
       }`}
     >
@@ -117,6 +136,10 @@ function SortableBoardTab({
         onClick={onSelect}
         className="flex items-center gap-2 px-2 py-2 text-sm font-medium whitespace-nowrap"
       >
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: board.color }}
+        />
         <span>{board.emoji}</span>
         <span>{board.name}</span>
       </button>
@@ -138,6 +161,7 @@ function SortableBoardTab({
 export default function TaskBoard({ initialBoards, users, currentUserId }: TaskBoardProps) {
   const [boards, setBoards] = useState<TaskBoardBoard[]>(initialBoards);
   const [activeBoard, setActiveBoard] = useState(initialBoards[0]?.id ?? "");
+  const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>("ALL");
   const [activeMobileColumn, setActiveMobileColumn] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [activeTask, setActiveTask] = useState<TaskBoardTask | null>(null);
@@ -149,8 +173,18 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
+  const isFilterAll = assigneeFilter === "ALL";
   const currentBoard = boards.find((b) => b.id === activeBoard);
-  const mobileColumn = currentBoard?.columns.find((c) => c.id === activeMobileColumn) ?? currentBoard?.columns[0];
+  const boardForView = useMemo(() => {
+    if (!currentBoard) return null;
+    const columns = currentBoard.columns.map((column) => ({
+      ...column,
+      tasks: column.tasks.filter((task) => matchesAssigneeFilter(task, assigneeFilter, currentUserId)),
+    }));
+    return { ...currentBoard, columns };
+  }, [assigneeFilter, currentBoard, currentUserId]);
+  const mobileColumn = boardForView?.columns.find((c) => c.id === activeMobileColumn) ?? boardForView?.columns[0];
+  const visibleTasksCount = boardForView?.columns.reduce((sum, column) => sum + column.tasks.length, 0) ?? 0;
 
   const reloadBoards = useCallback(async () => {
     const next = await fetchBoards();
@@ -190,6 +224,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
   }, [currentBoard]);
 
   const handleDragStart = (event: DragStartEvent) => {
+    if (!isFilterAll) return;
     const id = String(event.active.id);
     if (!currentBoard) return;
     if (boards.some((b) => b.id === id)) return;
@@ -203,6 +238,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    if (!isFilterAll) return;
     const { active, over } = event;
     setActiveTask(null);
     setActiveColumn(null);
@@ -574,7 +610,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex items-center gap-2 mb-4 md:mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
           <SortableContext items={boards.map((b) => b.id)} strategy={horizontalListSortingStrategy}>
             {boards.map((board) => (
               <SortableBoardTab
@@ -595,13 +631,34 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
             <Plus size={14} /> Нова дошка
           </motion.button>
         </div>
+        <div className="mb-4 md:mb-6">
+          <select
+            value={assigneeFilter}
+            onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)}
+            className="bg-white border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-700 outline-none w-full sm:w-auto"
+          >
+            <option value="ALL">Всі виконавці</option>
+            <option value="ME">Тільки мої задачі</option>
+            <option value="UNASSIGNED">Без виконавця</option>
+            {users.map((user) => (
+              <option key={user.id} value={`USER:${user.id}`}>
+                {user.emoji} {user.name ?? "Користувач"}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        {currentBoard ? (
+        {boardForView && currentBoard ? (
           <>
+            {!isFilterAll && visibleTasksCount === 0 && (
+              <div className="mb-3 rounded-2xl bg-warm-50 border border-warm-100 px-4 py-3 text-sm text-warm-500">
+                За обраним фільтром задач не знайдено
+              </div>
+            )}
             {isMobile ? (
               <div className="flex flex-col gap-3 pb-4 flex-1 min-w-0">
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                  {currentBoard.columns.map((column) => (
+                  {boardForView.columns.map((column) => (
                     <button
                       key={column.id}
                       type="button"
@@ -641,10 +698,10 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
             ) : (
               <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 flex-1 scrollbar-hide snap-x snap-mandatory">
                 <SortableContext
-                  items={currentBoard.columns.map((c) => c.id)}
+                  items={boardForView.columns.map((c) => c.id)}
                   strategy={horizontalListSortingStrategy}
                 >
-                  {currentBoard.columns.map((column) => (
+                  {boardForView.columns.map((column) => (
                     <TaskColumn
                       key={column.id}
                       column={column}

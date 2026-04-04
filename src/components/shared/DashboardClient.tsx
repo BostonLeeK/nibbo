@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { formatDate, formatTime, PRIORITY_CONFIG } from "@/lib/utils";
 import { useCozyConfig } from "@/hooks/useCozyConfig";
+import { createPortal } from "react-dom";
+import { Check, X } from "lucide-react";
+import toast from "react-hot-toast";
+import { TASK_POINTS_AWARDED_EVENT } from "@/lib/task-points";
 
 const TaskTamagotchi3D = dynamic(() => import("./TaskTamagotchi3D"), {
   ssr: false,
@@ -18,6 +22,14 @@ interface DashboardClientProps {
   recentTasks: any[];
 }
 
+type DashboardTask = {
+  id: string;
+  title: string;
+  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  dueDate?: string | null;
+  assignee?: { name?: string | null; color?: string; emoji?: string | null } | null;
+};
+
 export default function DashboardClient({
   stats,
   personalTaskStats,
@@ -25,6 +37,9 @@ export default function DashboardClient({
   recentTasks,
 }: DashboardClientProps) {
   const [show3D, setShow3D] = useState(false);
+  const [tasks, setTasks] = useState<DashboardTask[]>(recentTasks as DashboardTask[]);
+  const [confirmTask, setConfirmTask] = useState<DashboardTask | null>(null);
+  const [busyComplete, setBusyComplete] = useState(false);
   const modelRef = useRef<HTMLDivElement | null>(null);
   const { motion: cozyMotion } = useCozyConfig();
 
@@ -58,6 +73,32 @@ export default function DashboardClient({
       }
     };
   }, []);
+
+  const completeTask = async () => {
+    if (!confirmTask || busyComplete) return;
+    setBusyComplete(true);
+    try {
+      const res = await fetch(`/api/tasks/${confirmTask.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: true }),
+      });
+      if (!res.ok) throw new Error("Не вдалося оновити задачу");
+      const data = (await res.json()) as { awardedPoints?: number };
+      if (data.awardedPoints && data.awardedPoints > 0) {
+        window.dispatchEvent(
+          new CustomEvent(TASK_POINTS_AWARDED_EVENT, { detail: { points: data.awardedPoints } })
+        );
+      }
+      setTasks((prev) => prev.filter((task) => task.id !== confirmTask.id));
+      toast.success("Задачу відмічено як виконану");
+      setConfirmTask(null);
+    } catch {
+      toast.error("Не вдалося завершити задачу");
+    } finally {
+      setBusyComplete(false);
+    }
+  };
 
   const statCards = [
     { label: "Активних задач", value: stats.taskCount, emoji: "📋", color: "from-rose-400 to-rose-500", href: "/tasks" },
@@ -190,13 +231,13 @@ export default function DashboardClient({
             </Link>
           </div>
           <div className="space-y-3">
-            {recentTasks.length === 0 ? (
+            {tasks.length === 0 ? (
               <div className="text-center py-6 text-warm-400">
                 <div className="text-3xl mb-2">✨</div>
                 <p className="text-sm">Всі задачі виконані!</p>
               </div>
             ) : (
-              recentTasks.map((task) => {
+              tasks.map((task) => {
                 const priority =
                   PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG] ??
                   PRIORITY_CONFIG.MEDIUM;
@@ -213,11 +254,19 @@ export default function DashboardClient({
                         <p className="text-xs text-warm-400">{formatDate(task.dueDate)}</p>
                       )}
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmTask(task)}
+                      className="w-7 h-7 rounded-full bg-sage-100 hover:bg-sage-200 text-sage-700 flex items-center justify-center transition-colors"
+                      aria-label="Позначити виконаною"
+                    >
+                      <Check size={14} />
+                    </button>
                     {task.assignee && (
                       <div
                         className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white flex-shrink-0"
                         style={{ backgroundColor: task.assignee.color || "#f43f5e" }}
-                        title={task.assignee.name}
+                        title={task.assignee.name ?? undefined}
                       >
                         {task.assignee.emoji || task.assignee.name?.[0]}
                       </div>
@@ -229,6 +278,63 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {confirmTask && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setConfirmTask(null)}
+                  className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.97, y: 14 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: 14 }}
+                  className="relative z-10 w-full max-w-md rounded-3xl bg-white shadow-cozy-lg border border-warm-100 p-5"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <h3 className="font-bold text-warm-800">Підтвердити виконання</h3>
+                      <p className="text-sm text-warm-500 mt-1">Позначити задачу як виконану?</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmTask(null)}
+                      className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                  <div className="rounded-2xl bg-warm-50 border border-warm-100 px-3 py-2.5 text-sm text-warm-700 mb-4">
+                    {confirmTask.title}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmTask(null)}
+                      className="flex-1 py-2.5 rounded-xl bg-white border border-warm-200 text-warm-700 text-sm font-medium"
+                    >
+                      Скасувати
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyComplete}
+                      onClick={completeTask}
+                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-sage-500 to-sage-400 text-white text-sm font-semibold disabled:opacity-60"
+                    >
+                      {busyComplete ? "..." : "Виконано"}
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   );
 }
