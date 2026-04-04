@@ -106,7 +106,7 @@ export default function TaskColumn({
     <div
       ref={setRefs}
       style={style}
-      className={`w-[calc(100vw-2.5rem)] sm:w-72 flex-shrink-0 snap-start bg-white/60 backdrop-blur-sm rounded-3xl border transition-[border-color,box-shadow,background-color] ${
+      className={`w-[calc(100vw-2.5rem)] sm:w-72 flex-shrink-0 snap-start bg-white/60 backdrop-blur-sm rounded-3xl border transition-[border-color,box-shadow,background-color] flex flex-col min-h-0 ${
         isOver ? "border-rose-300 shadow-cozy-hover bg-rose-50/50" : "border-warm-100 shadow-cozy"
       }`}
     >
@@ -173,7 +173,7 @@ export default function TaskColumn({
         </div>
       </div>
 
-      <div className="p-3 space-y-2 min-h-[100px] max-h-[60dvh] sm:max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-hide">
+      <div className="p-3 space-y-2 min-h-[100px] max-h-[60dvh] sm:max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-hide flex-1">
         <SortableContext items={column.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {column.tasks.map((task) => (
             <TaskCard
@@ -194,7 +194,7 @@ export default function TaskColumn({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="p-3 border-t border-warm-100"
+          className="p-3 border-t border-warm-100 bg-white/85 backdrop-blur-sm"
         >
           <textarea
             autoFocus
