@@ -51,7 +51,7 @@ export default async function DashboardPage() {
   });
 
   const recentTasks = await prisma.task.findMany({
-    where: { completed: false, ...mine, column: { board: { familyId } } },
+    where: { completed: false, assigneeId: userId, column: { board: { familyId } } },
     include: { assignee: { select: { name: true, image: true, color: true, emoji: true } } },
     orderBy: [{ priority: "desc" }, { dueDate: "asc" }, { createdAt: "desc" }],
     take: 5,
