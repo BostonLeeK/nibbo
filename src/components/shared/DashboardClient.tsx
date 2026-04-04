@@ -30,6 +30,13 @@ type DashboardTask = {
   assignee?: { name?: string | null; color?: string; emoji?: string | null } | null;
 };
 
+type PersonalTaskStats = {
+  myOpen: number;
+  doneToday: number;
+  doneWeek: number;
+  doneTotal: number;
+};
+
 export default function DashboardClient({
   stats,
   personalTaskStats,
@@ -38,6 +45,7 @@ export default function DashboardClient({
 }: DashboardClientProps) {
   const [show3D, setShow3D] = useState(false);
   const [tasks, setTasks] = useState<DashboardTask[]>(recentTasks as DashboardTask[]);
+  const [tamagotchiStats, setTamagotchiStats] = useState<PersonalTaskStats>(personalTaskStats);
   const [confirmTask, setConfirmTask] = useState<DashboardTask | null>(null);
   const [busyComplete, setBusyComplete] = useState(false);
   const modelRef = useRef<HTMLDivElement | null>(null);
@@ -74,6 +82,15 @@ export default function DashboardClient({
     };
   }, []);
 
+  const refreshTamagotchiStats = async () => {
+    try {
+      const res = await fetch("/api/dashboard/task-stats");
+      if (!res.ok) return;
+      const data = (await res.json()) as PersonalTaskStats;
+      setTamagotchiStats(data);
+    } catch {}
+  };
+
   const completeTask = async () => {
     if (!confirmTask || busyComplete) return;
     setBusyComplete(true);
@@ -91,6 +108,7 @@ export default function DashboardClient({
         );
       }
       setTasks((prev) => prev.filter((task) => task.id !== confirmTask.id));
+      await refreshTamagotchiStats();
       toast.success("Задачу відмічено як виконану");
       setConfirmTask(null);
     } catch {
@@ -127,10 +145,10 @@ export default function DashboardClient({
       <div ref={modelRef} className="min-h-[360px]">
         {show3D ? (
           <TaskTamagotchi3D
-            doneToday={personalTaskStats.doneToday}
-            doneWeek={personalTaskStats.doneWeek}
-            myOpen={personalTaskStats.myOpen}
-            doneTotal={personalTaskStats.doneTotal}
+            doneToday={tamagotchiStats.doneToday}
+            doneWeek={tamagotchiStats.doneWeek}
+            myOpen={tamagotchiStats.myOpen}
+            doneTotal={tamagotchiStats.doneTotal}
           />
         ) : (
           <div className="h-[360px] bg-white/75 rounded-3xl border border-warm-100 shadow-cozy animate-pulse" />
