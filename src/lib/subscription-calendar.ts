@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { SubscriptionBillingCycle, SubscriptionStatus } from "@prisma/client";
 
-const AUTO_BILLING_MARKER = "[AUTO_BILLING]";
+export const AUTO_BILLING_MARKER = "[AUTO_BILLING]";
 
 function addBillingStep(date: Date, billingCycle: SubscriptionBillingCycle, step: number) {
   if (billingCycle === "YEARLY") {
