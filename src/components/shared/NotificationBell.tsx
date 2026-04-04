@@ -112,7 +112,7 @@ export default function NotificationBell() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-[min(100vw-2rem,22rem)] max-h-[min(24rem,70vh)] overflow-hidden flex flex-col rounded-2xl bg-white border border-warm-100 shadow-cozy z-[60]"
+            className="fixed left-3 right-3 top-14 max-h-[min(24rem,70vh)] overflow-hidden flex flex-col rounded-2xl bg-white border border-warm-100 shadow-cozy z-[60] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[22rem]"
           >
             <div className="px-4 py-3 border-b border-warm-100 flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-warm-800">Призначення</p>
