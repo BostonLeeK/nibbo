@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell } from "lucide-react";
@@ -25,6 +27,8 @@ export default function NotificationBell() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
 
   const load = useCallback(async () => {
     try {
@@ -60,11 +64,50 @@ export default function NotificationBell() {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (wrapRef.current?.contains(t) || panelRef.current?.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
+
+  const updatePanelPosition = useCallback(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const mobile = window.matchMedia("(max-width: 639px)").matches;
+    if (mobile) {
+      setPanelStyle({
+        position: "fixed",
+        left: 12,
+        right: 12,
+        top: r.bottom + 8,
+        zIndex: 100,
+        maxHeight: "min(24rem, 70vh)",
+      });
+    } else {
+      setPanelStyle({
+        position: "fixed",
+        top: r.bottom + 8,
+        right: Math.max(12, window.innerWidth - r.right),
+        width: "22rem",
+        zIndex: 100,
+        maxHeight: "min(24rem, 70vh)",
+      });
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePanelPosition();
+    window.addEventListener("resize", updatePanelPosition);
+    window.addEventListener("scroll", updatePanelPosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePanelPosition);
+      window.removeEventListener("scroll", updatePanelPosition, true);
+    };
+  }, [open, updatePanelPosition]);
 
   const markReadAndGo = async (taskId: string) => {
     await fetch("/api/notifications", {
@@ -105,63 +148,69 @@ export default function NotificationBell() {
         )}
       </motion.button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15 }}
-            className="fixed left-3 right-3 top-14 max-h-[min(24rem,70vh)] overflow-hidden flex flex-col rounded-2xl bg-white border border-warm-100 shadow-cozy z-[60] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[22rem]"
-          >
-            <div className="px-4 py-3 border-b border-warm-100 flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-warm-800">Призначення</p>
-              {count > 0 && (
-                <button
-                  type="button"
-                  onClick={() => markAll()}
-                  className="text-xs text-rose-600 hover:text-rose-700 font-medium whitespace-nowrap"
-                >
-                  Усі прочитані
-                </button>
-              )}
-            </div>
-            <div className="overflow-y-auto flex-1 p-2">
-              {loading ? (
-                <p className="text-xs text-warm-400 text-center py-6">Завантаження…</p>
-              ) : items.length === 0 ? (
-                <p className="text-xs text-warm-400 text-center py-6 px-3">
-                  Немає нових призначень на вас
-                </p>
-              ) : (
-                <ul className="space-y-1">
-                  {items.map((n) => (
-                    <li key={n.id}>
-                      <button
-                        type="button"
-                        onClick={() => markReadAndGo(n.id)}
-                        className={cn(
-                          "w-full text-left rounded-xl px-3 py-2.5 transition-colors",
-                          "hover:bg-rose-50/80 border border-transparent hover:border-rose-100"
-                        )}
-                      >
-                        <p className="text-sm font-medium text-warm-800 line-clamp-2">{n.title}</p>
-                        <p className="text-[11px] text-warm-400 mt-1">
-                          {n.boardEmoji} {n.boardName} · {n.columnName}
-                        </p>
-                        <p className="text-[11px] text-warm-500 mt-0.5">
-                          {n.creatorEmoji}{" "}
-                          {n.creatorName?.trim() || "Хтось"} призначив вас
-                        </p>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </motion.div>
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                ref={panelRef}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+                style={panelStyle}
+                className="overflow-hidden flex flex-col rounded-2xl bg-white border border-warm-100 shadow-cozy"
+              >
+                <div className="px-4 py-3 border-b border-warm-100 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-warm-800">Призначення</p>
+                  {count > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => markAll()}
+                      className="text-xs text-rose-600 hover:text-rose-700 font-medium whitespace-nowrap"
+                    >
+                      Усі прочитані
+                    </button>
+                  )}
+                </div>
+                <div className="overflow-y-auto flex-1 p-2">
+                  {loading ? (
+                    <p className="text-xs text-warm-400 text-center py-6">Завантаження…</p>
+                  ) : items.length === 0 ? (
+                    <p className="text-xs text-warm-400 text-center py-6 px-3">
+                      Немає нових призначень на вас
+                    </p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {items.map((n) => (
+                        <li key={n.id}>
+                          <button
+                            type="button"
+                            onClick={() => markReadAndGo(n.id)}
+                            className={cn(
+                              "w-full text-left rounded-xl px-3 py-2.5 transition-colors",
+                              "hover:bg-rose-50/80 border border-transparent hover:border-rose-100"
+                            )}
+                          >
+                            <p className="text-sm font-medium text-warm-800 line-clamp-2">{n.title}</p>
+                            <p className="text-[11px] text-warm-400 mt-1">
+                              {n.boardEmoji} {n.boardName} · {n.columnName}
+                            </p>
+                            <p className="text-[11px] text-warm-500 mt-0.5">
+                              {n.creatorEmoji}{" "}
+                              {n.creatorName?.trim() || "Хтось"} призначив вас
+                            </p>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </div>
   );
 }
