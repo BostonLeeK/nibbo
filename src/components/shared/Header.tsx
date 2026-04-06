@@ -77,6 +77,7 @@ export default function Header({ user: u, greeting, dateLabel, initialPoints, is
 
       <div className="flex items-center gap-1.5 md:gap-2">
         <Link
+          data-tour="xp-badge"
           href="/achievements"
           className="h-8 md:h-9 px-2.5 md:px-3 rounded-xl bg-gradient-to-r from-lavender-100 to-rose-100 border border-lavender-200 flex items-center gap-1.5 md:gap-2 hover:from-lavender-200 hover:to-rose-200 transition-colors"
         >
@@ -95,6 +96,7 @@ export default function Header({ user: u, greeting, dateLabel, initialPoints, is
           <LogOut size={16} />
         </motion.button>
         <button
+          data-tour="profile-button"
           type="button"
           onClick={() => setOpenProfile(true)}
           className="w-8 h-8 md:w-9 md:h-9 rounded-xl overflow-hidden ring-2 ring-rose-100"

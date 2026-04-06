@@ -47,6 +47,7 @@ model User {
   emoji         String    @default("🌸")
   familyId      String?
   familyRole    FamilyRole @default(MEMBER)
+  onboardingCompletedAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

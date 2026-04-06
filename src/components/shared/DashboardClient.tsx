@@ -135,14 +135,14 @@ export default function DashboardClient({
 
   return (
     <div className="space-y-5 md:space-y-6 max-w-6xl mx-auto">
-      <div>
+      <div data-tour="dashboard-home">
         <h2 className="text-xl md:text-2xl font-bold text-warm-800">
           Фокус дня 🌸
         </h2>
         <p className="text-warm-500 text-sm mt-1">Nibby росте, коли ти закриваєш задачі</p>
       </div>
 
-      <div ref={modelRef} className="min-h-[360px]">
+      <div ref={modelRef} data-tour="tamagotchi-3d" className="min-h-[360px]">
         {show3D ? (
           <TaskTamagotchi3D
             doneToday={tamagotchiStats.doneToday}
@@ -174,9 +174,9 @@ export default function DashboardClient({
 
       <div>
         <h3 className="font-semibold text-warm-700 mb-3 text-sm">Швидкий доступ ✨</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div data-tour="quick-actions" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {quickLinks.map((link) => (
-            <Link key={link.href} href={link.href}>
+            <Link key={link.href} href={link.href} data-tour={link.href === "/menu" ? "recipes-action" : undefined}>
               <motion.div
                 whileHover={{ y: -1, scale: cozyMotion.hoverScale }}
                 whileTap={{ scale: cozyMotion.tapScale }}

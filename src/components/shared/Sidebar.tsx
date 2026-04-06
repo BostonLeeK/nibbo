@@ -79,8 +79,20 @@ export default function Sidebar({ user: u }: SidebarProps) {
               <nav className="flex-1 space-y-2 overflow-y-auto">
                 {navItems.map((item) => {
                   const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  const tourKey =
+                    item.href === "/family"
+                      ? "nav-family"
+                      : item.href === "/menu"
+                        ? "nav-menu"
+                        : item.href === "/calendar"
+                          ? "nav-calendar"
+                          : item.href === "/notes"
+                            ? "nav-notes"
+                            : item.href === "/budget"
+                              ? "nav-budget"
+                              : undefined;
                   return (
-                    <Link key={item.href} href={item.href} onClick={() => setOpenMobileMenu(false)}>
+                    <Link key={item.href} href={item.href} onClick={() => setOpenMobileMenu(false)} data-tour={tourKey}>
                       <motion.div
                         whileTap={{ scale: 0.98 }}
                         className={cn(
@@ -126,7 +138,10 @@ export default function Sidebar({ user: u }: SidebarProps) {
           </motion.div>
         )}
       </AnimatePresence>
-      <aside className="hidden md:flex w-64 h-full bg-white/80 backdrop-blur-md border-r border-warm-100 flex-col shadow-cozy z-10">
+      <aside
+        data-tour="sidebar-nav"
+        className="hidden md:flex w-64 h-full bg-white/80 backdrop-blur-md border-r border-warm-100 flex-col shadow-cozy z-10"
+      >
         <div className="p-6 border-b border-warm-100">
           <div className="flex items-center gap-3">
             <Image src="/favicon.svg" alt="Nibbo logo" width={32} height={32} />
@@ -139,9 +154,21 @@ export default function Sidebar({ user: u }: SidebarProps) {
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            const tourKey =
+              item.href === "/family"
+                ? "nav-family"
+                : item.href === "/menu"
+                  ? "nav-menu"
+                  : item.href === "/calendar"
+                    ? "nav-calendar"
+                    : item.href === "/notes"
+                      ? "nav-notes"
+                      : item.href === "/budget"
+                        ? "nav-budget"
+                        : undefined;
             return (
               <div key={item.href}>
-                <Link href={item.href}>
+                <Link href={item.href} data-tour={tourKey}>
                   <motion.div
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.97 }}

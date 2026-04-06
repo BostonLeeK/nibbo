@@ -132,6 +132,7 @@ export default function NotificationBell() {
   return (
     <div ref={wrapRef} className="relative">
       <motion.button
+        data-tour="notifications-bell"
         type="button"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
