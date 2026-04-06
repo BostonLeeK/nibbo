@@ -60,6 +60,17 @@ interface MealPlannerProps {
 }
 
 type Tab = "planner" | "recipes" | "market";
+type RecipeForm = {
+  name: string;
+  description: string;
+  emoji: string;
+  category: string;
+  prepTime: string;
+  cookTime: string;
+  calories: string;
+  servings: string;
+  ingredients: Array<{ name: string; amount: string; unit: string }>;
+};
 
 function AnimatedRecipeImage({
   src,
@@ -136,7 +147,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
   const [viewRecipe, setViewRecipe] = useState<Recipe | null>(null);
   const [viewRecipeSource, setViewRecipeSource] = useState<"recipes" | "market">("recipes");
   const [marketLoadingId, setMarketLoadingId] = useState<string | null>(null);
-  const [newRecipe, setNewRecipe] = useState({
+  const [newRecipe, setNewRecipe] = useState<RecipeForm>({
     name: "", description: "", emoji: "🍽️", category: t.categories[1] ?? "",
     prepTime: "", cookTime: "", calories: "", servings: "4",
     ingredients: [{ name: "", amount: "", unit: "" }],

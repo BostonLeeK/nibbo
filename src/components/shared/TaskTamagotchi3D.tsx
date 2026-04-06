@@ -18,7 +18,7 @@ interface TaskTamagotchi3DProps {
 const DAY_TARGET = 3;
 const WEEK_TARGET = 12;
 const SPRITE_MODEL_URL = "/models/water-sprite.glb";
-type TamagotchiText = typeof I18N.uk.tamagotchi;
+type TamagotchiText = Record<keyof typeof I18N.uk.tamagotchi, string>;
 
 function clamp(value: number, min = 0, max = 100) {
   return Math.min(max, Math.max(min, value));

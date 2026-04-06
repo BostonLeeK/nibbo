@@ -22,13 +22,11 @@ interface HeaderProps {
     color: string;
     emoji: string;
   };
-  greeting: string;
-  dateLabel: string;
   initialPoints: number;
   isAdmin?: boolean;
 }
 
-export default function Header({ user: u, greeting, dateLabel, initialPoints, isAdmin = false }: HeaderProps) {
+export default function Header({ user: u, initialPoints, isAdmin = false }: HeaderProps) {
   const router = useRouter();
   const { language, setLanguage } = useAppLanguage();
   const t = I18N[language];
@@ -51,6 +49,33 @@ export default function Header({ user: u, greeting, dateLabel, initialPoints, is
     };
     void loadPoints();
   }, []);
+
+  const now = new Date();
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: "Europe/Kyiv",
+    }).format(now)
+  );
+  const greeting =
+    language === "en"
+      ? hour < 12
+        ? "Good morning"
+        : hour < 18
+          ? "Good afternoon"
+          : "Good evening"
+      : hour < 12
+        ? "Доброго ранку"
+        : hour < 18
+          ? "Доброго дня"
+          : "Доброго вечора";
+  const dateLabel = new Intl.DateTimeFormat(language === "en" ? "en-US" : "uk-UA", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Kyiv",
+  }).format(now);
 
   useEffect(() => {
     const onAwarded = (event: Event) => {
@@ -132,7 +157,7 @@ export default function Header({ user: u, greeting, dateLabel, initialPoints, is
           {user.image ? (
             <Image
               src={user.image}
-              alt={user.name || "User"}
+              alt={user.name || t.task.userFallback}
               width={36}
               height={36}
               className="w-8 h-8 md:w-9 md:h-9 object-cover"

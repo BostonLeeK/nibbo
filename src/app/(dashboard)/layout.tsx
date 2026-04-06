@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import Sidebar from "@/components/shared/Sidebar";
 import Header from "@/components/shared/Header";
 import OnboardingTour from "@/components/shared/OnboardingTour";
-import { dashboardHeaderLabels } from "@/lib/utils";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -49,8 +48,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
   if (!user) redirect("/login");
 
-  const { greeting, dateLabel } = dashboardHeaderLabels();
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden">
       <Sidebar user={user} />
@@ -58,8 +55,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <OnboardingTour shouldRun={!user.onboardingCompletedAt} userId={user.id} />
         <Header
           user={user}
-          greeting={greeting}
-          dateLabel={dateLabel}
           initialPoints={0}
           isAdmin={Boolean(session.user.isAdmin)}
         />

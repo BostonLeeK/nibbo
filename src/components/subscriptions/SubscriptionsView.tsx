@@ -101,7 +101,13 @@ function getCategoryEmoji(category: string | null) {
   return "💳";
 }
 
-function getDueInfo(nextBillingDate: string, t: typeof I18N.uk.subscriptions) {
+type DueInfoText = {
+  overdue: string;
+  today: string;
+  inDays: string;
+};
+
+function getDueInfo(nextBillingDate: string, t: DueInfoText) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const due = new Date(nextBillingDate);
