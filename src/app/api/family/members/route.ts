@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
+import { POINTS_PER_TASK_COMPLETION } from "@/lib/task-points";
+import { userCreditedTaskWhere } from "@/lib/task-xp";
 import { NextRequest, NextResponse } from "next/server";
 
 async function getCurrentFamilyUser(userId: string, familyId: string) {
@@ -54,9 +56,28 @@ export async function GET() {
       : Promise.resolve([]),
   ]);
 
+  const memberIds = members.map((member) => member.id);
+  const pointsPerMember = await Promise.all(
+    memberIds.map(async (memberId) => {
+      const completedTasks = await prisma.task.count({
+        where: {
+          ...userCreditedTaskWhere(memberId),
+          completed: true,
+          column: { board: { familyId } },
+        },
+      });
+      return [memberId, completedTasks * POINTS_PER_TASK_COMPLETION] as const;
+    })
+  );
+  const pointsByMemberId = Object.fromEntries(pointsPerMember);
+  const membersWithPoints = members.map((member) => ({
+    ...member,
+    points: pointsByMemberId[member.id] ?? 0,
+  }));
+
   return NextResponse.json({
     family,
-    members,
+    members: membersWithPoints,
     invitations,
     incomingInvitations,
     currentUserRole: currentUser.familyRole,

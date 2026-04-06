@@ -102,39 +102,6 @@ export default function AchievementsView({
       </div>
 
       <div className="bg-white/85 rounded-3xl border border-warm-100 p-5 md:p-6">
-        <h2 className="text-lg font-semibold text-warm-800">{t.achievementsTitle}</h2>
-        <div className="grid gap-3 md:grid-cols-2 mt-4">
-          {achievements.map((achievement) => {
-            const unlocked = points >= achievement.threshold;
-            return (
-              <div
-                key={achievement.id}
-                className={`rounded-2xl border px-4 py-3 transition-all ${
-                  unlocked
-                    ? "bg-gradient-to-r from-sage-50 to-lavender-50 border-sage-200 shadow-sm"
-                    : "bg-warm-50 border-warm-200"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-warm-800">
-                    {getAchievementTitle(achievement.id, achievement.title, t.badges)}
-                  </p>
-                  <span
-                    className={`text-xs font-semibold ${unlocked ? "text-sage-700" : "text-warm-400"}`}
-                  >
-                    {unlocked ? t.unlocked : t.locked}
-                  </span>
-                </div>
-                <p className="text-xs text-warm-500 mt-1">
-                  {t.threshold}: {achievement.threshold} XP
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="bg-white/85 rounded-3xl border border-warm-100 p-5 md:p-6">
         <h2 className="text-lg font-semibold text-warm-800">
           {t.rankingTitle}
         </h2>
@@ -175,6 +142,39 @@ export default function AchievementsView({
               </div>
             ))
           )}
+        </div>
+      </div>
+
+      <div className="bg-white/85 rounded-3xl border border-warm-100 p-5 md:p-6">
+        <h2 className="text-lg font-semibold text-warm-800">{t.achievementsTitle}</h2>
+        <div className="grid gap-3 md:grid-cols-2 mt-4">
+          {achievements.map((achievement) => {
+            const unlocked = points >= achievement.threshold;
+            return (
+              <div
+                key={achievement.id}
+                className={`rounded-2xl border px-4 py-3 transition-all ${
+                  unlocked
+                    ? "bg-gradient-to-r from-sage-50 to-lavender-50 border-sage-200 shadow-sm"
+                    : "bg-warm-50 border-warm-200"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-warm-800">
+                    {getAchievementTitle(achievement.id, achievement.title, t.badges)}
+                  </p>
+                  <span
+                    className={`text-xs font-semibold ${unlocked ? "text-sage-700" : "text-warm-400"}`}
+                  >
+                    {unlocked ? t.unlocked : t.locked}
+                  </span>
+                </div>
+                <p className="text-xs text-warm-500 mt-1">
+                  {t.threshold}: {achievement.threshold} XP
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

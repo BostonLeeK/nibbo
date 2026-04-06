@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { ensureUserFamily } from "@/lib/family";
 import { kyivStartOfTodayUtc, kyivStartOfWeekUtc } from "@/lib/kyiv-range";
 import { prisma } from "@/lib/prisma";
+import { userCreditedTaskWhere } from "@/lib/task-xp";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -11,7 +12,7 @@ export async function GET() {
   if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = session.user.id;
-  const mine = { OR: [{ assigneeId: userId }, { creatorId: userId }] };
+  const mine = userCreditedTaskWhere(userId);
   const startToday = kyivStartOfTodayUtc();
   const startWeek = kyivStartOfWeekUtc();
 

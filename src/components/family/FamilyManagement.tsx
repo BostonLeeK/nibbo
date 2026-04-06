@@ -13,6 +13,7 @@ type Member = {
   color: string;
   emoji: string;
   familyRole: "OWNER" | "MEMBER";
+  points: number;
 };
 
 type Invite = { id: string; email: string; createdAt: string };
@@ -291,7 +292,9 @@ export default function FamilyManagement() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-warm-800">{m.name || m.email || t.memberFallback}</p>
-                  <p className="text-xs text-warm-400">{m.familyRole === "OWNER" ? t.ownerRole : t.memberRole}</p>
+                  <p className="text-xs text-warm-400">
+                    {m.familyRole === "OWNER" ? t.ownerRole : t.memberRole} • {t.personalXp}: {m.points}
+                  </p>
                 </div>
               </div>
               {owner && m.id !== data?.currentUserId && (

@@ -5,6 +5,7 @@ import { kyivStartOfTodayUtc, kyivStartOfWeekUtc } from "@/lib/kyiv-range";
 import { redirect } from "next/navigation";
 import { ensureUserFamily } from "@/lib/family";
 import { AUTO_BILLING_MARKER } from "@/lib/subscription-calendar";
+import { userCreditedTaskWhere } from "@/lib/task-xp";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -13,7 +14,7 @@ export default async function DashboardPage() {
   const userId = session.user.id;
   const familyId = await ensureUserFamily(userId);
   if (!familyId) redirect("/login");
-  const mine = { OR: [{ assigneeId: userId }, { creatorId: userId }] };
+  const mine = userCreditedTaskWhere(userId);
 
   const startToday = kyivStartOfTodayUtc();
   const startWeek = kyivStartOfWeekUtc();

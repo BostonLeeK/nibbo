@@ -9,10 +9,8 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const familyId = await ensureUserFamily(session.user.id);
   if (!familyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const userId = session.user.id;
   const doneTotal = await prisma.task.count({
     where: {
-      OR: [{ assigneeId: userId }, { creatorId: userId }],
       completed: true,
       column: { board: { familyId } },
     },

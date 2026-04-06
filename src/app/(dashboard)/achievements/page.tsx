@@ -34,10 +34,9 @@ export default async function AchievementsPage() {
   const familyId = await ensureUserFamily(userId);
   if (!familyId) redirect("/login");
 
-  const [userCompletedTasks, familyInfoRows, leaderboard] = await Promise.all([
+  const [familyCompletedTasks, familyInfoRows, leaderboard] = await Promise.all([
     prisma.task.count({
       where: {
-        OR: [{ assigneeId: userId }, { creatorId: userId }],
         completed: true,
         column: { board: { familyId } },
       },
@@ -64,7 +63,7 @@ export default async function AchievementsPage() {
   ]);
 
   const familyInfo = familyInfoRows[0] ?? null;
-  const points = userCompletedTasks * POINTS_PER_TASK_COMPLETION;
+  const points = familyCompletedTasks * POINTS_PER_TASK_COMPLETION;
   const rows = leaderboard.map((row, index) => ({
     rank: index + 1,
     familyId: row.familyId,
