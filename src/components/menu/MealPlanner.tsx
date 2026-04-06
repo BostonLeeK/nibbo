@@ -225,6 +225,12 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const mealTypes: ("BREAKFAST" | "LUNCH" | "DINNER" | "SNACK")[] = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"];
+  const mealTypeLabels: Record<(typeof mealTypes)[number], string> = {
+    BREAKFAST: t.mealTypes.breakfast,
+    LUNCH: t.mealTypes.lunch,
+    DINNER: t.mealTypes.dinner,
+    SNACK: t.mealTypes.snack,
+  };
 
   const getMealForSlot = (date: Date, mealType: string) =>
     mealPlans.find(
@@ -636,7 +642,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                       <div key={mealType} className="grid grid-cols-[84px_1fr] gap-2 items-stretch">
                         <div className={`rounded-2xl px-2 py-3 text-center ${config.color} flex flex-col items-center justify-center`}>
                           <span className="text-lg">{config.emoji}</span>
-                          <span className="text-[11px] font-semibold text-warm-600">{config.label}</span>
+                          <span className="text-[11px] font-semibold text-warm-600">{mealTypeLabels[mealType]}</span>
                         </div>
                         {renderMealSlot(day, mealType)}
                       </div>
@@ -674,7 +680,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   <div key={mealType} className="grid grid-cols-8 gap-2 mb-3">
                     <div className={`rounded-2xl p-3 text-center ${config.color} flex flex-col items-center justify-center`}>
                       <span className="text-xl mb-1">{config.emoji}</span>
-                      <span className="text-xs font-semibold text-warm-600">{config.label}</span>
+                      <span className="text-xs font-semibold text-warm-600">{mealTypeLabels[mealType]}</span>
                     </div>
                     {weekDays.map((day) => (
                       <div key={`${mealType}-${format(day, "yyyy-MM-dd")}`}>

@@ -1,6 +1,7 @@
 export type AppLanguage = "uk" | "en";
 
 export const APP_LANGUAGE_KEY = "nibbo:language";
+export const APP_LANGUAGE_COOKIE_KEY = "nibbo_language";
 
 export const I18N = {
   uk: {
@@ -319,6 +320,8 @@ export const I18N = {
       subtitle: "Качай XP, відкривай досягнення і рухай сім’ю в топ рейтингу.",
       next: "Далі",
       allUnlocked: "Усі досягнення відкрито",
+      unlocked: "ВІДКРИТО",
+      locked: "ЗАКРИТО",
       achievementsTitle: "Досягнення",
       threshold: "Поріг",
       rankingTitle: "Рейтинг родин (XP)",
@@ -328,6 +331,14 @@ export const I18N = {
       yourFamilyRankSuffix: "місці з",
       familyNotInRating: "Ваша родина не бере участь у рейтингу. Увімкніть опцію в розділі Родина.",
       noFamilies: "Поки немає родин у рейтингу.",
+      badges: {
+        "first-steps": "Перша іскра",
+        "warm-routine": "Домашній ритм",
+        "cozy-family": "Серце дому",
+        "task-masters": "Майстер справ",
+        legend: "Хранитель затишку",
+        "master-of-nibbo": "Легенда оселі",
+      },
     },
     cozyTheme: {
       ariaLabel: "Тема атмосфери",
@@ -502,6 +513,12 @@ export const I18N = {
       toShoppingList: "У список «Покупки»",
       openShopping: "Відкрити розділ Покупки →",
       deleteRecipeConfirm: "Видалити «{name}»? Клітинки в тижневому меню з цим рецептом стануть порожніми.",
+      mealTypes: {
+        breakfast: "Сніданок",
+        lunch: "Обід",
+        dinner: "Вечеря",
+        snack: "Перекус",
+      },
       categories: ["Сніданок", "Обід", "Вечеря", "Перекус", "Суп", "Салат", "Десерт"],
     },
     tour: {
@@ -848,6 +865,8 @@ export const I18N = {
       subtitle: "Earn XP, unlock achievements, and push your family to the top of the ranking.",
       next: "Next",
       allUnlocked: "All achievements unlocked",
+      unlocked: "UNLOCKED",
+      locked: "LOCKED",
       achievementsTitle: "Achievements",
       threshold: "Threshold",
       rankingTitle: "Family ranking (XP)",
@@ -857,6 +876,14 @@ export const I18N = {
       yourFamilyRankSuffix: "place with",
       familyNotInRating: "Your family is not in the leaderboard. Enable the option in Family section.",
       noFamilies: "No families in leaderboard yet.",
+      badges: {
+        "first-steps": "First spark",
+        "warm-routine": "Home rhythm",
+        "cozy-family": "Heart of home",
+        "task-masters": "Task master",
+        legend: "Keeper of coziness",
+        "master-of-nibbo": "Legend of the home",
+      },
     },
     cozyTheme: {
       ariaLabel: "Atmosphere theme",
@@ -1031,6 +1058,12 @@ export const I18N = {
       toShoppingList: "To Shopping list",
       openShopping: "Open Shopping section →",
       deleteRecipeConfirm: "Delete \"{name}\"? Weekly menu cells with this recipe will become empty.",
+      mealTypes: {
+        breakfast: "Breakfast",
+        lunch: "Lunch",
+        dinner: "Dinner",
+        snack: "Snack",
+      },
       categories: ["Breakfast", "Lunch", "Dinner", "Snack", "Soup", "Salad", "Dessert"],
     },
     tour: {

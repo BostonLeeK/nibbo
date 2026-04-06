@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Nunito } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { cookies } from "next/headers";
+import { APP_LANGUAGE_COOKIE_KEY } from "@/lib/i18n";
+import { AppLanguageProvider } from "@/components/shared/AppLanguageProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -26,11 +29,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const cookieLanguage = cookieStore.get(APP_LANGUAGE_COOKIE_KEY)?.value;
+  const language = cookieLanguage === "en" ? "en" : "uk";
+
   return (
-    <html lang="uk" className={`${inter.variable} ${nunito.variable}`}>
+    <html lang={language} className={`${inter.variable} ${nunito.variable}`}>
       <body className="font-sans min-h-screen antialiased bg-gradient-to-br from-cream-50 via-rose-50/30 to-lavender-50/20">
-        {children}
+        <AppLanguageProvider initialLanguage={language}>
+          {children}
+        </AppLanguageProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{

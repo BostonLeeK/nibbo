@@ -31,6 +31,20 @@ interface AchievementsViewProps {
   achievements: Achievement[];
 }
 
+function getAchievementTitle(
+  achievementId: string,
+  fallback: string,
+  badges: Record<keyof typeof I18N.uk.achievements.badges, string>
+) {
+  if (achievementId === "first-steps") return badges["first-steps"];
+  if (achievementId === "warm-routine") return badges["warm-routine"];
+  if (achievementId === "cozy-family") return badges["cozy-family"];
+  if (achievementId === "task-masters") return badges["task-masters"];
+  if (achievementId === "legend") return badges.legend;
+  if (achievementId === "master-of-nibbo") return badges["master-of-nibbo"];
+  return fallback;
+}
+
 export default function AchievementsView({
   points,
   familyInfo,
@@ -70,7 +84,7 @@ export default function AchievementsView({
             </div>
             {nextAchievement ? (
               <span className="text-xs md:text-sm text-warm-600">
-                {t.next}: {nextAchievement.title} ({nextAchievement.threshold} XP)
+                {t.next}: {getAchievementTitle(nextAchievement.id, nextAchievement.title, t.badges)} ({nextAchievement.threshold} XP)
               </span>
             ) : (
               <span className="text-xs md:text-sm text-sage-700">
@@ -103,12 +117,12 @@ export default function AchievementsView({
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-warm-800">
-                    {achievement.title}
+                    {getAchievementTitle(achievement.id, achievement.title, t.badges)}
                   </p>
                   <span
                     className={`text-xs font-semibold ${unlocked ? "text-sage-700" : "text-warm-400"}`}
                   >
-                    {unlocked ? "UNLOCKED" : "LOCKED"}
+                    {unlocked ? t.unlocked : t.locked}
                   </span>
                 </div>
                 <p className="text-xs text-warm-500 mt-1">
