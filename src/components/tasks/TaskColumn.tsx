@@ -9,6 +9,8 @@ import { Plus, Pencil, Trash2, GripHorizontal } from "lucide-react";
 import { PRIORITY_CONFIG } from "@/lib/utils";
 import TaskCard from "./TaskCard";
 import type { TaskBoardColumn, TaskBoardTask, TaskBoardUser } from "@/lib/task-board";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 const TASK_PRIORITIES: TaskBoardTask["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 
@@ -42,6 +44,9 @@ export default function TaskColumn({
   onDeleteColumn,
   onEditTask,
 }: TaskColumnProps) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].task.column;
+  const userFallback = I18N[language].task.userFallback;
   const [isAdding, setIsAdding] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newAssigneeId, setNewAssigneeId] = useState("");
@@ -116,7 +121,7 @@ export default function TaskColumn({
             <button
               type="button"
               className="p-1 text-warm-300 hover:text-warm-500 cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
-              aria-label="Перетягнути колонку"
+              aria-label={t.dragAria}
               {...attributes}
               {...listeners}
             >
@@ -149,7 +154,7 @@ export default function TaskColumn({
               type="button"
               onClick={startRename}
               className="w-7 h-7 rounded-lg bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center transition-colors"
-              aria-label="Перейменувати"
+              aria-label={t.renameAria}
             >
               <Pencil size={12} />
             </button>
@@ -157,7 +162,7 @@ export default function TaskColumn({
               type="button"
               onClick={() => onDeleteColumn(column.id)}
               className="w-7 h-7 rounded-lg bg-warm-100 hover:bg-rose-100 text-warm-500 hover:text-rose-500 flex items-center justify-center transition-colors"
-              aria-label="Видалити колонку"
+              aria-label={t.deleteAria}
             >
               <Trash2 size={12} />
             </button>
@@ -206,7 +211,7 @@ export default function TaskColumn({
                 handleAdd();
               }
             }}
-            placeholder="Назва задачі..."
+            placeholder={t.taskTitlePlaceholder}
             rows={2}
             className="w-full bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 resize-none mb-2"
           />
@@ -230,10 +235,10 @@ export default function TaskColumn({
               onChange={(e) => setNewAssigneeId(e.target.value)}
               className="w-full bg-warm-50 rounded-xl px-3 py-2 text-xs text-warm-800 border border-warm-200 focus:border-rose-300 outline-none mb-2"
             >
-              <option value="">Виконавець: не призначено</option>
+              <option value="">{t.assigneeUnassigned}</option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.emoji} {u.name ?? "Користувач"}
+                  {u.emoji} {u.name ?? userFallback}
                 </option>
               ))}
             </select>
@@ -244,7 +249,7 @@ export default function TaskColumn({
               onClick={handleAdd}
               className="flex-1 bg-rose-500 text-white rounded-xl py-2 text-xs font-medium hover:bg-rose-600 transition-colors"
             >
-              Додати задачу
+              {t.addTask}
             </button>
             <button
               type="button"

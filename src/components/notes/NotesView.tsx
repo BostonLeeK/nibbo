@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Pin, Trash2, X, Search, Save, FolderPlus } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface NoteCategory {
@@ -37,6 +39,8 @@ export default function NotesView({
   initialCategories: NoteCategory[];
   currentUserId: string;
 }) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].notes;
   const [notes, setNotes] = useState(initialNotes);
   const [categories, setCategories] = useState(initialCategories);
   const [search, setSearch] = useState("");
@@ -101,7 +105,7 @@ export default function NotesView({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title: newNote.title || "Нотатка",
+        title: newNote.title || t.noteFallbackTitle,
         content: newNote.content,
         emoji: newNote.emoji,
         color: newNote.color,
@@ -113,7 +117,7 @@ export default function NotesView({
     setNotes((prev) => [note, ...prev]);
     setShowAdd(false);
     setNewNote({ title: "", content: "", emoji: "📓", color: "#faf3e0", tags: "", categoryId: "" });
-    toast.success("Нотатку збережено! 📓");
+    toast.success(t.toastSaved);
   };
 
   const handlePin = async (note: Note) => {
@@ -138,13 +142,13 @@ export default function NotesView({
           }
         : prev
     );
-    toast.success(updated.pinned ? "Закріплено 📌" : "Відкріплено");
+    toast.success(updated.pinned ? t.toastPinned : t.toastUnpinned);
   };
 
   const handleSaveEdit = async () => {
     if (!editingNote) return;
     const payload = {
-      title: editDraft.title || "Нотатка",
+      title: editDraft.title || t.noteFallbackTitle,
       content: editDraft.content,
       emoji: editDraft.emoji,
       color: editDraft.color,
@@ -160,7 +164,7 @@ export default function NotesView({
     setNotes((prev) => prev.map((n) => (n.id === editingNote.id ? updated : n)).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)));
     setEditingNote(updated);
     setEditDraft(noteToDraft(updated));
-    toast.success("Нотатку оновлено");
+    toast.success(t.toastUpdated);
   };
 
   const handleAddCategory = async () => {
@@ -179,7 +183,7 @@ export default function NotesView({
     setCategories((prev) => [...prev, category]);
     setShowAddCategory(false);
     setNewCategory({ name: "", emoji: "📂", color: "#f5f3ff", parentId: "" });
-    toast.success("Категорію додано");
+    toast.success(t.toastCategoryAdded);
   };
 
   const categoryOptions: NoteCategory[] = [];
@@ -196,7 +200,7 @@ export default function NotesView({
     await fetch(`/api/notes/${id}`, { method: "DELETE" });
     setNotes((prev) => prev.filter((n) => n.id !== id));
     setEditingNote(null);
-    toast.success("Нотатку видалено");
+    toast.success(t.toastDeleted);
   };
 
   const openAddNote = () => {
@@ -289,17 +293,17 @@ export default function NotesView({
         <div className="flex-1 relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Пошук нотаток..." className="w-full pl-10 pr-4 py-2.5 bg-white/80 rounded-2xl border border-warm-200 text-sm outline-none focus:border-rose-300 shadow-sm" />
+            placeholder={t.searchPlaceholder} className="w-full pl-10 pr-4 py-2.5 bg-white/80 rounded-2xl border border-warm-200 text-sm outline-none focus:border-rose-300 shadow-sm" />
         </div>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           onClick={openAddNote}
           className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cream-400 to-cream-300 text-warm-800 rounded-2xl text-sm font-medium shadow-cozy border border-cream-300">
-          <Plus size={16} /> Нова нотатка
+          <Plus size={16} /> {t.newNote}
         </motion.button>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddCategory(true)}
           className="flex items-center gap-2 px-4 py-2.5 bg-white border border-warm-200 text-warm-700 rounded-2xl text-sm font-medium shadow-sm">
-          <FolderPlus size={16} /> Категорія
+          <FolderPlus size={16} /> {t.category}
         </motion.button>
       </div>
 
@@ -310,7 +314,7 @@ export default function NotesView({
             onClick={() => setSelectedCategoryId(null)}
             className={`px-3 py-1.5 rounded-xl text-xs border ${selectedCategoryId === null ? "bg-rose-100 border-rose-300 text-rose-700" : "bg-white border-warm-200 text-warm-600"}`}
           >
-            📌 Корінь
+            📌 {t.root}
           </button>
           {rootCategories.map((cat) => (
             <button
@@ -349,7 +353,7 @@ export default function NotesView({
       {pinned.length > 0 && (
         <div className="mb-6">
           <p className="text-xs font-semibold text-warm-400 mb-3 flex items-center gap-1">
-            <Pin size={12} /> ЗАКРІПЛЕНІ
+            <Pin size={12} /> {t.pinnedTitle}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             {pinned.map((note) => (
@@ -362,7 +366,7 @@ export default function NotesView({
       {/* All notes */}
       {unpinned.length > 0 && (
         <div>
-          {pinned.length > 0 && <p className="text-xs font-semibold text-warm-400 mb-3">ІНШІ</p>}
+          {pinned.length > 0 && <p className="text-xs font-semibold text-warm-400 mb-3">{t.othersTitle}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             {unpinned.map((note) => (
               <NoteCard key={note.id} note={note} />
@@ -374,8 +378,8 @@ export default function NotesView({
       {visibleNotes.length === 0 && (
         <div className="text-center py-16 text-warm-400">
           <div className="text-5xl mb-4">📓</div>
-          <p className="text-lg font-semibold mb-2">Нотаток поки немає</p>
-          <p className="text-sm">Записуйте ідеї, плани, думки</p>
+          <p className="text-lg font-semibold mb-2">{t.emptyTitle}</p>
+          <p className="text-sm">{t.emptyHint}</p>
         </div>
       )}
 
@@ -402,7 +406,7 @@ export default function NotesView({
               />
               <div className="overflow-y-auto overscroll-contain p-5 flex-1 min-h-0">
                 <div className="flex items-center justify-between gap-2 mb-4">
-                  <p className="text-sm font-semibold text-warm-800">Нова нотатка</p>
+                  <p className="text-sm font-semibold text-warm-800">{t.newNoteModalTitle}</p>
                   <button
                     type="button"
                     onClick={() => setShowAdd(false)}
@@ -411,7 +415,7 @@ export default function NotesView({
                     <X size={16} />
                   </button>
                 </div>
-                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">Емодзі</p>
+                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">{t.emojiLabel}</p>
                 <div className="flex flex-wrap gap-1.5 mb-4 max-h-20 overflow-y-auto">
                   {NOTE_EMOJIS.map((e) => (
                     <button
@@ -428,7 +432,7 @@ export default function NotesView({
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">Колір смуги</p>
+                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">{t.stripColorLabel}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {NOTE_COLORS.map((c) => (
                     <button
@@ -445,20 +449,20 @@ export default function NotesView({
                 <input
                   value={newNote.title}
                   onChange={(e) => setNewNote((p) => ({ ...p, title: e.target.value }))}
-                  placeholder="Заголовок"
+                  placeholder={t.titlePlaceholder}
                   className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm font-semibold text-warm-900 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 mb-3"
                 />
                 <textarea
                   value={newNote.content}
                   onChange={(e) => setNewNote((p) => ({ ...p, content: e.target.value }))}
-                  placeholder="Текст нотатки…"
+                  placeholder={t.contentPlaceholder}
                   rows={5}
                   className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm text-warm-800 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 resize-none mb-3"
                 />
                 <input
                   value={newNote.tags}
                   onChange={(e) => setNewNote((p) => ({ ...p, tags: e.target.value }))}
-                  placeholder="Теги через кому"
+                  placeholder={t.tagsPlaceholder}
                   className="w-full bg-warm-50 rounded-xl px-4 py-2.5 text-xs text-warm-700 placeholder:text-warm-400 outline-none border border-warm-200 mb-4"
                 />
                 <select
@@ -466,7 +470,7 @@ export default function NotesView({
                   onChange={(e) => setNewNote((p) => ({ ...p, categoryId: e.target.value }))}
                   className="w-full bg-warm-50 rounded-xl px-4 py-2.5 text-xs text-warm-700 outline-none border border-warm-200 mb-4"
                 >
-                  <option value="">Корінь</option>
+                  <option value="">{t.root}</option>
                   {categoryOptions.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.parentId ? "↳ " : ""}{c.emoji} {c.name}
@@ -479,7 +483,7 @@ export default function NotesView({
                   onClick={handleAdd}
                   className="w-full py-3 bg-gradient-to-r from-rose-400 to-rose-500 text-white rounded-2xl font-semibold text-sm"
                 >
-                  Зберегти {newNote.emoji}
+                  {t.save} {newNote.emoji}
                 </motion.button>
               </div>
             </motion.div>
@@ -541,7 +545,7 @@ export default function NotesView({
                     </button>
                   </div>
                 </div>
-                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">Емодзі</p>
+                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">{t.emojiLabel}</p>
                 <div className="flex flex-wrap gap-1.5 mb-4 max-h-20 overflow-y-auto">
                   {NOTE_EMOJIS.map((e) => (
                     <button
@@ -558,7 +562,7 @@ export default function NotesView({
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">Колір смуги</p>
+                <p className="text-[10px] font-medium text-warm-400 uppercase tracking-wide mb-2">{t.stripColorLabel}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {NOTE_COLORS.map((c) => (
                     <button
@@ -575,20 +579,20 @@ export default function NotesView({
                 <input
                   value={editDraft.title}
                   onChange={(e) => setEditDraft((p) => ({ ...p, title: e.target.value }))}
-                  placeholder="Заголовок"
+                  placeholder={t.titlePlaceholder}
                   className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm font-semibold text-warm-900 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 mb-3"
                 />
                 <textarea
                   value={editDraft.content}
                   onChange={(e) => setEditDraft((p) => ({ ...p, content: e.target.value }))}
-                  placeholder="Текст нотатки…"
+                  placeholder={t.contentPlaceholder}
                   rows={5}
                   className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm text-warm-800 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 resize-none mb-3"
                 />
                 <input
                   value={editDraft.tags}
                   onChange={(e) => setEditDraft((p) => ({ ...p, tags: e.target.value }))}
-                  placeholder="Теги через кому"
+                  placeholder={t.tagsPlaceholder}
                   className="w-full bg-warm-50 rounded-xl px-4 py-2.5 text-xs text-warm-700 placeholder:text-warm-400 outline-none border border-warm-200 mb-4"
                 />
                 <select
@@ -596,7 +600,7 @@ export default function NotesView({
                   onChange={(e) => setEditDraft((p) => ({ ...p, categoryId: e.target.value }))}
                   className="w-full bg-warm-50 rounded-xl px-4 py-2.5 text-xs text-warm-700 outline-none border border-warm-200 mb-4"
                 >
-                  <option value="">Корінь</option>
+                  <option value="">{t.root}</option>
                   {categoryOptions.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.parentId ? "↳ " : ""}{c.emoji} {c.name}
@@ -609,7 +613,7 @@ export default function NotesView({
                   onClick={handleSaveEdit}
                   className="w-full py-3 bg-gradient-to-r from-rose-400 to-rose-500 text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2"
                 >
-                  <Save size={14} /> Зберегти зміни
+                  <Save size={14} /> {t.saveChanges}
                 </motion.button>
                 {(editingNote.tags.length > 0 || editDraft.tags) && (
                   <div className="flex gap-1 flex-wrap mt-4 pt-4 border-t border-warm-100">
@@ -647,7 +651,7 @@ export default function NotesView({
             >
               <div className="bg-white rounded-3xl shadow-cozy-lg p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm font-semibold text-warm-800">Нова категорія</p>
+                  <p className="text-sm font-semibold text-warm-800">{t.newCategoryTitle}</p>
                   <button type="button" onClick={() => setShowAddCategory(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center">
                     <X size={15} />
                   </button>
@@ -655,7 +659,7 @@ export default function NotesView({
                 <input
                   value={newCategory.name}
                   onChange={(e) => setNewCategory((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="Назва категорії"
+                  placeholder={t.categoryNamePlaceholder}
                   className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm text-warm-800 border border-warm-200 outline-none mb-3"
                 />
                 <select
@@ -663,7 +667,7 @@ export default function NotesView({
                   onChange={(e) => setNewCategory((p) => ({ ...p, parentId: e.target.value }))}
                   className="w-full bg-warm-50 rounded-xl px-4 py-2.5 text-xs text-warm-700 border border-warm-200 outline-none mb-3"
                 >
-                  <option value="">Коренева категорія</option>
+                  <option value="">{t.rootCategory}</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
                   ))}
@@ -696,7 +700,7 @@ export default function NotesView({
                   onClick={handleAddCategory}
                   className="w-full py-3 bg-gradient-to-r from-rose-400 to-rose-500 text-white rounded-2xl font-semibold text-sm"
                 >
-                  Створити категорію
+                  {t.createCategory}
                 </button>
               </div>
             </motion.div>

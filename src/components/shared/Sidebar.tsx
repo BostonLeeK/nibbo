@@ -7,17 +7,19 @@ import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
+import { I18N } from "@/lib/i18n";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
 
 const navItems = [
-  { href: "/dashboard", label: "Головна", emoji: "🏠" },
-  { href: "/family", label: "Родина", emoji: "👨‍👩‍👧‍👦" },
-  { href: "/tasks", label: "Задачі", emoji: "📋" },
-  { href: "/calendar", label: "Календар", emoji: "📅" },
-  { href: "/menu", label: "Меню", emoji: "🍽️" },
-  { href: "/notes", label: "Нотатки", emoji: "📓" },
-  { href: "/budget", label: "Бюджет", emoji: "💰" },
-  { href: "/subscriptions", label: "Підписки", emoji: "📺" },
-  { href: "/shopping", label: "Покупки", emoji: "🛒" },
+  { href: "/dashboard", key: "dashboard", emoji: "🏠" },
+  { href: "/family", key: "family", emoji: "👨‍👩‍👧‍👦" },
+  { href: "/tasks", key: "tasks", emoji: "📋" },
+  { href: "/calendar", key: "calendar", emoji: "📅" },
+  { href: "/menu", key: "menu", emoji: "🍽️" },
+  { href: "/notes", key: "notes", emoji: "📓" },
+  { href: "/budget", key: "budget", emoji: "💰" },
+  { href: "/subscriptions", key: "subscriptions", emoji: "📺" },
+  { href: "/shopping", key: "shopping", emoji: "🛒" },
 ];
 
 interface SidebarProps {
@@ -32,6 +34,8 @@ interface SidebarProps {
 
 export default function Sidebar({ user: u }: SidebarProps) {
   const user = u ?? { name: null, email: null, image: null, color: "#f43f5e", emoji: "🌸" };
+  const { language } = useAppLanguage();
+  const t = I18N[language];
   const pathname = usePathname();
   const [openMobileMenu, setOpenMobileMenu] = useState(false);
 
@@ -47,7 +51,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
             type="button"
             onClick={() => setOpenMobileMenu(true)}
             className="w-9 h-9 rounded-xl bg-white border border-warm-200 text-warm-700 flex items-center justify-center"
-            aria-label="Відкрити меню"
+            aria-label={t.openMenuAria}
           >
             <Menu size={18} />
           </button>
@@ -65,13 +69,13 @@ export default function Sidebar({ user: u }: SidebarProps) {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Image src="/favicon.svg" alt="Nibbo logo" width={30} height={30} />
-                  <h2 className="text-xl font-bold text-warm-800">Меню</h2>
+                  <h2 className="text-xl font-bold text-warm-800">{t.mobileMenuTitle}</h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setOpenMobileMenu(false)}
                   className="w-10 h-10 rounded-xl bg-warm-100 text-warm-700 flex items-center justify-center"
-                  aria-label="Закрити меню"
+                  aria-label={t.closeMenuAria}
                 >
                   <X size={20} />
                 </button>
@@ -103,7 +107,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
                         )}
                       >
                         <span className="text-2xl">{item.emoji}</span>
-                        <span>{item.label}</span>
+                        <span>{t.nav[item.key as keyof typeof t.nav]}</span>
                       </motion.div>
                     </Link>
                   );
@@ -147,7 +151,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
             <Image src="/favicon.svg" alt="Nibbo logo" width={32} height={32} />
             <div>
               <h1 className="font-bold text-warm-800 text-lg leading-tight">Nibbo</h1>
-              <p className="text-xs text-warm-400">Ваш цифровий дім</p>
+              <p className="text-xs text-warm-400">{t.dashboardHomeTagline}</p>
             </div>
           </div>
         </div>
@@ -187,7 +191,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
                       />
                     )}
                     <span className="text-xl relative z-10">{item.emoji}</span>
-                    <span className="relative z-10">{item.label}</span>
+                    <span className="relative z-10">{t.nav[item.key as keyof typeof t.nav]}</span>
                     {isActive && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-rose-400 relative z-10" />
                     )}

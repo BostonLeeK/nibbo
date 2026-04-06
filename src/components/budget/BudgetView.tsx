@@ -6,6 +6,8 @@ import { Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface Category { id: string; name: string; emoji: string; color: string; budget: number | null; }
@@ -19,6 +21,8 @@ export default function BudgetView({ initialCategories, initialExpenses, current
   initialExpenses: Expense[];
   currentUserId: string;
 }) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].budget;
   const [categories, setCategories] = useState(initialCategories);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [showAddExpense, setShowAddExpense] = useState(false);
@@ -50,13 +54,13 @@ export default function BudgetView({ initialCategories, initialExpenses, current
     setExpenses((prev) => [expense, ...prev]);
     setShowAddExpense(false);
     setNewExpense({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
-    toast.success("Витрату додано! 💰");
+    toast.success(t.toastExpenseAdded);
   };
 
   const handleDeleteExpense = async (id: string) => {
     await fetch(`/api/budget/${id}`, { method: "DELETE" });
     setExpenses((prev) => prev.filter((e) => e.id !== id));
-    toast.success("Видалено");
+    toast.success(t.toastDeleted);
   };
 
   const handleAddCategory = async () => {
@@ -70,7 +74,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
     setCategories((prev) => [...prev, cat]);
     setShowAddCategory(false);
     setNewCat({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
-    toast.success("Категорію додано! ✅");
+    toast.success(t.toastCategoryAdded);
   };
 
   return (
@@ -78,15 +82,15 @@ export default function BudgetView({ initialCategories, initialExpenses, current
       <div className="space-y-5 md:space-y-6 xl:sticky xl:top-4 self-start">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl p-4 md:p-6 text-white shadow-cozy">
-          <p className="text-sage-100 text-sm mb-1">Витрачено цього місяця</p>
+          <p className="text-sage-100 text-sm mb-1">{t.spentThisMonth}</p>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">{formatCurrency(totalSpent)}</h2>
           <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
             <div className="bg-white/20 rounded-2xl px-4 py-2">
-              <p className="text-xs text-sage-100">Транзакцій</p>
+              <p className="text-xs text-sage-100">{t.transactions}</p>
               <p className="font-bold">{expenses.length}</p>
             </div>
             <div className="bg-white/20 rounded-2xl px-4 py-2">
-              <p className="text-xs text-sage-100">Категорій</p>
+              <p className="text-xs text-sage-100">{t.categoriesCount}</p>
               <p className="font-bold">{categories.length}</p>
             </div>
           </div>
@@ -94,9 +98,9 @@ export default function BudgetView({ initialCategories, initialExpenses, current
 
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-warm-800">Категорії 📊</h3>
+            <h3 className="font-bold text-warm-800">{t.categoriesTitle}</h3>
             <button onClick={() => setShowAddCategory(true)} className="text-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1">
-              <Plus size={14} /> Категорія
+              <Plus size={14} /> {t.category}
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3">
@@ -113,11 +117,11 @@ export default function BudgetView({ initialCategories, initialExpenses, current
                   <p className="text-lg font-bold text-warm-800">{formatCurrency(cat.spent)}</p>
                   {cat.budget && (
                     <>
-                      <p className="text-xs text-warm-400 mb-2">з {formatCurrency(cat.budget)}</p>
+                      <p className="text-xs text-warm-400 mb-2">{t.outOf} {formatCurrency(cat.budget)}</p>
                       <div className="h-1.5 bg-warm-100 rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: overBudget ? "#f43f5e" : cat.color }} />
                       </div>
-                      {overBudget && <p className="text-xs text-rose-500 mt-1">⚠️ Перевищено</p>}
+                      {overBudget && <p className="text-xs text-rose-500 mt-1">{t.overBudget}</p>}
                     </>
                   )}
                 </motion.div>
@@ -129,11 +133,11 @@ export default function BudgetView({ initialCategories, initialExpenses, current
 
       <div className="min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-          <h3 className="font-bold text-warm-800">Транзакції цього місяця</h3>
+          <h3 className="font-bold text-warm-800">{t.monthTransactions}</h3>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             onClick={() => setShowAddExpense(true)}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto">
-            <Plus size={14} /> Додати витрату
+            <Plus size={14} /> {t.addExpense}
           </motion.button>
         </div>
 
@@ -141,7 +145,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
           {expenses.length === 0 ? (
             <div className="text-center py-12 text-warm-400">
               <div className="text-4xl mb-3">💸</div>
-              <p>Витрат поки немає</p>
+              <p>{t.emptyExpenses}</p>
             </div>
           ) : (
             <div className="divide-y divide-warm-50">
@@ -186,17 +190,17 @@ export default function BudgetView({ initialCategories, initialExpenses, current
               className="relative z-10 w-full max-w-md">
               <div className="bg-white rounded-3xl shadow-cozy-lg p-4 md:p-6">
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-lg font-bold text-warm-800">Нова витрата 💰</h2>
+                  <h2 className="text-lg font-bold text-warm-800">{t.newExpenseTitle}</h2>
                   <button onClick={() => setShowAddExpense(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
                 </div>
                 <div className="space-y-4">
                   <input value={newExpense.title} onChange={(e) => setNewExpense((p) => ({ ...p, title: e.target.value }))}
-                    placeholder="На що витратили?" className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
+                    placeholder={t.expenseTitlePlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
                   <input type="number" value={newExpense.amount} onChange={(e) => setNewExpense((p) => ({ ...p, amount: e.target.value }))}
-                    placeholder="Сума (грн)" className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
+                    placeholder={t.amountPlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
                   <select value={newExpense.categoryId} onChange={(e) => setNewExpense((p) => ({ ...p, categoryId: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400">
-                    <option value="">{"Категорія (необов'язково)"}</option>
+                    <option value="">{t.optionalCategory}</option>
                     {categories.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
                   </select>
                   <input type="date" value={newExpense.date} onChange={(e) => setNewExpense((p) => ({ ...p, date: e.target.value }))}
@@ -204,7 +208,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddExpense}
                     className="w-full py-3 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl font-semibold">
-                    Зберегти 💰
+                    {t.save} 💰
                   </motion.button>
                 </div>
               </div>
@@ -226,7 +230,7 @@ export default function BudgetView({ initialCategories, initialExpenses, current
               className="relative z-10 w-full max-w-sm">
               <div className="bg-white rounded-3xl shadow-cozy-lg p-4 md:p-6">
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-lg font-bold text-warm-800">Нова категорія</h2>
+                  <h2 className="text-lg font-bold text-warm-800">{t.newCategoryTitle}</h2>
                   <button onClick={() => setShowAddCategory(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
                 </div>
                 <div className="space-y-4">
@@ -246,12 +250,12 @@ export default function BudgetView({ initialCategories, initialExpenses, current
                     ))}
                   </div>
                   <input value={newCat.name} onChange={(e) => setNewCat((p) => ({ ...p, name: e.target.value }))}
-                    placeholder="Назва категорії" className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
+                    placeholder={t.categoryNamePlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
                   <input type="number" value={newCat.budget} onChange={(e) => setNewCat((p) => ({ ...p, budget: e.target.value }))}
-                    placeholder="Місячний бюджет (грн)" className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
+                    placeholder={t.monthlyBudgetPlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleAddCategory}
                     className="w-full py-3 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl font-semibold">
-                    Створити {newCat.emoji}
+                    {t.create} {newCat.emoji}
                   </motion.button>
                 </div>
               </div>

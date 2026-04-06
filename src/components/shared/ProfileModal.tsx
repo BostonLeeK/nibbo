@@ -6,6 +6,8 @@ import { X, Upload } from "lucide-react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
 import { USER_COLORS, USER_EMOJIS } from "@/lib/utils";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 interface UserProfile {
   id: string;
@@ -25,6 +27,8 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ open, onClose, user, onSaved }: ProfileModalProps) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].profile;
   const [name, setName] = useState(user.name ?? "");
   const [emoji, setEmoji] = useState(user.emoji || "🌸");
   const [color, setColor] = useState(user.color || "#f43f5e");
@@ -124,9 +128,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
   const leaveFamily = async () => {
     if (currentUserRole !== "MEMBER" && currentUserRole !== "OWNER") return;
     const ok = confirm(
-      currentUserRole === "OWNER"
-        ? "Вийти з цієї сім'ї? Якщо в сім'ї є інші учасники, власником стане перший з них. Тобі буде створено нову власну сім'ю."
-        : "Вийти з цієї сім'ї? Тобі буде створено нову власну сім'ю."
+      currentUserRole === "OWNER" ? t.leaveFamilyOwnerConfirm : t.leaveFamilyMemberConfirm
     );
     if (!ok) return;
     setFamilyBusy(true);
@@ -148,9 +150,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
   };
 
   const acceptInvite = async (inviteId: string, familyName: string) => {
-    const ok = confirm(
-      `Прийняти запрошення до сім'ї «${familyName}»?\nТи вийдеш зі своєї поточної сім'ї. Якщо вона порожня, її буде видалено.`
-    );
+    const ok = confirm(t.acceptInviteConfirm.replace("{familyName}", familyName));
     if (!ok) return;
     setFamilyBusy(true);
     try {
@@ -192,7 +192,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
           >
             <div className="bg-white rounded-3xl shadow-cozy-lg p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-warm-800">Профіль</h2>
+                <h2 className="text-lg font-bold text-warm-800">{t.title}</h2>
                 <button
                   type="button"
                   onClick={onClose}
@@ -204,7 +204,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   {user.image ? (
-                    <Image src={user.image} alt={user.name || "User"} width={52} height={52} className="rounded-2xl ring-2 ring-rose-100 object-cover" unoptimized={user.image.startsWith("/api/users/avatar/")} />
+                    <Image src={user.image} alt={user.name || t.userFallback} width={52} height={52} className="rounded-2xl ring-2 ring-rose-100 object-cover" unoptimized={user.image.startsWith("/api/users/avatar/")} />
                   ) : (
                     <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-2xl text-white" style={{ backgroundColor: color }}>
                       {emoji}
@@ -212,18 +212,18 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                   )}
                   <label className="inline-flex items-center gap-2 px-3 py-2 text-xs bg-warm-100 hover:bg-warm-200 text-warm-700 rounded-xl cursor-pointer">
                     <Upload size={13} />
-                    Завантажити фото
+                    {t.uploadPhoto}
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => onUpload(e.target.files?.[0] ?? null)} />
                   </label>
                 </div>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ім'я"
+                  placeholder={t.namePlaceholder}
                   className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm text-warm-800 border border-warm-200 outline-none focus:border-rose-300"
                 />
                 <div>
-                  <p className="text-xs font-semibold text-warm-500 mb-2">Іконка</p>
+                  <p className="text-xs font-semibold text-warm-500 mb-2">{t.iconLabel}</p>
                   <div className="flex flex-wrap gap-2">
                     {USER_EMOJIS.map((e) => (
                       <button
@@ -238,7 +238,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-warm-500 mb-2">Колір</p>
+                  <p className="text-xs font-semibold text-warm-500 mb-2">{t.colorLabel}</p>
                   <div className="flex gap-2">
                     {USER_COLORS.map((c) => (
                       <button
@@ -257,10 +257,10 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                   onClick={save}
                   className="w-full py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-medium disabled:opacity-60"
                 >
-                  Зберегти
+                  {t.save}
                 </button>
                 <div className="pt-2 border-t border-warm-100">
-                  <p className="text-xs font-semibold text-warm-500 mb-2">Родина</p>
+                  <p className="text-xs font-semibold text-warm-500 mb-2">{t.familyTitle}</p>
                   <div className="space-y-2 max-h-28 overflow-y-auto pr-1">
                     {familyMembers.map((m) => (
                       <div key={m.id} className="flex items-center gap-2 bg-warm-50 rounded-xl px-3 py-2">
@@ -270,18 +270,18 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                         >
                           {m.emoji || "🌸"}
                         </div>
-                        <span className="text-xs text-warm-700">{m.name || m.email || "Учасник"}</span>
+                        <span className="text-xs text-warm-700">{m.name || m.email || t.memberFallback}</span>
                       </div>
                     ))}
                     {pendingInvites.map((i) => (
                       <div key={i.id} className="text-xs text-warm-400 px-1">
-                        Запрошено: {i.email}
+                        {t.invitedLabel} {i.email}
                       </div>
                     ))}
                     {incomingInvites.map((i) => (
                       <div key={i.id} className="flex items-center justify-between gap-2 bg-sage-50 rounded-xl px-2 py-1.5">
                         <div className="min-w-0">
-                          <p className="text-xs text-sage-700 truncate">Запрошення в: {i.family.name}</p>
+                          <p className="text-xs text-sage-700 truncate">{t.inviteToLabel} {i.family.name}</p>
                           <p className="text-[11px] text-sage-500 truncate">{i.email}</p>
                         </div>
                         <button
@@ -290,12 +290,12 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                           onClick={() => acceptInvite(i.id, i.family.name)}
                           className="px-2.5 py-1 text-[11px] rounded-lg bg-sage-500 hover:bg-sage-600 text-white disabled:opacity-60"
                         >
-                          Прийняти
+                          {t.accept}
                         </button>
                       </div>
                     ))}
                     {!familyBusy && familyMembers.length === 0 && (
-                      <p className="text-xs text-warm-400 px-1">Поки тільки ти в родині</p>
+                      <p className="text-xs text-warm-400 px-1">{t.onlyYouInFamily}</p>
                     )}
                   </div>
                   {currentUserRole === "OWNER" ? (
@@ -303,7 +303,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                       <input
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
-                        placeholder="email рідного"
+                        placeholder={t.inviteEmailPlaceholder}
                         className="flex-1 bg-warm-50 rounded-xl px-3 py-2 text-xs text-warm-800 border border-warm-200 outline-none focus:border-rose-300"
                       />
                       <button
@@ -312,7 +312,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                         onClick={invite}
                         className="px-3 py-2 text-xs rounded-xl bg-lavender-500 hover:bg-lavender-600 text-white disabled:opacity-60"
                       >
-                        Додати
+                        {t.add}
                       </button>
                     </div>
                   ) : currentUserRole === "MEMBER" ? (
@@ -322,7 +322,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                       onClick={leaveFamily}
                       className="mt-2 w-full px-3 py-2 text-xs rounded-xl bg-rose-500 hover:bg-rose-600 text-white disabled:opacity-60"
                     >
-                      Вийти із сім’ї
+                      {t.leaveFamily}
                     </button>
                   ) : (
                     <div className="mt-2 h-8 rounded-xl bg-warm-50 border border-warm-100" />

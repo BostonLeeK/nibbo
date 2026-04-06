@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 type Member = {
   id: string;
@@ -26,6 +28,8 @@ type Payload = {
 };
 
 export default function FamilyManagement() {
+  const { language } = useAppLanguage();
+  const t = I18N[language].family;
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -43,7 +47,7 @@ export default function FamilyManagement() {
       setFamilyName(payload.family?.name || "");
       setShareInLeaderboard(Boolean(payload.family?.shareInLeaderboard));
     } catch {
-      toast.error("Не вдалося завантажити родину");
+      toast.error(t.toastLoadError);
     } finally {
       setLoading(false);
     }
@@ -65,10 +69,10 @@ export default function FamilyManagement() {
       });
       if (!res.ok) throw new Error("fail");
       setInviteEmail("");
-      toast.success("Запрошення надіслано");
+      toast.success(t.toastInviteSent);
       await load();
     } catch {
-      toast.error("Не вдалося запросити");
+      toast.error(t.toastInviteError);
     } finally {
       setBusy(false);
     }
@@ -83,10 +87,10 @@ export default function FamilyManagement() {
         body: JSON.stringify({ inviteId }),
       });
       if (!res.ok) throw new Error("fail");
-      toast.success("Запрошення скасовано");
+      toast.success(t.toastInviteCancelled);
       await load();
     } catch {
-      toast.error("Не вдалося скасувати");
+      toast.error(t.toastCancelError);
     } finally {
       setBusy(false);
     }
@@ -101,19 +105,17 @@ export default function FamilyManagement() {
         body: JSON.stringify({ memberId }),
       });
       if (!res.ok) throw new Error("fail");
-      toast.success("Учасника видалено з родини");
+      toast.success(t.toastMemberRemoved);
       await load();
     } catch {
-      toast.error("Не вдалося видалити");
+      toast.error(t.toastMemberRemoveError);
     } finally {
       setBusy(false);
     }
   };
 
   const acceptInvite = async (inviteId: string, familyName: string) => {
-    const ok = confirm(
-      `Прийняти запрошення до сім'ї «${familyName}»?\nТи вийдеш зі своєї поточної сім'ї. Якщо вона порожня, її буде видалено.`
-    );
+    const ok = confirm(t.acceptInviteConfirm.replace("{familyName}", familyName));
     if (!ok) return;
     setBusy(true);
     try {
@@ -126,10 +128,10 @@ export default function FamilyManagement() {
         const data = await res.json().catch(() => ({} as { error?: string }));
         throw new Error(data.error || "fail");
       }
-      toast.success("Запрошення прийнято");
+      toast.success(t.toastInviteAccepted);
       window.location.reload();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не вдалося прийняти");
+      toast.error(e instanceof Error ? e.message : t.toastAcceptError);
     } finally {
       setBusy(false);
     }
@@ -144,10 +146,10 @@ export default function FamilyManagement() {
         body: JSON.stringify({ ownerId }),
       });
       if (!res.ok) throw new Error("fail");
-      toast.success("Передано права власника");
+      toast.success(t.toastOwnershipTransferred);
       await load();
     } catch {
-      toast.error("Не вдалося передати права");
+      toast.error(t.toastOwnershipTransferError);
     } finally {
       setBusy(false);
     }
@@ -157,7 +159,7 @@ export default function FamilyManagement() {
 
   const saveFamilySettings = async () => {
     if (!familyName.trim()) {
-      toast.error("Вкажи назву родини");
+      toast.error(t.toastFamilyNameRequired);
       return;
     }
     setBusy(true);
@@ -175,10 +177,10 @@ export default function FamilyManagement() {
         const errorData = await res.json().catch(() => ({} as { error?: string }));
         throw new Error(errorData.error || "fail");
       }
-      toast.success("Налаштування родини збережено");
+      toast.success(t.toastSettingsSaved);
       await load();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не вдалося зберегти");
+      toast.error(error instanceof Error ? error.message : t.toastSaveError);
     } finally {
       setBusy(false);
     }
@@ -187,8 +189,8 @@ export default function FamilyManagement() {
   const leaveFamily = async () => {
     const ok = confirm(
       owner
-        ? "Вийти із сім'ї? Якщо в сім'ї є інші учасники, власником стане перший з них. Тобі буде створено нову власну сім'ю."
-        : "Вийти із сім'ї? Тобі буде створено нову власну сім'ю."
+        ? t.leaveFamilyOwnerConfirm
+        : t.leaveFamilyMemberConfirm
     );
     if (!ok || !data) return;
     setBusy(true);
@@ -199,10 +201,10 @@ export default function FamilyManagement() {
         body: JSON.stringify({ memberId: data.currentUserId }),
       });
       if (!res.ok) throw new Error("fail");
-      toast.success("Ти вийшов із сім'ї");
+      toast.success(t.toastLeftFamily);
       window.location.reload();
     } catch {
-      toast.error("Не вдалося вийти із сім'ї");
+      toast.error(t.toastLeaveError);
     } finally {
       setBusy(false);
     }
@@ -211,21 +213,21 @@ export default function FamilyManagement() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-warm-800">Керування родиною</h2>
+        <h2 className="text-2xl font-bold text-warm-800">{t.title}</h2>
         <p className="text-sm text-warm-500 mt-1">
-          {data?.family?.name || "Родина"} • тільки члени родини мають доступ до ваших даних і файлів
+          {data?.family?.name || t.familyFallback} • {t.subtitle}
         </p>
       </div>
 
       <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-4">
-        <h3 className="font-semibold text-warm-800 text-sm">Налаштування родини</h3>
+        <h3 className="font-semibold text-warm-800 text-sm">{t.settingsTitle}</h3>
         <div className="space-y-3">
           <div className="space-y-1">
-            <p className="text-xs text-warm-500">Назва родини</p>
+            <p className="text-xs text-warm-500">{t.familyNameLabel}</p>
             <input
               value={familyName}
               onChange={(e) => setFamilyName(e.target.value)}
-              placeholder="Наша родина"
+              placeholder={t.familyNamePlaceholder}
               disabled={!owner || busy}
               className="w-full bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 border border-warm-200 outline-none focus:border-rose-300 disabled:opacity-60"
             />
@@ -238,7 +240,7 @@ export default function FamilyManagement() {
               disabled={!owner || busy}
               className="accent-rose-500"
             />
-            Показувати родину в XP-рейтингу
+            {t.leaderboardShare}
           </label>
           <button
             type="button"
@@ -246,14 +248,14 @@ export default function FamilyManagement() {
             onClick={saveFamilySettings}
             className="px-4 py-2 rounded-xl bg-sage-500 hover:bg-sage-600 text-white text-sm disabled:opacity-60"
           >
-            Зберегти
+            {t.save}
           </button>
-          {!owner && <p className="text-xs text-warm-400">Тільки власник сім’ї може змінювати налаштування.</p>}
+          {!owner && <p className="text-xs text-warm-400">{t.ownerOnlySettings}</p>}
         </div>
       </div>
 
       <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-4">
-        <h3 className="font-semibold text-warm-800 text-sm">Запросити рідного</h3>
+        <h3 className="font-semibold text-warm-800 text-sm">{t.inviteSectionTitle}</h3>
         <div className="flex gap-2">
           <input
             value={inviteEmail}
@@ -267,16 +269,16 @@ export default function FamilyManagement() {
             onClick={invite}
             className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm disabled:opacity-60"
           >
-            Запросити
+            {t.invite}
           </button>
         </div>
-        {!owner && <p className="text-xs text-warm-400">Тільки власник сім’ї може запрошувати.</p>}
+        {!owner && <p className="text-xs text-warm-400">{t.ownerOnlyInvite}</p>}
       </div>
 
       <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-3">
-        <h3 className="font-semibold text-warm-800 text-sm">Члени родини</h3>
+        <h3 className="font-semibold text-warm-800 text-sm">{t.membersTitle}</h3>
         {loading ? (
-          <p className="text-sm text-warm-400">Завантаження...</p>
+          <p className="text-sm text-warm-400">{t.loading}</p>
         ) : (
           (data?.members || []).map((m) => (
             <div key={m.id} className="flex items-center justify-between gap-3 bg-warm-50 rounded-2xl px-3 py-2">
@@ -288,8 +290,8 @@ export default function FamilyManagement() {
                   {m.emoji || "🌸"}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-warm-800">{m.name || m.email || "Учасник"}</p>
-                  <p className="text-xs text-warm-400">{m.familyRole === "OWNER" ? "Власник" : "Учасник"}</p>
+                  <p className="text-sm font-medium text-warm-800">{m.name || m.email || t.memberFallback}</p>
+                  <p className="text-xs text-warm-400">{m.familyRole === "OWNER" ? t.ownerRole : t.memberRole}</p>
                 </div>
               </div>
               {owner && m.id !== data?.currentUserId && (
@@ -301,7 +303,7 @@ export default function FamilyManagement() {
                       onClick={() => transferOwnership(m.id)}
                       className="px-3 py-1.5 text-xs rounded-lg bg-lavender-500 hover:bg-lavender-600 text-white disabled:opacity-60"
                     >
-                      Зробити власником
+                      {t.makeOwner}
                     </button>
                   )}
                   <button
@@ -310,7 +312,7 @@ export default function FamilyManagement() {
                     onClick={() => removeMember(m.id)}
                     className="px-3 py-1.5 text-xs rounded-lg bg-warm-200 hover:bg-warm-300 text-warm-700 disabled:opacity-60"
                   >
-                    Видалити
+                    {t.delete}
                   </button>
                 </div>
               )}
@@ -320,9 +322,9 @@ export default function FamilyManagement() {
       </div>
 
       <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-3">
-        <h3 className="font-semibold text-warm-800 text-sm">Вхідні запрошення</h3>
+        <h3 className="font-semibold text-warm-800 text-sm">{t.incomingInvitesTitle}</h3>
         {(data?.incomingInvitations || []).length === 0 ? (
-          <p className="text-sm text-warm-400">Немає нових запрошень</p>
+          <p className="text-sm text-warm-400">{t.noIncomingInvites}</p>
         ) : (
           (data?.incomingInvitations || []).map((inv) => (
             <div key={inv.id} className="flex items-center justify-between bg-warm-50 rounded-2xl px-3 py-2 gap-3">
@@ -336,7 +338,7 @@ export default function FamilyManagement() {
                 onClick={() => acceptInvite(inv.id, inv.family.name)}
                 className="px-3 py-1.5 text-xs rounded-lg bg-sage-500 hover:bg-sage-600 text-white disabled:opacity-60"
               >
-                Прийняти
+                {t.accept}
               </button>
             </div>
           ))
@@ -344,9 +346,9 @@ export default function FamilyManagement() {
       </div>
 
       <div className="bg-white/80 rounded-3xl border border-warm-100 p-5 space-y-3">
-        <h3 className="font-semibold text-warm-800 text-sm">Очікують запрошення</h3>
+        <h3 className="font-semibold text-warm-800 text-sm">{t.pendingInvitesTitle}</h3>
         {(data?.invitations || []).length === 0 ? (
-          <p className="text-sm text-warm-400">Немає очікуючих запрошень</p>
+          <p className="text-sm text-warm-400">{t.noPendingInvites}</p>
         ) : (
           (data?.invitations || []).map((inv) => (
             <div key={inv.id} className="flex items-center justify-between bg-warm-50 rounded-2xl px-3 py-2">
@@ -358,7 +360,7 @@ export default function FamilyManagement() {
                   onClick={() => removeInvite(inv.id)}
                   className="px-3 py-1.5 text-xs rounded-lg bg-warm-200 hover:bg-warm-300 text-warm-700 disabled:opacity-60"
                 >
-                  Скасувати
+                  {t.cancel}
                 </button>
               )}
             </div>
@@ -373,7 +375,7 @@ export default function FamilyManagement() {
           onClick={leaveFamily}
           className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm disabled:opacity-60"
         >
-          Вийти із сім’ї
+          {t.leaveFamily}
         </button>
       </div>
     </div>

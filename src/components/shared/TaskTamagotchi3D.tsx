@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { useCozyConfig } from "@/hooks/useCozyConfig";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 interface TaskTamagotchi3DProps {
   doneToday: number;
@@ -16,16 +18,17 @@ interface TaskTamagotchi3DProps {
 const DAY_TARGET = 3;
 const WEEK_TARGET = 12;
 const SPRITE_MODEL_URL = "/models/water-sprite.glb";
+type TamagotchiText = typeof I18N.uk.tamagotchi;
 
 function clamp(value: number, min = 0, max = 100) {
   return Math.min(max, Math.max(min, value));
 }
 
-function resolveMood(doneToday: number, doneWeek: number) {
+function resolveMood(doneToday: number, doneWeek: number, t: TamagotchiText) {
   if (doneToday >= 4 || doneWeek >= 16) {
     return {
-      title: "Супер форма",
-      subtitle: "Потужна енергія і максимальний вайб",
+      title: t.superForm,
+      subtitle: t.superFormSubtitle,
       face: "happy" as const,
       body: "#7c3aed",
       glow: "#a78bfa",
@@ -43,8 +46,8 @@ function resolveMood(doneToday: number, doneWeek: number) {
   }
   if (doneToday >= 2 || doneWeek >= 8) {
     return {
-      title: "Гарний ритм",
-      subtitle: "Nibby стає сильнішим з кожною закритою задачею",
+      title: t.goodRhythm,
+      subtitle: t.goodRhythmSubtitle,
       face: "smile" as const,
       body: "#0ea5e9",
       glow: "#38bdf8",
@@ -62,8 +65,8 @@ function resolveMood(doneToday: number, doneWeek: number) {
   }
   if (doneToday >= 1 || doneWeek >= 4) {
     return {
-      title: "Стабільно",
-      subtitle: "Ще трохи задач сьогодні для апгрейду",
+      title: t.stable,
+      subtitle: t.stableSubtitle,
       face: "neutral" as const,
       body: "#fb923c",
       glow: "#fda4af",
@@ -80,8 +83,8 @@ function resolveMood(doneToday: number, doneWeek: number) {
     };
   }
   return {
-    title: "Хоче руху",
-    subtitle: "Закрий хоча б одну задачу і Nibby оживе",
+    title: t.needsMove,
+    subtitle: t.needsMoveSubtitle,
     face: "sleepy" as const,
     body: "#94a3b8",
     glow: "#cbd5e1",
@@ -116,8 +119,10 @@ function pickClipName(face: "happy" | "smile" | "neutral" | "sleepy", names: str
 
 export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTotal }: TaskTamagotchi3DProps) {
   const { config } = useCozyConfig();
+  const { language } = useAppLanguage();
+  const t = I18N[language].tamagotchi;
   const mascotName = config.mascot.slice(0, 1).toUpperCase() + config.mascot.slice(1);
-  const mood = resolveMood(doneToday, doneWeek);
+  const mood = resolveMood(doneToday, doneWeek, t);
   const dayProgress = clamp((doneToday / DAY_TARGET) * 100);
   const weekProgress = clamp((doneWeek / WEEK_TARGET) * 100);
   const activityLevel = clamp((doneToday * 7 + doneWeek * 2) / 60, 0, 1);
@@ -336,13 +341,13 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
 
         <div className="space-y-4">
           <div className="rounded-2xl border border-warm-100 p-3 bg-warm-50/60">
-            <p className="text-xs text-warm-500 mb-1">Стан</p>
+            <p className="text-xs text-warm-500 mb-1">{t.state}</p>
             <p className="text-sm font-semibold text-warm-800">{mood.title}</p>
           </div>
 
           <div>
             <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-warm-600">День</span>
+              <span className="text-warm-600">{t.day}</span>
               <span className="text-warm-500">{doneToday}/{DAY_TARGET}</span>
             </div>
             <div className="h-2.5 rounded-full bg-warm-100 overflow-hidden">
@@ -357,7 +362,7 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
 
           <div>
             <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-warm-600">Тиждень</span>
+              <span className="text-warm-600">{t.week}</span>
               <span className="text-warm-500">{doneWeek}/{WEEK_TARGET}</span>
             </div>
             <div className="h-2.5 rounded-full bg-warm-100 overflow-hidden">
@@ -372,17 +377,17 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
 
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-xl border border-warm-100 bg-white/70 p-2.5">
-              <p className="text-[11px] text-warm-500">Активні мої</p>
+              <p className="text-[11px] text-warm-500">{t.myActive}</p>
               <p className="text-sm font-semibold text-warm-800">{myOpen}</p>
             </div>
             <div className="rounded-xl border border-warm-100 bg-white/70 p-2.5">
-              <p className="text-[11px] text-warm-500">Завершено всього</p>
+              <p className="text-[11px] text-warm-500">{t.doneTotal}</p>
               <p className="text-sm font-semibold text-warm-800">{doneTotal}</p>
             </div>
           </div>
 
           <p className="text-xs text-warm-500">
-            Виконання задач змінює настрій і енергію Nibby.
+            {t.hint}
           </p>
           <motion.div
             initial={{ width: 0 }}

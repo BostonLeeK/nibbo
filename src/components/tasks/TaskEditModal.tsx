@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
 import { PRIORITY_CONFIG } from "@/lib/utils";
 import type { TaskBoardTask, TaskBoardUser } from "@/lib/task-board";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 const PRIOS: TaskBoardTask["priority"][] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 
@@ -19,6 +21,9 @@ interface TaskEditModalProps {
 }
 
 export default function TaskEditModal({ open, task, users, onClose, onSave }: TaskEditModalProps) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].task.editModal;
+  const userFallback = I18N[language].task.userFallback;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -51,7 +56,7 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
       });
       onClose();
     } catch {
-      toast.error("Не вдалося зберегти");
+      toast.error(t.saveError);
     } finally {
       setSaving(false);
     }
@@ -78,7 +83,7 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
           >
             <div className="bg-white rounded-3xl shadow-cozy-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-warm-800">Редагувати задачу</h2>
+                <h2 className="text-lg font-bold text-warm-800">{t.title}</h2>
                 <button
                   type="button"
                   onClick={onClose}
@@ -91,13 +96,13 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Назва"
+                  placeholder={t.titlePlaceholder}
                   className="w-full bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 border border-warm-200 focus:border-rose-300 outline-none"
                 />
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Опис"
+                  placeholder={t.descriptionPlaceholder}
                   rows={3}
                   className="w-full bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 border border-warm-200 focus:border-rose-300 outline-none resize-none"
                 />
@@ -114,7 +119,7 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
                     onChange={(e) => setCompleted(e.target.checked)}
                     className="rounded border-warm-300"
                   />
-                  Виконано
+                  {t.completed}
                 </label>
                 <select
                   value={priority}
@@ -133,10 +138,10 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
                     onChange={(e) => setAssigneeId(e.target.value)}
                     className="w-full bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 border border-warm-200 outline-none"
                   >
-                    <option value="">Без виконавця</option>
+                    <option value="">{t.noAssignee}</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.emoji} {u.name ?? "Користувач"}
+                        {u.emoji} {u.name ?? userFallback}
                       </option>
                     ))}
                   </select>
@@ -148,14 +153,14 @@ export default function TaskEditModal({ open, task, users, onClose, onSave }: Ta
                     disabled={saving || !title.trim()}
                     className="flex-1 py-2.5 bg-rose-500 text-white rounded-xl text-sm font-medium hover:bg-rose-600 disabled:opacity-50"
                   >
-                    Зберегти
+                    {t.save}
                   </button>
                   <button
                     type="button"
                     onClick={onClose}
                     className="px-4 py-2.5 bg-warm-100 text-warm-600 rounded-xl text-sm"
                   >
-                    Скасувати
+                    {t.cancel}
                   </button>
                 </div>
               </div>

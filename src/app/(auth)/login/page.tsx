@@ -4,8 +4,12 @@ import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Image from "next/image";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 export default function LoginPage() {
+  const { language } = useAppLanguage();
+  const t = I18N[language].login;
   const [loading, setLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
@@ -60,18 +64,18 @@ export default function LoginPage() {
 
           <h1 className="text-3xl font-bold text-warm-800 mb-2">Nibbo</h1>
           <p className="text-warm-500 mb-8 text-sm">
-            Затишне місце для вашої родини 🌸
+            {t.subtitle}
           </p>
 
           {/* Features preview */}
           <div className="grid grid-cols-3 gap-3 mb-8">
             {[
-              { emoji: "📋", label: "Задачі" },
-              { emoji: "📅", label: "Календар" },
-              { emoji: "🍽️", label: "Меню" },
-              { emoji: "📓", label: "Нотатки" },
-              { emoji: "💰", label: "Бюджет" },
-              { emoji: "🛒", label: "Покупки" },
+              { emoji: "📋", label: t.features.tasks },
+              { emoji: "📅", label: t.features.calendar },
+              { emoji: "🍽️", label: t.features.menu },
+              { emoji: "📓", label: t.features.notes },
+              { emoji: "💰", label: t.features.budget },
+              { emoji: "🛒", label: t.features.shopping },
             ].map((f) => (
               <motion.div
                 key={f.label}
@@ -107,12 +111,12 @@ export default function LoginPage() {
               </svg>
             )}
             <span className="group-hover:text-rose-600 transition-colors">
-              {loading ? "Входимо..." : "Увійти через Google"}
+              {loading ? t.signingIn : t.signInWithGoogle}
             </span>
           </motion.button>
 
           <p className="text-xs text-warm-400 mt-4">
-            Тут ви можете організувати свою родину та управляти домашніми справами
+            {t.footer}
           </p>
         </div>
       </motion.div>

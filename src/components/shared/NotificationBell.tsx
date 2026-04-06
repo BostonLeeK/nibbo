@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 type NotificationItem = {
   id: string;
@@ -21,6 +23,8 @@ type NotificationItem = {
 };
 
 export default function NotificationBell() {
+  const { language } = useAppLanguage();
+  const t = I18N[language].notificationBell;
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(0);
@@ -163,23 +167,23 @@ export default function NotificationBell() {
                 className="overflow-hidden flex flex-col rounded-2xl bg-white border border-warm-100 shadow-cozy"
               >
                 <div className="px-4 py-3 border-b border-warm-100 flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-warm-800">Призначення</p>
+                  <p className="text-sm font-semibold text-warm-800">{t.title}</p>
                   {count > 0 && (
                     <button
                       type="button"
                       onClick={() => markAll()}
                       className="text-xs text-rose-600 hover:text-rose-700 font-medium whitespace-nowrap"
                     >
-                      Усі прочитані
+                      {t.markAllRead}
                     </button>
                   )}
                 </div>
                 <div className="overflow-y-auto flex-1 p-2">
                   {loading ? (
-                    <p className="text-xs text-warm-400 text-center py-6">Завантаження…</p>
+                    <p className="text-xs text-warm-400 text-center py-6">{t.loading}</p>
                   ) : items.length === 0 ? (
                     <p className="text-xs text-warm-400 text-center py-6 px-3">
-                      Немає нових призначень на вас
+                      {t.empty}
                     </p>
                   ) : (
                     <ul className="space-y-1">
@@ -199,7 +203,7 @@ export default function NotificationBell() {
                             </p>
                             <p className="text-[11px] text-warm-500 mt-0.5">
                               {n.creatorEmoji}{" "}
-                              {n.creatorName?.trim() || "Хтось"} призначив вас
+                              {n.creatorName?.trim() || t.someone} {t.assignedYou}
                             </p>
                           </button>
                         </li>

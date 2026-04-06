@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays, startOfWeek } from "date-fns";
-import { uk } from "date-fns/locale";
+import { uk, enUS } from "date-fns/locale";
 import Link from "next/link";
 import { Plus, X, Copy, ClipboardList, ImagePlus, Pencil, Trash2, Eye } from "lucide-react";
 import { MEAL_TYPE_CONFIG } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 function isLocalUpload(src: string | null | undefined) {
   return Boolean(src?.startsWith("/uploads/") || src?.startsWith("/api/recipes/image/"));
@@ -108,6 +110,9 @@ function AnimatedRecipeImage({
 }
 
 export default function MealPlanner({ initialRecipes, initialMarketRecipes, initialMealPlans, users, currentUserId, isAdmin }: MealPlannerProps) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].mealPlanner;
+  const dateLocale = language === "en" ? enUS : uk;
   const [tab, setTab] = useState<Tab>("planner");
   const [recipes, setRecipes] = useState(initialRecipes);
   const [marketRecipes, setMarketRecipes] = useState(initialMarketRecipes);
@@ -132,7 +137,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
   const [viewRecipeSource, setViewRecipeSource] = useState<"recipes" | "market">("recipes");
   const [marketLoadingId, setMarketLoadingId] = useState<string | null>(null);
   const [newRecipe, setNewRecipe] = useState({
-    name: "", description: "", emoji: "🍽️", category: "Обід",
+    name: "", description: "", emoji: "🍽️", category: t.categories[1] ?? "",
     prepTime: "", cookTime: "", calories: "", servings: "4",
     ingredients: [{ name: "", amount: "", unit: "" }],
   });
@@ -157,7 +162,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
       name: "",
       description: "",
       emoji: "🍽️",
-      category: "Обід",
+      category: t.categories[1] ?? "",
       prepTime: "",
       cookTime: "",
       calories: "",
@@ -233,13 +238,13 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
     setShowAddMeal(null);
     setSelectedRecipeId("");
     setSelectedCookId("");
-    toast.success("Прийом їжі додано! 🍽️");
+    toast.success(t.mealAdded);
   };
 
   const handleDeleteMeal = async (id: string) => {
     await fetch(`/api/meals/${id}`, { method: "DELETE" });
     setMealPlans((prev) => prev.filter((p) => p.id !== id));
-    toast.success("Видалено");
+    toast.success(t.deleted);
   };
 
   const handleSaveRecipe = async () => {
@@ -255,7 +260,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
       const up = await fetch("/api/recipes/upload", { method: "POST", body: fd });
       if (!up.ok) {
         const err = await up.json().catch(() => ({}));
-        toast.error((err as { error?: string }).error || "Не вдалося завантажити фото");
+        toast.error((err as { error?: string }).error || t.uploadImageFailed);
         return;
       }
       uploadedUrl = ((await up.json()) as { url: string }).url;
@@ -280,7 +285,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
         }),
       });
       if (!res.ok) {
-        toast.error("Не вдалося оновити рецепт");
+        toast.error(t.recipeUpdateFailed);
         return;
       }
       const updated = await res.json();
@@ -291,7 +296,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
         )
       );
       closeAddRecipeModal();
-      toast.success("Рецепт оновлено");
+      toast.success(t.recipeUpdated);
       return;
     }
 
@@ -313,33 +318,33 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
       }),
     });
     if (!res.ok) {
-      toast.error("Не вдалося зберегти рецепт");
+      toast.error(t.recipeSaveFailed);
       return;
     }
     const recipe = await res.json();
     setRecipes((prev) => [...prev, recipe]);
     closeAddRecipeModal();
-    toast.success("Рецепт додано! 👨‍🍳");
+    toast.success(t.recipeAdded);
   };
 
   const handleDeleteRecipe = async (recipe: Recipe) => {
     if (
       !confirm(
-        `Видалити «${recipe.name}»? Клітинки в тижневому меню з цим рецептом стануть порожніми.`
+        t.deleteRecipeConfirm.replace("{name}", recipe.name)
       )
     ) {
       return;
     }
     const res = await fetch(`/api/meals/${recipe.id}?type=recipe`, { method: "DELETE" });
     if (!res.ok) {
-      toast.error("Не вдалося видалити");
+      toast.error(t.deleteFailed);
       return;
     }
     setRecipes((prev) => prev.filter((r) => r.id !== recipe.id));
     setMealPlans((prev) =>
       prev.map((p) => (p.recipe?.id === recipe.id ? { ...p, recipe: null } : p))
     );
-    toast.success("Рецепт видалено");
+    toast.success(t.recipeDeleted);
   };
 
   const handlePublishToMarket = async (recipe: Recipe) => {
@@ -351,12 +356,12 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
         body: JSON.stringify({ type: "publish", recipeId: recipe.id }),
       });
       if (!res.ok) {
-        toast.error("Не вдалося додати в маркет");
+        toast.error(t.marketAddFailed);
         return;
       }
       const created = await res.json();
       setMarketRecipes((prev) => [created, ...prev]);
-      toast.success("Додано в маркет рецептів");
+      toast.success(t.marketAdded);
     } finally {
       setMarketLoadingId(null);
     }
@@ -371,12 +376,12 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
         body: JSON.stringify({ type: "import", marketRecipeId: marketId }),
       });
       if (!res.ok) {
-        toast.error("Не вдалося додати в рецепти");
+        toast.error(t.importFailed);
         return;
       }
       const imported = await res.json();
       setRecipes((prev) => [...prev, imported]);
-      toast.success("Рецепт додано в твою книгу");
+      toast.success(t.imported);
     } finally {
       setMarketLoadingId(null);
     }
@@ -387,11 +392,11 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
     try {
       const res = await fetch(`/api/recipe-market/${marketId}`, { method: "DELETE" });
       if (!res.ok) {
-        toast.error("Не вдалося видалити з маркету");
+        toast.error(t.marketDeleteFailed);
         return;
       }
       setMarketRecipes((prev) => prev.filter((r) => r.id !== marketId));
-      toast.success("Рецепт видалено з маркету");
+      toast.success(t.marketDeleted);
     } finally {
       setMarketLoadingId(null);
     }
@@ -415,7 +420,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
       }
     }
     if (!unique.length) {
-      toast.error("У тижневому меню немає страв з рецептами");
+      toast.error(t.noMenuRecipes);
       return;
     }
     setShopLines(unique);
@@ -425,9 +430,9 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
   const copyShopLines = async () => {
     try {
       await navigator.clipboard.writeText(shopLines.join("\n"));
-      toast.success("Скопійовано в буфер");
+      toast.success(t.copied);
     } catch {
-      toast.error("Не вдалося скопіювати");
+      toast.error(t.copyFailed);
     }
   };
 
@@ -442,7 +447,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
         const create = await fetch("/api/shopping", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "list", name: "З меню", emoji: "🍽️" }),
+          body: JSON.stringify({ type: "list", name: t.fromMenuListName, emoji: "🍽️" }),
         });
         if (!create.ok) throw new Error();
         const list = await create.json();
@@ -455,22 +460,22 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
           body: JSON.stringify({
             name: line,
             listId,
-            category: "Інше 📦",
+            category: t.categoryOther,
           }),
         });
         if (!res.ok) throw new Error();
       }
-      toast.success(`Додано ${shopLines.length} позицій у «Покупки»`);
+      toast.success(t.addedToShopping.replace("{count}", String(shopLines.length)));
       setShowShopModal(false);
     } catch {
-      toast.error("Не вдалося додати в список");
+      toast.error(t.addToListFailed);
     } finally {
       setShopLoading(false);
     }
   };
 
   const FOOD_EMOJIS = ["🍽️", "🥗", "🍝", "🥘", "🍲", "🥩", "🍳", "🥐", "🍕", "🥪", "🍜", "🥑", "🍱", "🥦", "🍰"];
-  const CATEGORIES = ["Сніданок", "Обід", "Вечеря", "Перекус", "Суп", "Салат", "Десерт"];
+  const CATEGORIES = t.categories;
   const getDayCalories = (day: Date) =>
     mealPlans.reduce((sum, p) => (
       format(new Date(p.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
@@ -532,7 +537,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
             {meal.recipe?.name || meal.note || "—"}
           </p>
           {meal.recipe?.calories != null && (
-            <p className="text-[11px] text-warm-500 mt-1">{meal.recipe.calories} ккал</p>
+            <p className="text-[11px] text-warm-500 mt-1">{meal.recipe.calories} kcal</p>
           )}
           {meal.cook && (
             <div className="flex items-center gap-1 mt-1.5">
@@ -563,13 +568,13 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
       {/* Tabs */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 md:mb-6">
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {[{ id: "planner", label: "Тижневе меню", emoji: "📅" }, { id: "recipes", label: "Рецепти", emoji: "📖" }, { id: "market", label: "Маркет рецептів", emoji: "🛍️" }].map((t) => (
-            <motion.button key={t.id} whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}
-              onClick={() => setTab(t.id as Tab)}
+          {[{ id: "planner", label: t.tabPlanner, emoji: "📅" }, { id: "recipes", label: t.tabRecipes, emoji: "📖" }, { id: "market", label: t.tabMarket, emoji: "🛍️" }].map((tabItem) => (
+            <motion.button key={tabItem.id} whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}
+              onClick={() => setTab(tabItem.id as Tab)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${
-                tab === t.id ? "bg-white shadow-cozy text-warm-800" : "text-warm-500 hover:bg-white/50"
+                tab === tabItem.id ? "bg-white shadow-cozy text-warm-800" : "text-warm-500 hover:bg-white/50"
               }`}>
-              <span>{t.emoji}</span> {t.label}
+              <span>{tabItem.emoji}</span> {tabItem.label}
             </motion.button>
           ))}
         </div>
@@ -581,12 +586,12 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={openShopFromMenu}
-              title="Зібрати інгредієнти з усіх страв у тижневому плані"
+              title={t.collectIngredientsTitle}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-sage-100 hover:bg-sage-200 text-sage-800 rounded-2xl text-sm font-medium transition-all border border-sage-200/60 w-full sm:w-auto"
             >
               <ClipboardList size={16} />
-              <span className="hidden sm:inline">Інгредієнти з плану</span>
-              <span className="sm:hidden">До покупок</span>
+              <span className="hidden sm:inline">{t.ingredientsFromPlan}</span>
+              <span className="sm:hidden">{t.toShopping}</span>
             </motion.button>
           )}
           {tab !== "market" && (
@@ -597,7 +602,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               onClick={openNewRecipeModal}
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto"
             >
-              <Plus size={16} /> Новий рецепт
+              <Plus size={16} /> {t.newRecipe}
             </motion.button>
           )}
         </div>
@@ -610,7 +615,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <div key={day.toISOString()} className="bg-white/70 rounded-3xl border border-warm-100 p-3">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-semibold text-warm-800 capitalize">
-                    {format(day, "EEEE, d MMMM", { locale: uk })}
+                    {format(day, "EEEE, d MMMM", { locale: dateLocale })}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -628,8 +633,8 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   })}
                 </div>
                 <div className="mt-3 rounded-2xl bg-white border border-warm-100 px-3 py-2 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-warm-500">Калорії за день</span>
-                  <span className="text-sm font-bold text-peach-600">{getDayCalories(day)} ккал</span>
+                  <span className="text-xs font-semibold text-warm-500">{t.caloriesLabel}</span>
+                  <span className="text-sm font-bold text-peach-600">{getDayCalories(day)} kcal</span>
                 </div>
               </div>
             ))}
@@ -637,11 +642,11 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
           <div className="hidden md:block overflow-auto h-full">
             <div className="min-w-[720px] md:min-w-[800px]">
               <div className="grid grid-cols-8 gap-2 mb-3">
-                <div className="text-xs font-semibold text-warm-400 pt-2 pl-2">Прийом їжі</div>
+                <div className="text-xs font-semibold text-warm-400 pt-2 pl-2">{t.mealTypeTitle}</div>
                 {weekDays.map((day) => (
                   <div key={day.toISOString()} className="text-center">
                     <div className="text-xs text-warm-400 font-medium capitalize">
-                      {format(day, "EEE", { locale: uk })}
+                      {format(day, "EEE", { locale: dateLocale })}
                     </div>
                     <div className={`text-lg font-bold mt-0.5 ${
                       format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
@@ -670,11 +675,11 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               })}
               <div className="grid grid-cols-8 gap-2">
                 <div className="rounded-2xl bg-white border border-warm-100 px-3 py-3 flex items-center justify-center text-xs font-semibold text-warm-500">
-                  Ккал / день
+                  {t.caloriesPerDay}
                 </div>
                 {weekDays.map((day) => (
                   <div key={`calories-${format(day, "yyyy-MM-dd")}`} className="rounded-2xl bg-white border border-warm-100 px-3 py-3 text-center">
-                    <span className="text-sm font-bold text-peach-600">{getDayCalories(day)} ккал</span>
+                    <span className="text-sm font-bold text-peach-600">{getDayCalories(day)} kcal</span>
                   </div>
                 ))}
               </div>
@@ -699,7 +704,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                     onClick={() => handlePublishToMarket(recipe)}
                     disabled={marketLoadingId === recipe.id}
                     className="w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-600 hover:text-sage-600 flex items-center justify-center disabled:opacity-60"
-                    title="Опублікувати в маркет"
+                    title={t.publishToMarket}
                   >
                     <ClipboardList size={15} />
                   </button>
@@ -711,7 +716,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                       setViewRecipe(recipe);
                     }}
                   className="w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-600 hover:text-sky-600 flex items-center justify-center"
-                  title="Переглянути"
+                  title={t.view}
                 >
                   <Eye size={15} />
                 </button>
@@ -719,7 +724,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   type="button"
                   onClick={() => openEditRecipe(recipe)}
                   className="w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-600 hover:text-peach-600 flex items-center justify-center"
-                  title="Редагувати"
+                  title={t.edit}
                 >
                   <Pencil size={15} />
                 </button>
@@ -727,7 +732,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   type="button"
                   onClick={() => handleDeleteRecipe(recipe)}
                   className="w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-500 hover:text-rose-600 flex items-center justify-center"
-                  title="Видалити"
+                  title={t.delete}
                 >
                   <Trash2 size={15} />
                 </button>
@@ -750,13 +755,13 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <p className="text-xs text-warm-400 mb-3 line-clamp-2">{recipe.description}</p>
               <div className="flex gap-2 flex-wrap mb-3">
                 <span className="text-xs bg-peach-50 text-peach-600 px-2 py-1 rounded-full">{recipe.category}</span>
-                {recipe.prepTime && <span className="text-xs bg-sage-50 text-sage-600 px-2 py-1 rounded-full">⏱ {recipe.prepTime}хв</span>}
-                {recipe.calories != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full">🔥 {recipe.calories} ккал</span>}
+                {recipe.prepTime && <span className="text-xs bg-sage-50 text-sage-600 px-2 py-1 rounded-full">⏱ {recipe.prepTime}m</span>}
+                {recipe.calories != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full">🔥 {recipe.calories} kcal</span>}
                 <span className="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-full">👥 {recipe.servings}</span>
               </div>
               {recipe.ingredients.length > 0 && (
                 <div className="border-t border-warm-100 pt-3">
-                  <p className="text-xs font-semibold text-warm-600 mb-2">Інгредієнти:</p>
+                  <p className="text-xs font-semibold text-warm-600 mb-2">{t.ingredientsLabel}</p>
                   <div className="space-y-1">
                     {recipe.ingredients.slice(0, 3).map((ing) => (
                       <p key={ing.id} className="text-xs text-warm-500">
@@ -764,7 +769,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                       </p>
                     ))}
                     {recipe.ingredients.length > 3 && (
-                      <p className="text-xs text-warm-400">+{recipe.ingredients.length - 3} ще...</p>
+                      <p className="text-xs text-warm-400">+{recipe.ingredients.length - 3} {t.more}</p>
                     )}
                   </div>
                 </div>
@@ -780,7 +785,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
             className="bg-white/40 rounded-3xl p-5 border-2 border-dashed border-warm-200 hover:border-peach-300 text-warm-300 hover:text-peach-400 flex flex-col items-center justify-center gap-2 min-h-[180px] transition-all"
           >
             <Plus size={24} />
-            <span className="text-sm font-medium">Додати рецепт</span>
+            <span className="text-sm font-medium">{t.addRecipe}</span>
           </motion.button>
 
         </div>
@@ -800,12 +805,12 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   onClick={() => handleDeleteMarketRecipe(recipe.id)}
                   disabled={marketLoadingId === recipe.id}
                   className="absolute top-3 right-3 w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-500 hover:text-rose-600 flex items-center justify-center disabled:opacity-60"
-                  title="Прибрати з маркету"
+                  title={t.removeFromMarket}
                 >
                   <Trash2 size={15} />
                 </button>
               )}
-              <div className="absolute top-3 left-3 text-[10px] font-semibold px-2 py-1 rounded-full bg-sage-100 text-sage-700">Маркет</div>
+              <div className="absolute top-3 left-3 text-[10px] font-semibold px-2 py-1 rounded-full bg-sage-100 text-sage-700">{t.marketBadge}</div>
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-warm-100 mb-3 mt-6">
                 <button
                   type="button"
@@ -814,7 +819,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                     setViewRecipe(recipe);
                   }}
                   className="absolute top-2 right-2 z-10 w-9 h-9 rounded-xl bg-white/95 shadow-md border border-warm-200 text-warm-600 hover:text-sky-600 flex items-center justify-center"
-                  title="Переглянути"
+                  title={t.view}
                 >
                   <Eye size={15} />
                 </button>
@@ -835,8 +840,8 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <p className="text-xs text-warm-400 mb-3 line-clamp-2">{recipe.description}</p>
               <div className="flex gap-2 flex-wrap mb-3">
                 <span className="text-xs bg-peach-50 text-peach-600 px-2 py-1 rounded-full">{recipe.category}</span>
-                {recipe.prepTime && <span className="text-xs bg-sage-50 text-sage-600 px-2 py-1 rounded-full">⏱ {recipe.prepTime}хв</span>}
-                {recipe.calories != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full">🔥 {recipe.calories} ккал</span>}
+                {recipe.prepTime && <span className="text-xs bg-sage-50 text-sage-600 px-2 py-1 rounded-full">⏱ {recipe.prepTime}m</span>}
+                {recipe.calories != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full">🔥 {recipe.calories} kcal</span>}
                 <span className="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-full">👥 {recipe.servings}</span>
               </div>
               <motion.button
@@ -846,13 +851,13 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                 disabled={marketLoadingId === recipe.id}
                 className="w-full py-2.5 rounded-2xl bg-sage-500 text-white text-sm font-semibold disabled:opacity-60"
               >
-                Додати в мої рецепти
+                {t.addToMyRecipes}
               </motion.button>
             </motion.div>
           ))}
           {marketRecipes.length === 0 && (
             <div className="col-span-full rounded-3xl bg-white/70 border border-warm-100 p-8 text-center text-warm-500">
-              Маркет поки порожній
+              {t.marketEmpty}
             </div>
           )}
         </div>
@@ -879,7 +884,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <div className="overflow-y-auto overscroll-contain p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-warm-800">
-                    {showAddMeal && MEAL_TYPE_CONFIG[showAddMeal.mealType as keyof typeof MEAL_TYPE_CONFIG]?.emoji} Додати страву
+                    {showAddMeal && MEAL_TYPE_CONFIG[showAddMeal.mealType as keyof typeof MEAL_TYPE_CONFIG]?.emoji} {t.addDish}
                   </h2>
                   <button onClick={() => setShowAddMeal(null)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center">
                     <X size={16} />
@@ -888,18 +893,18 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                 <div className="space-y-4">
                   <select value={selectedRecipeId} onChange={(e) => setSelectedRecipeId(e.target.value)}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400">
-                    <option value="">Вибрати рецепт...</option>
+                    <option value="">{t.chooseRecipe}</option>
                     {recipes.map((r) => <option key={r.id} value={r.id}>{r.emoji} {r.name}</option>)}
                   </select>
                   <select value={selectedCookId} onChange={(e) => setSelectedCookId(e.target.value)}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400">
-                    <option value="">👩‍🍳 Хто готує?</option>
+                    <option value="">{t.whoCooks}</option>
                     {users.map((u) => <option key={u.id} value={u.id}>{u.emoji} {u.name}</option>)}
                   </select>
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddMeal}
                     className="w-full py-3 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl font-semibold">
-                    Додати 🍽️
+                    {t.add} 🍽️
                   </motion.button>
                 </div>
               </div>
@@ -956,26 +961,26 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                 <div className="flex flex-wrap gap-2">
                   <span className="text-xs bg-peach-50 text-peach-600 px-2.5 py-1 rounded-full font-medium">{viewRecipe.category}</span>
                   {viewRecipe.prepTime != null && (
-                    <span className="text-xs bg-sage-50 text-sage-600 px-2.5 py-1 rounded-full">Підготовка {viewRecipe.prepTime} хв</span>
+                    <span className="text-xs bg-sage-50 text-sage-600 px-2.5 py-1 rounded-full">{t.prep} {viewRecipe.prepTime} m</span>
                   )}
                   {viewRecipe.cookTime != null && (
-                    <span className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">Готування {viewRecipe.cookTime} хв</span>
+                    <span className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">{t.cooking} {viewRecipe.cookTime} m</span>
                   )}
                   {viewRecipe.calories != null && (
-                    <span className="text-xs bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full">Калорії {viewRecipe.calories} ккал</span>
+                    <span className="text-xs bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full">{t.calories} {viewRecipe.calories} kcal</span>
                   )}
-                  <span className="text-xs bg-sky-50 text-sky-600 px-2.5 py-1 rounded-full">Порцій: {viewRecipe.servings}</span>
+                  <span className="text-xs bg-sky-50 text-sky-600 px-2.5 py-1 rounded-full">{t.servings}: {viewRecipe.servings}</span>
                 </div>
                 {viewRecipe.description?.trim() ? (
                   <div>
-                    <p className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-1.5">Опис</p>
+                    <p className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-1.5">{t.descriptionTitle}</p>
                     <p className="text-sm text-warm-800 whitespace-pre-wrap leading-relaxed">{viewRecipe.description}</p>
                   </div>
                 ) : (
-                  <p className="text-sm text-warm-400 italic">Опис не додано</p>
+                  <p className="text-sm text-warm-400 italic">{t.descriptionEmpty}</p>
                 )}
                 <div>
-                  <p className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2">Інгредієнти</p>
+                  <p className="text-xs font-semibold text-warm-500 uppercase tracking-wide mb-2">{t.ingredientsTitle}</p>
                   {viewRecipe.ingredients.length > 0 ? (
                     <ul className="space-y-2">
                       {viewRecipe.ingredients.map((ing) => (
@@ -993,7 +998,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-warm-400">Інгредієнтів немає</p>
+                    <p className="text-sm text-warm-400">{t.noIngredients}</p>
                   )}
                 </div>
               </div>
@@ -1003,7 +1008,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   onClick={() => setViewRecipe(null)}
                   className="flex-1 py-3 rounded-2xl bg-white border border-warm-200 text-warm-800 font-medium text-sm"
                 >
-                  Закрити
+                  {t.close}
                 </button>
                 {viewRecipeSource !== "market" && (
                   <motion.button
@@ -1012,7 +1017,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                     onClick={openEditFromView}
                     className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-400 text-white font-semibold text-sm"
                   >
-                    Редагувати
+                    {t.edit}
                   </motion.button>
                 )}
               </div>
@@ -1044,7 +1049,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <div className="overflow-y-auto overscroll-contain p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-warm-800">
-                    {editingRecipeId ? "Редагувати рецепт" : "Новий рецепт"} 👨‍🍳
+                    {editingRecipeId ? t.editRecipeTitle : t.newRecipeTitle} 👨‍🍳
                   </h2>
                   <button type="button" onClick={closeAddRecipeModal} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center">
                     <X size={16} />
@@ -1060,7 +1065,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                       const f = e.target.files?.[0];
                       if (!f) return;
                       if (f.size > 5 * 1024 * 1024) {
-                        toast.error("Максимум 5 МБ");
+                        toast.error(t.max5mb);
                         e.target.value = "";
                         return;
                       }
@@ -1078,7 +1083,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                       className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border-2 border-dashed border-warm-200 hover:border-peach-300 text-warm-600 text-sm font-medium bg-warm-50/80"
                     >
                       <ImagePlus size={18} />
-                      Фото страви
+                      {t.dishPhoto}
                     </button>
                     {(recipeImagePreview || editInitialImageUrl) && (
                       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -1095,7 +1100,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                           onClick={removeRecipePhoto}
                           className="text-xs text-rose-500 font-medium hover:text-rose-600 shrink-0"
                         >
-                          Прибрати фото
+                          {t.removePhoto}
                         </button>
                       </div>
                     )}
@@ -1109,9 +1114,9 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                     ))}
                   </div>
                   <input value={newRecipe.name} onChange={(e) => setNewRecipe((p) => ({ ...p, name: e.target.value }))}
-                    placeholder="Назва страви" className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
+                    placeholder={t.dishNamePlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
                   <textarea value={newRecipe.description} onChange={(e) => setNewRecipe((p) => ({ ...p, description: e.target.value }))}
-                    placeholder="Опис (необов'язково)" rows={2}
+                    placeholder={t.descriptionPlaceholder} rows={2}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400 resize-none" />
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <select value={newRecipe.category} onChange={(e) => setNewRecipe((p) => ({ ...p, category: e.target.value }))}
@@ -1119,31 +1124,31 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                       {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                     </select>
                     <input type="number" value={newRecipe.prepTime} onChange={(e) => setNewRecipe((p) => ({ ...p, prepTime: e.target.value }))}
-                      placeholder="Підготовка (хв)" className="bg-warm-50 rounded-xl px-3 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
+                      placeholder={t.prepPlaceholder} className="bg-warm-50 rounded-xl px-3 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
                     <input type="number" value={newRecipe.cookTime} onChange={(e) => setNewRecipe((p) => ({ ...p, cookTime: e.target.value }))}
-                      placeholder="Готування (хв)" className="bg-warm-50 rounded-xl px-3 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
+                      placeholder={t.cookPlaceholder} className="bg-warm-50 rounded-xl px-3 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
                     <input type="number" value={newRecipe.calories} onChange={(e) => setNewRecipe((p) => ({ ...p, calories: e.target.value }))}
-                      placeholder="Калорії" className="bg-warm-50 rounded-xl px-3 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
+                      placeholder={t.caloriesPlaceholder} className="bg-warm-50 rounded-xl px-3 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
                     <input type="number" value={newRecipe.servings} onChange={(e) => setNewRecipe((p) => ({ ...p, servings: e.target.value }))}
-                      placeholder="Порцій" className="bg-warm-50 rounded-xl px-3 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
+                      placeholder={t.servingsPlaceholder} className="bg-warm-50 rounded-xl px-3 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400" />
                   </div>
 
                   {/* Ingredients */}
                   <div>
-                    <p className="text-sm font-semibold text-warm-700 mb-2">Інгредієнти</p>
+                    <p className="text-sm font-semibold text-warm-700 mb-2">{t.ingredientsTitle}</p>
                     {newRecipe.ingredients.map((ing, i) => (
                       <div key={i} className="flex gap-2 mb-2">
                         <input value={ing.name} onChange={(e) => setNewRecipe((p) => ({ ...p, ingredients: p.ingredients.map((x, j) => j === i ? { ...x, name: e.target.value } : x) }))}
-                          placeholder="Назва" className="flex-1 bg-warm-50 rounded-xl px-3 py-2 text-sm outline-none border border-warm-200 focus:border-peach-400" />
+                          placeholder={t.ingredientName} className="flex-1 bg-warm-50 rounded-xl px-3 py-2 text-sm outline-none border border-warm-200 focus:border-peach-400" />
                         <input value={ing.amount} onChange={(e) => setNewRecipe((p) => ({ ...p, ingredients: p.ingredients.map((x, j) => j === i ? { ...x, amount: e.target.value } : x) }))}
-                          placeholder="Кількість" className="w-24 bg-warm-50 rounded-xl px-3 py-2 text-sm outline-none border border-warm-200 focus:border-peach-400" />
+                          placeholder={t.ingredientAmount} className="w-24 bg-warm-50 rounded-xl px-3 py-2 text-sm outline-none border border-warm-200 focus:border-peach-400" />
                         <input value={ing.unit} onChange={(e) => setNewRecipe((p) => ({ ...p, ingredients: p.ingredients.map((x, j) => j === i ? { ...x, unit: e.target.value } : x) }))}
-                          placeholder="Од." className="w-16 bg-warm-50 rounded-xl px-3 py-2 text-sm outline-none border border-warm-200 focus:border-peach-400" />
+                          placeholder={t.unitShort} className="w-16 bg-warm-50 rounded-xl px-3 py-2 text-sm outline-none border border-warm-200 focus:border-peach-400" />
                       </div>
                     ))}
                     <button onClick={() => setNewRecipe((p) => ({ ...p, ingredients: [...p.ingredients, { name: "", amount: "", unit: "" }] }))}
                       className="text-xs text-peach-500 hover:text-peach-600 font-medium">
-                      + Додати інгредієнт
+                      {t.addIngredient}
                     </button>
                   </div>
 
@@ -1154,7 +1159,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                     onClick={handleSaveRecipe}
                     className="w-full py-3 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl font-semibold"
                   >
-                    {editingRecipeId ? "Зберегти зміни" : `Зберегти рецепт ${newRecipe.emoji}`}
+                    {editingRecipeId ? t.saveChanges : `${t.saveRecipe} ${newRecipe.emoji}`}
                   </motion.button>
                 </div>
               </div>
@@ -1185,9 +1190,9 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
             >
               <div className="flex items-center justify-between gap-3 border-b border-warm-100 px-5 py-4 shrink-0">
                 <div>
-                  <h2 className="text-lg font-bold text-warm-800">Інгредієнти з меню</h2>
+                  <h2 className="text-lg font-bold text-warm-800">{t.menuIngredientsTitle}</h2>
                   <p className="text-xs text-warm-500 mt-0.5">
-                    Усі інгредієнти зі страв у поточному тижневому плані (без дублів)
+                    {t.menuIngredientsHint}
                   </p>
                 </div>
                 <button
@@ -1215,7 +1220,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   onClick={copyShopLines}
                   className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white border border-warm-200 text-warm-800 font-medium text-sm"
                 >
-                  <Copy size={16} /> Копіювати текст
+                  <Copy size={16} /> {t.copyText}
                 </motion.button>
                 <motion.button
                   type="button"
@@ -1224,7 +1229,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   onClick={addShopToShoppingLists}
                   className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-sage-500 text-white font-medium text-sm disabled:opacity-60"
                 >
-                  {shopLoading ? "…" : "У список «Покупки»"}
+                  {shopLoading ? "…" : t.toShoppingList}
                 </motion.button>
               </div>
               <div className="px-4 pb-4 text-center">
@@ -1233,7 +1238,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   className="text-xs text-peach-600 hover:text-peach-700 font-medium"
                   onClick={() => setShowShopModal(false)}
                 >
-                  Відкрити розділ Покупки →
+                  {t.openShopping}
                 </Link>
               </div>
             </motion.div>

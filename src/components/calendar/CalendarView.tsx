@@ -7,11 +7,13 @@ import {
   addMonths, subMonths, eachDayOfInterval, isSameMonth, isSameDay, isToday,
   parseISO, addHours,
 } from "date-fns";
-import { uk } from "date-fns/locale";
+import { uk, enUS } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface Subscription { id: string; title: string; }
@@ -30,7 +32,6 @@ const EVENT_COLORS = [
 ];
 
 const EVENT_EMOJIS = ["📅", "🎉", "🏃", "💊", "🍽️", "✈️", "🎂", "🎓", "💼", "🌟"];
-const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 const MONTH_COZY_BACKGROUNDS = [
   "url('/calendar/cozy-winter.svg')",
   "url('/calendar/cozy-winter.svg')",
@@ -52,6 +53,9 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
   currentUserId: string;
   subscriptions: Subscription[];
 }) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].calendar;
+  const dateLocale = language === "en" ? enUS : uk;
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -123,13 +127,13 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
     setEvents((prev) => [...prev, event]);
     setShowAddEvent(false);
     setNewEvent({ title: "", description: "", emoji: "📅", color: "#8b5cf6", startDate: "", startTime: "10:00", endTime: "11:00", allDay: false, location: "", assigneeId: "", subscriptionId: "", weeklyRepeat: false, weeklyDay: 1 });
-    toast.success("Подію додано! 📅");
+    toast.success(t.addEventToast);
   };
 
   const handleDeleteEvent = async (id: string) => {
     await fetch(`/api/events/${id}`, { method: "DELETE" });
     setEvents((prev) => prev.filter((e) => e.id !== id));
-    toast.success("Подію видалено");
+    toast.success(t.deleteEventToast);
   };
 
   return (
@@ -146,7 +150,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
               <ChevronLeft size={18} />
             </motion.button>
             <h2 className="text-lg md:text-xl font-bold text-warm-800 capitalize text-center min-w-0 sm:min-w-48">
-              {format(currentMonth, "LLLL yyyy", { locale: uk })}
+              {format(currentMonth, "LLLL yyyy", { locale: dateLocale })}
             </h2>
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -164,7 +168,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
             onClick={() => { setNewEvent((p) => ({ ...p, startDate: format(new Date(), "yyyy-MM-dd") })); setShowAddEvent(true); }}
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-lavender-500 to-lavender-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto"
           >
-            <Plus size={16} /> Нова подія
+            <Plus size={16} /> {t.newEvent}
           </motion.button>
         </div>
 
@@ -187,12 +191,12 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
               >
                 <div className="flex items-center justify-between mb-1">
                   <p className={cn("text-sm font-semibold", todayDay ? "text-rose-600" : "text-warm-800")}>
-                    {format(day, "d MMMM, EEE", { locale: uk })}
+                    {format(day, "d MMMM, EEE", { locale: dateLocale })}
                   </p>
-                  <span className="text-xs text-warm-500">{dayEvents.length} подій</span>
+                  <span className="text-xs text-warm-500">{dayEvents.length} {t.eventsCount}</span>
                 </div>
                 {dayEvents.length === 0 ? (
-                  <p className="text-xs text-warm-400">Немає подій</p>
+                  <p className="text-xs text-warm-400">{t.noEvents}</p>
                 ) : (
                   <div className="space-y-1">
                     {dayEvents.slice(0, 2).map((event) => (
@@ -201,7 +205,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                       </div>
                     ))}
                     {dayEvents.length > 2 && (
-                      <p className="text-xs text-warm-400">+{dayEvents.length - 2} ще</p>
+                      <p className="text-xs text-warm-400">+{dayEvents.length - 2} {t.more}</p>
                     )}
                   </div>
                 )}
@@ -213,7 +217,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
           <div className="md:hidden mt-3 bg-white/80 rounded-3xl shadow-cozy border border-warm-100 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-warm-800">
-                {format(selectedDay, "d MMMM", { locale: uk })}
+                {format(selectedDay, "d MMMM", { locale: dateLocale })}
               </h3>
               <button
                 onClick={() => { setNewEvent((p) => ({ ...p, startDate: format(selectedDay, "yyyy-MM-dd") })); setShowAddEvent(true); }}
@@ -223,7 +227,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
               </button>
             </div>
             {selectedDayEvents.length === 0 ? (
-              <p className="text-sm text-warm-400">Нічого не заплановано</p>
+              <p className="text-sm text-warm-400">{t.nothingPlanned}</p>
             ) : (
               <div className="space-y-2">
                 {selectedDayEvents.map((event) => (
@@ -241,7 +245,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                           </p>
                         )}
                         {event.subscription && (
-                          <p className="text-xs text-lavender-600 mt-1">Підписка: {event.subscription.title}</p>
+                          <p className="text-xs text-lavender-600 mt-1">{t.subscriptionLabel}: {event.subscription.title}</p>
                         )}
                       </div>
                       <button
@@ -261,7 +265,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
         <div className="hidden md:flex flex-1 min-w-0 min-h-0">
           <div className="w-full h-full flex flex-col">
             <div className="grid grid-cols-7 mb-2">
-              {WEEKDAYS.map((d) => (
+              {t.weekdays.map((d) => (
                 <div key={d} className="text-center text-xs font-semibold text-warm-500 py-2">{d}</div>
               ))}
             </div>
@@ -322,7 +326,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-warm-800">
-                {format(selectedDay, "d MMMM", { locale: uk })}
+                {format(selectedDay, "d MMMM", { locale: dateLocale })}
               </h3>
               <button
                 onClick={() => { setNewEvent((p) => ({ ...p, startDate: format(selectedDay, "yyyy-MM-dd") })); setShowAddEvent(true); }}
@@ -335,7 +339,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
             {selectedDayEvents.length === 0 ? (
               <div className="text-center py-8 text-warm-400">
                 <div className="text-3xl mb-2">🌙</div>
-                <p className="text-sm">Нічого не заплановано</p>
+                <p className="text-sm">{t.nothingPlanned}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -359,14 +363,14 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                         )}
                         {event.weeklyRepeat && event.weeklyDay && (
                           <p className="text-xs text-warm-500 mt-1">
-                            Щотижня: {WEEKDAYS[event.weeklyDay - 1]}
+                            {t.weeklyLabel}: {t.weekdays[event.weeklyDay - 1]}
                           </p>
                         )}
                         {event.location && (
                           <p className="text-xs text-warm-400 mt-1">📍 {event.location}</p>
                         )}
                         {event.subscription && (
-                          <p className="text-xs text-lavender-600 mt-1">Підписка: {event.subscription.title}</p>
+                          <p className="text-xs text-lavender-600 mt-1">{t.subscriptionLabel}: {event.subscription.title}</p>
                         )}
                         {event.assignee && (
                           <div className="flex items-center gap-1 mt-2">
@@ -395,7 +399,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
         ) : (
           <div className="bg-white/60 rounded-3xl p-5 text-center text-warm-400 border border-warm-100">
             <div className="text-3xl mb-2">📅</div>
-            <p className="text-sm">Вибери день щоб побачити події</p>
+            <p className="text-sm">{t.chooseDayHint}</p>
           </div>
         )}
       </div>
@@ -420,7 +424,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
             >
               <div className="bg-white rounded-3xl shadow-cozy-lg p-6">
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-lg font-bold text-warm-800">Нова подія 📅</h2>
+                  <h2 className="text-lg font-bold text-warm-800">{t.modalTitle}</h2>
                   <button onClick={() => setShowAddEvent(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center">
                     <X size={16} />
                   </button>
@@ -448,10 +452,10 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                   </div>
 
                   <input value={newEvent.title} onChange={(e) => setNewEvent((p) => ({ ...p, title: e.target.value }))}
-                    placeholder="Назва події" className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400" />
+                    placeholder={t.eventTitlePlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400" />
 
                   <input value={newEvent.description} onChange={(e) => setNewEvent((p) => ({ ...p, description: e.target.value }))}
-                    placeholder="Опис (необов'язково)" className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400" />
+                    placeholder={t.eventDescriptionPlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400" />
 
                   <input type="date" value={newEvent.startDate} onChange={(e) => setNewEvent((p) => ({ ...p, startDate: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400" />
@@ -464,7 +468,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                         onChange={(e) => setNewEvent((p) => ({ ...p, weeklyRepeat: e.target.checked }))}
                         className="rounded accent-lavender-500"
                       />
-                      <span className="text-sm text-warm-600">Повторювати щотижня</span>
+                      <span className="text-sm text-warm-600">{t.repeatWeekly}</span>
                     </label>
                     {newEvent.weeklyRepeat && (
                       <select
@@ -472,7 +476,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                         onChange={(e) => setNewEvent((p) => ({ ...p, weeklyDay: Number(e.target.value) }))}
                         className="bg-warm-50 rounded-xl px-3 py-2 text-sm outline-none border border-warm-200 focus:border-lavender-400"
                       >
-                        {WEEKDAYS.map((w, idx) => (
+                        {t.weekdays.map((w, idx) => (
                           <option key={w} value={idx + 1}>{w}</option>
                         ))}
                       </select>
@@ -491,27 +495,27 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={newEvent.allDay} onChange={(e) => setNewEvent((p) => ({ ...p, allDay: e.target.checked }))}
                       className="rounded accent-lavender-500" />
-                    <span className="text-sm text-warm-600">Весь день</span>
+                    <span className="text-sm text-warm-600">{t.allDay}</span>
                   </label>
 
                   <input value={newEvent.location} onChange={(e) => setNewEvent((p) => ({ ...p, location: e.target.value }))}
-                    placeholder={"📍 Місце (необов'язково)"} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400" />
+                    placeholder={t.locationPlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400" />
 
                   <select value={newEvent.assigneeId} onChange={(e) => setNewEvent((p) => ({ ...p, assigneeId: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400">
-                    <option value="">{"👤 Відповідальний (необов'язково)"}</option>
+                    <option value="">{t.assigneeOptional}</option>
                     {users.map((u) => <option key={u.id} value={u.id}>{u.emoji} {u.name}</option>)}
                   </select>
                   <select value={newEvent.subscriptionId} onChange={(e) => setNewEvent((p) => ({ ...p, subscriptionId: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400">
-                    <option value="">{"🔗 Підписка (необов'язково)"}</option>
+                    <option value="">{t.subscriptionOptional}</option>
                     {subscriptions.map((subscription) => <option key={subscription.id} value={subscription.id}>{subscription.title}</option>)}
                   </select>
 
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddEvent}
                     className="w-full py-3 bg-gradient-to-r from-lavender-500 to-lavender-400 text-white rounded-2xl font-semibold hover:shadow-cozy transition-all">
-                    Додати подію {newEvent.emoji}
+                    {t.addEventCta} {newEvent.emoji}
                   </motion.button>
                 </div>
               </div>

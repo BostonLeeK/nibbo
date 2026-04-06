@@ -10,6 +10,8 @@ import { createPortal } from "react-dom";
 import { Check, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { TASK_POINTS_AWARDED_EVENT } from "@/lib/task-points";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 const TaskTamagotchi3D = dynamic(() => import("./TaskTamagotchi3D"), {
   ssr: false,
@@ -43,6 +45,8 @@ export default function DashboardClient({
   upcomingEvents,
   recentTasks,
 }: DashboardClientProps) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].dashboard;
   const [show3D, setShow3D] = useState(false);
   const [tasks, setTasks] = useState<DashboardTask[]>(recentTasks as DashboardTask[]);
   const [tamagotchiStats, setTamagotchiStats] = useState<PersonalTaskStats>(personalTaskStats);
@@ -100,7 +104,7 @@ export default function DashboardClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed: true }),
       });
-      if (!res.ok) throw new Error("Не вдалося оновити задачу");
+      if (!res.ok) throw new Error(t.completeTaskError);
       const data = (await res.json()) as { awardedPoints?: number };
       if (data.awardedPoints && data.awardedPoints > 0) {
         window.dispatchEvent(
@@ -109,37 +113,37 @@ export default function DashboardClient({
       }
       setTasks((prev) => prev.filter((task) => task.id !== confirmTask.id));
       await refreshTamagotchiStats();
-      toast.success("Задачу відмічено як виконану");
+      toast.success(t.completeTaskSuccess);
       setConfirmTask(null);
     } catch {
-      toast.error("Не вдалося завершити задачу");
+      toast.error(t.completeTaskFailToast);
     } finally {
       setBusyComplete(false);
     }
   };
 
   const statCards = [
-    { label: "Активних задач", value: stats.taskCount, emoji: "📋", color: "from-rose-400 to-rose-500", href: "/tasks" },
-    { label: "Майбутніх подій", value: stats.eventCount, emoji: "📅", color: "from-lavender-400 to-lavender-500", href: "/calendar" },
-    { label: "До купівлі", value: stats.shoppingCount, emoji: "🛒", color: "from-sage-400 to-sage-500", href: "/shopping" },
+    { label: t.stats.activeTasks, value: stats.taskCount, emoji: "📋", color: "from-rose-400 to-rose-500", href: "/tasks" },
+    { label: t.stats.upcomingEvents, value: stats.eventCount, emoji: "📅", color: "from-lavender-400 to-lavender-500", href: "/calendar" },
+    { label: t.stats.toBuy, value: stats.shoppingCount, emoji: "🛒", color: "from-sage-400 to-sage-500", href: "/shopping" },
   ];
 
   const quickLinks = [
-    { href: "/tasks", emoji: "📋", label: "Нова задача", color: "bg-rose-50 hover:bg-rose-100 border-rose-200" },
-    { href: "/calendar", emoji: "📅", label: "Новий івент", color: "bg-lavender-50 hover:bg-lavender-100 border-lavender-200" },
-    { href: "/menu", emoji: "🍽️", label: "Планувати меню", color: "bg-peach-50 hover:bg-peach-100 border-peach-200" },
-    { href: "/notes", emoji: "📓", label: "Нотатка", color: "bg-cream-50 hover:bg-cream-100 border-cream-200" },
-    { href: "/budget", emoji: "💰", label: "Витрата", color: "bg-sage-50 hover:bg-sage-100 border-sage-200" },
-    { href: "/shopping", emoji: "🛒", label: "Додати покупку", color: "bg-sky-50 hover:bg-sky-100 border-sky-200" },
+    { href: "/tasks", emoji: "📋", label: t.quickLinks.newTask, color: "bg-rose-50 hover:bg-rose-100 border-rose-200" },
+    { href: "/calendar", emoji: "📅", label: t.quickLinks.newEvent, color: "bg-lavender-50 hover:bg-lavender-100 border-lavender-200" },
+    { href: "/menu", emoji: "🍽️", label: t.quickLinks.planMenu, color: "bg-peach-50 hover:bg-peach-100 border-peach-200" },
+    { href: "/notes", emoji: "📓", label: t.quickLinks.note, color: "bg-cream-50 hover:bg-cream-100 border-cream-200" },
+    { href: "/budget", emoji: "💰", label: t.quickLinks.expense, color: "bg-sage-50 hover:bg-sage-100 border-sage-200" },
+    { href: "/shopping", emoji: "🛒", label: t.quickLinks.addPurchase, color: "bg-sky-50 hover:bg-sky-100 border-sky-200" },
   ];
 
   return (
     <div className="space-y-5 md:space-y-6 max-w-6xl mx-auto">
       <div data-tour="dashboard-home">
         <h2 className="text-xl md:text-2xl font-bold text-warm-800">
-          Фокус дня 🌸
+          {t.dayFocusTitle}
         </h2>
-        <p className="text-warm-500 text-sm mt-1">Nibby росте, коли ти закриваєш задачі</p>
+        <p className="text-warm-500 text-sm mt-1">{t.dayFocusSubtitle}</p>
       </div>
 
       <div ref={modelRef} data-tour="tamagotchi-3d" className="min-h-[360px]">
@@ -173,7 +177,7 @@ export default function DashboardClient({
       </div>
 
       <div>
-        <h3 className="font-semibold text-warm-700 mb-3 text-sm">Швидкий доступ ✨</h3>
+        <h3 className="font-semibold text-warm-700 mb-3 text-sm">{t.quickAccess}</h3>
         <div data-tour="quick-actions" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {quickLinks.map((link) => (
             <Link key={link.href} href={link.href} data-tour={link.href === "/menu" ? "recipes-action" : undefined}>
@@ -195,17 +199,17 @@ export default function DashboardClient({
         <div className="bg-white/70 rounded-3xl p-4 md:p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
-              <span>📅</span> Майбутні події
+              <span>📅</span> {t.upcomingEventsTitle}
             </h3>
             <Link href="/calendar" className="text-xs text-rose-500 hover:text-rose-600 font-medium">
-              Всі →
+              {t.all}
             </Link>
           </div>
           <div className="space-y-3">
             {upcomingEvents.length === 0 ? (
               <div className="text-center py-6 text-warm-400">
                 <div className="text-3xl mb-2">🌙</div>
-                <p className="text-sm">Поки немає подій</p>
+                <p className="text-sm">{t.noEvents}</p>
               </div>
             ) : (
               upcomingEvents.map((event) => (
@@ -242,17 +246,17 @@ export default function DashboardClient({
         <div className="bg-white/70 rounded-3xl p-4 md:p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
-              <span>📋</span> Твої активні задачі
+              <span>📋</span> {t.activeTasksTitle}
             </h3>
             <Link href="/tasks" className="text-xs text-rose-500 hover:text-rose-600 font-medium">
-              Всі →
+              {t.all}
             </Link>
           </div>
           <div className="space-y-3">
             {tasks.length === 0 ? (
               <div className="text-center py-6 text-warm-400">
                 <div className="text-3xl mb-2">✨</div>
-                <p className="text-sm">Всі задачі виконані!</p>
+                <p className="text-sm">{t.allTasksDone}</p>
               </div>
             ) : (
               tasks.map((task) => {
@@ -276,7 +280,7 @@ export default function DashboardClient({
                       type="button"
                       onClick={() => setConfirmTask(task)}
                       className="w-7 h-7 rounded-full bg-sage-100 hover:bg-sage-200 text-sage-700 flex items-center justify-center transition-colors"
-                      aria-label="Позначити виконаною"
+                      aria-label={t.markCompletedAria}
                     >
                       <Check size={14} />
                     </button>
@@ -316,8 +320,8 @@ export default function DashboardClient({
                 >
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div>
-                      <h3 className="font-bold text-warm-800">Підтвердити виконання</h3>
-                      <p className="text-sm text-warm-500 mt-1">Позначити задачу як виконану?</p>
+                      <h3 className="font-bold text-warm-800">{t.confirmTitle}</h3>
+                      <p className="text-sm text-warm-500 mt-1">{t.confirmSubtitle}</p>
                     </div>
                     <button
                       type="button"
@@ -336,7 +340,7 @@ export default function DashboardClient({
                       onClick={() => setConfirmTask(null)}
                       className="flex-1 py-2.5 rounded-xl bg-white border border-warm-200 text-warm-700 text-sm font-medium"
                     >
-                      Скасувати
+                      {t.cancel}
                     </button>
                     <button
                       type="button"
@@ -344,7 +348,7 @@ export default function DashboardClient({
                       onClick={completeTask}
                       className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-sage-500 to-sage-400 text-white text-sm font-semibold disabled:opacity-60"
                     >
-                      {busyComplete ? "..." : "Виконано"}
+                      {busyComplete ? "..." : t.done}
                     </button>
                   </div>
                 </motion.div>

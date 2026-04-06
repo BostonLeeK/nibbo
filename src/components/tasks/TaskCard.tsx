@@ -5,6 +5,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Calendar, Trash2, GripVertical, Pencil } from "lucide-react";
 import { cn, formatDate, PRIORITY_CONFIG } from "@/lib/utils";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface Task {
@@ -37,6 +39,9 @@ export default function TaskCard({
   onEdit,
   isDragging,
 }: TaskCardProps) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].task.card;
+  const userFallback = I18N[language].task.userFallback;
   const [showActions, setShowActions] = useState(false);
   const priority = PRIORITY_CONFIG[task.priority];
 
@@ -86,7 +91,7 @@ export default function TaskCard({
                 onChange={(e) => onCompletedChange(e.target.checked)}
                 onPointerDown={(e) => e.stopPropagation()}
                 className="mt-0.5 w-4 h-4 rounded border-warm-300 text-rose-500 focus:ring-rose-400 cursor-pointer flex-shrink-0"
-                aria-label="Позначити виконаною"
+                aria-label={t.markCompletedAria}
               />
             )}
             <p
@@ -189,10 +194,10 @@ export default function TaskCard({
               onPointerDown={(e) => e.stopPropagation()}
               className="mt-2 w-full bg-warm-50 rounded-xl px-2 py-1.5 text-xs text-warm-800 border border-warm-200 focus:border-rose-300 outline-none"
             >
-              <option value="">Не призначено</option>
+              <option value="">{t.unassigned}</option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.emoji} {u.name ?? "Користувач"}
+                  {u.emoji} {u.name ?? userFallback}
                 </option>
               ))}
             </select>

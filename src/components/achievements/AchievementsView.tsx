@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 type Achievement = {
   id: string;
@@ -36,6 +38,8 @@ export default function AchievementsView({
   rows,
   achievements,
 }: AchievementsViewProps) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].achievements;
   const nextAchievement = useMemo(
     () =>
       achievements.find((achievement) => points < achievement.threshold) ??
@@ -53,10 +57,10 @@ export default function AchievementsView({
         <div className="absolute -left-12 -bottom-12 h-40 w-40 rounded-full bg-lavender-200/30 blur-3xl" />
         <div className="relative">
           <h1 className="text-2xl md:text-3xl font-bold text-warm-800">
-            Ачівки
+            {t.title}
           </h1>
           <p className="text-sm text-warm-500 mt-1">
-            Качай XP, відкривай досягнення і рухай сім’ю в топ рейтингу.
+            {t.subtitle}
           </p>
           <div className="mt-4 flex items-center gap-3">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-lavender-200">
@@ -66,11 +70,11 @@ export default function AchievementsView({
             </div>
             {nextAchievement ? (
               <span className="text-xs md:text-sm text-warm-600">
-                Далі: {nextAchievement.title} ({nextAchievement.threshold} XP)
+                {t.next}: {nextAchievement.title} ({nextAchievement.threshold} XP)
               </span>
             ) : (
               <span className="text-xs md:text-sm text-sage-700">
-                Усі досягнення відкрито
+                {t.allUnlocked}
               </span>
             )}
           </div>
@@ -84,7 +88,7 @@ export default function AchievementsView({
       </div>
 
       <div className="bg-white/85 rounded-3xl border border-warm-100 p-5 md:p-6">
-        <h2 className="text-lg font-semibold text-warm-800">Досягнення</h2>
+        <h2 className="text-lg font-semibold text-warm-800">{t.achievementsTitle}</h2>
         <div className="grid gap-3 md:grid-cols-2 mt-4">
           {achievements.map((achievement) => {
             const unlocked = points >= achievement.threshold;
@@ -108,7 +112,7 @@ export default function AchievementsView({
                   </span>
                 </div>
                 <p className="text-xs text-warm-500 mt-1">
-                  Поріг: {achievement.threshold} XP
+                  {t.threshold}: {achievement.threshold} XP
                 </p>
               </div>
             );
@@ -118,26 +122,25 @@ export default function AchievementsView({
 
       <div className="bg-white/85 rounded-3xl border border-warm-100 p-5 md:p-6">
         <h2 className="text-lg font-semibold text-warm-800">
-          Рейтинг родин (XP)
+          {t.rankingTitle}
         </h2>
         <p className="text-xs text-warm-500 mt-1">
-          У таблиці тільки родини, які ввімкнули видимість в рейтингу.
+          {t.rankingSubtitle}
         </p>
         {familyInfo?.shareInLeaderboard && myRank ? (
           <p className="text-sm text-sage-700 mt-3">
-            Ваша родина «{familyInfo.name}» на #{myRank.rank} місці з{" "}
-            {myRank.points} XP.
+            {t.yourFamilyRankPrefix} «{familyInfo.name}» {t.yourFamilyRankMiddle} #{myRank.rank}{" "}
+            {t.yourFamilyRankSuffix} {myRank.points} XP.
           </p>
         ) : (
           <p className="text-sm text-warm-500 mt-3">
-            Ваша родина не бере участь у рейтингу. Увімкніть опцію в розділі
-            Родина.
+            {t.familyNotInRating}
           </p>
         )}
         <div className="mt-4 space-y-2">
           {rows.length === 0 ? (
             <p className="text-sm text-warm-400">
-              Поки немає родин у рейтингу.
+              {t.noFamilies}
             </p>
           ) : (
             rows.map((row) => (

@@ -36,6 +36,8 @@ import TaskColumn from "./TaskColumn";
 import TaskCard from "./TaskCard";
 import AddBoardModal from "./AddBoardModal";
 import TaskEditModal from "./TaskEditModal";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 interface TaskBoardProps {
   initialBoards: TaskBoardBoard[];
@@ -91,11 +93,15 @@ function SortableBoardTab({
   active,
   onSelect,
   onEditSettings,
+  dragAriaLabel,
+  settingsAriaLabel,
 }: {
   board: TaskBoardBoard;
   active: boolean;
   onSelect: () => void;
   onEditSettings: () => void;
+  dragAriaLabel: string;
+  settingsAriaLabel: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: board.id,
@@ -125,7 +131,7 @@ function SortableBoardTab({
       <button
         type="button"
         className="hidden md:block px-1.5 py-2 text-warm-300 hover:text-warm-500 cursor-grab active:cursor-grabbing touch-none"
-        aria-label="Перетягнути дошку"
+        aria-label={dragAriaLabel}
         {...attributes}
         {...listeners}
       >
@@ -150,7 +156,7 @@ function SortableBoardTab({
           onEditSettings();
         }}
         className="p-2 text-warm-400 hover:text-rose-500 rounded-lg hover:bg-rose-50/80"
-        aria-label="Налаштування дошки"
+        aria-label={settingsAriaLabel}
       >
         <Settings2 size={14} />
       </button>
@@ -159,6 +165,9 @@ function SortableBoardTab({
 }
 
 export default function TaskBoard({ initialBoards, users, currentUserId }: TaskBoardProps) {
+  const { language } = useAppLanguage();
+  const taskI18n = I18N[language].task;
+  const t = taskI18n.board;
   const [boards, setBoards] = useState<TaskBoardBoard[]>(initialBoards);
   const [activeBoard, setActiveBoard] = useState(initialBoards[0]?.id ?? "");
   const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>("ALL");
@@ -365,7 +374,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
     setBoards((prev) =>
       prev.map((b) => (b.id === boardId ? { ...b, columns: [...b.columns, col] } : b))
     );
-    toast.success("Колонку додано! 🎉");
+    toast.success(t.toastColumnAdded);
   };
 
   const addTask = async (
@@ -400,7 +409,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
           : b
       )
     );
-    toast.success("Задачу додано! ✅");
+    toast.success(t.toastTaskAdded);
   };
 
   const updateTaskAssignee = async (taskId: string, assigneeId: string | null) => {
@@ -422,7 +431,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         }))
       );
     } catch {
-      toast.error("Не вдалося оновити виконавця");
+      toast.error(t.toastAssigneeUpdateError);
     }
   };
 
@@ -445,7 +454,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         }))
       );
     } catch {
-      toast.error("Не вдалося змінити пріоритет");
+      toast.error(t.toastPriorityUpdateError);
     }
   };
 
@@ -464,21 +473,26 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
           new CustomEvent(TASK_POINTS_AWARDED_EVENT, { detail: { points: task.awardedPoints } })
         );
         toast.custom(
-          (t) => (
+          (toastState) => (
             <div
               className={`${
-                t.visible ? "animate-enter" : "animate-leave"
+                toastState.visible ? "animate-enter" : "animate-leave"
               } bg-white border border-lavender-200 shadow-cozy rounded-2xl px-4 py-3`}
             >
-              <p className="text-sm font-semibold text-warm-800">🎉 Вітаємо! +{task.awardedPoints} XP</p>
-              <p className="text-xs text-warm-500 mt-1">Ще один крок до супер форми Nibbo</p>
+              <p className="text-sm font-semibold text-warm-800">
+                {t.xpTitlePrefix}
+                {task.awardedPoints} XP
+              </p>
+              <p className="text-xs text-warm-500 mt-1">
+                {t.xpSubtitleProgress}
+              </p>
             </div>
           ),
           { duration: 2200 }
         );
       }
     } catch {
-      toast.error("Не вдалося оновити статус");
+      toast.error(t.toastStatusUpdateError);
     }
   };
 
@@ -498,20 +512,25 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         new CustomEvent(TASK_POINTS_AWARDED_EVENT, { detail: { points: task.awardedPoints } })
       );
       toast.custom(
-        (t) => (
+        (toastState) => (
           <div
             className={`${
-              t.visible ? "animate-enter" : "animate-leave"
+              toastState.visible ? "animate-enter" : "animate-leave"
             } bg-white border border-lavender-200 shadow-cozy rounded-2xl px-4 py-3`}
           >
-            <p className="text-sm font-semibold text-warm-800">🎉 Вітаємо! +{task.awardedPoints} XP</p>
-            <p className="text-xs text-warm-500 mt-1">Nibbo радіє кожному завершенню задачі</p>
+            <p className="text-sm font-semibold text-warm-800">
+              {t.xpTitlePrefix}
+              {task.awardedPoints} XP
+            </p>
+            <p className="text-xs text-warm-500 mt-1">
+              {t.xpSubtitleNibbo}
+            </p>
           </div>
         ),
         { duration: 2200 }
       );
     }
-    toast.success("Збережено");
+    toast.success(t.toastSaved);
   };
 
   const deleteTask = async (taskId: string, columnId: string) => {
@@ -524,7 +543,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         ),
       }))
     );
-    toast.success("Задачу видалено");
+    toast.success(t.toastTaskDeleted);
   };
 
   const renameColumn = async (columnId: string, name: string) => {
@@ -534,7 +553,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
       body: JSON.stringify({ name: name.trim() }),
     });
     if (!res.ok) {
-      toast.error("Не вдалося перейменувати");
+      toast.error(t.toastRenameError);
       return;
     }
     const column = await res.json();
@@ -544,11 +563,11 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         columns: b.columns.map((c) => (c.id === columnId ? { ...c, ...column } : c)),
       }))
     );
-    toast.success("Колонку оновлено");
+    toast.success(t.toastColumnUpdated);
   };
 
   const deleteColumn = async (columnId: string) => {
-    if (!confirm("Видалити колонку і всі задачі в ній?")) return;
+    if (!confirm(t.deleteColumnConfirm)) return;
     await fetch(`/api/tasks/columns/${columnId}`, { method: "DELETE" });
     setBoards((prev) =>
       prev.map((b) => ({
@@ -556,7 +575,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         columns: b.columns.filter((c) => c.id !== columnId),
       }))
     );
-    toast.success("Колонку видалено");
+    toast.success(t.toastColumnDeleted);
   };
 
   const addBoard = async (name: string, emoji: string, color: string) => {
@@ -569,7 +588,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
     setBoards((prev) => [...prev, board]);
     setActiveBoard(board.id);
     setShowAddBoard(false);
-    toast.success("Дошку створено! 🎊");
+    toast.success(t.toastBoardCreated);
   };
 
   const updateBoard = async (id: string, name: string, emoji: string, color: string) => {
@@ -579,13 +598,13 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
       body: JSON.stringify({ name, emoji, color }),
     });
     if (!res.ok) {
-      toast.error("Не вдалося оновити дошку");
+      toast.error(t.toastBoardUpdateError);
       return;
     }
     const board = await res.json();
     setBoards((prev) => prev.map((b) => (b.id === id ? board : b)));
     setEditBoard(null);
-    toast.success("Дошку оновлено");
+    toast.success(t.toastBoardUpdated);
   };
 
   const deleteBoard = async (id: string) => {
@@ -599,7 +618,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
       return next;
     });
     setEditBoard(null);
-    toast.success("Дошку видалено");
+    toast.success(t.toastBoardDeleted);
   };
 
   return (
@@ -619,6 +638,8 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
                 active={activeBoard === board.id}
                 onSelect={() => setActiveBoard(board.id)}
                 onEditSettings={() => setEditBoard(board)}
+                dragAriaLabel={t.dragBoardAria}
+                settingsAriaLabel={t.boardSettingsAria}
               />
             ))}
           </SortableContext>
@@ -628,7 +649,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
             onClick={() => setShowAddBoard(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-warm-400 hover:text-rose-500 hover:bg-rose-50 border-2 border-dashed border-warm-200 hover:border-rose-300 transition-all flex-shrink-0"
           >
-            <Plus size={14} /> Нова дошка
+            <Plus size={14} /> {t.newBoard}
           </motion.button>
         </div>
         <div className="mb-4 md:mb-6">
@@ -637,12 +658,12 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
             onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)}
             className="bg-white border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-700 outline-none w-full sm:w-auto"
           >
-            <option value="ALL">Всі виконавці</option>
-            <option value="ME">Тільки мої задачі</option>
-            <option value="UNASSIGNED">Без виконавця</option>
+            <option value="ALL">{t.filterAll}</option>
+            <option value="ME">{t.filterMine}</option>
+            <option value="UNASSIGNED">{t.filterUnassigned}</option>
             {users.map((user) => (
               <option key={user.id} value={`USER:${user.id}`}>
-                {user.emoji} {user.name ?? "Користувач"}
+                {user.emoji} {user.name ?? taskI18n.userFallback}
               </option>
             ))}
           </select>
@@ -652,7 +673,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
           <>
             {!isFilterAll && visibleTasksCount === 0 && (
               <div className="mb-3 rounded-2xl bg-warm-50 border border-warm-100 px-4 py-3 text-sm text-warm-500">
-                За обраним фільтром задач не знайдено
+                {t.filteredEmpty}
               </div>
             )}
             {isMobile ? (
@@ -745,15 +766,15 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="text-5xl mb-4">📋</div>
-              <h3 className="text-lg font-semibold text-warm-700 mb-2">Немає дошок</h3>
-              <p className="text-warm-400 text-sm mb-4">Створіть першу дошку для задач</p>
+              <h3 className="text-lg font-semibold text-warm-700 mb-2">{t.noBoardsTitle}</h3>
+              <p className="text-warm-400 text-sm mb-4">{t.noBoardsHint}</p>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowAddBoard(true)}
                 className="px-6 py-3 bg-rose-500 text-white rounded-2xl font-medium hover:bg-rose-600 transition-colors w-full sm:w-auto"
               >
-                Створити дошку 🎉
+                {t.createBoardCta}
               </motion.button>
             </div>
           </div>
@@ -788,6 +809,8 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
 }
 
 function AddColumnButton({ onAdd }: { onAdd: (name: string, emoji: string, color: string) => void }) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].task.board;
   const [isAdding, setIsAdding] = useState(false);
   const [name, setName] = useState("");
 
@@ -811,7 +834,7 @@ function AddColumnButton({ onAdd }: { onAdd: (name: string, emoji: string, color
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-            placeholder="Назва колонки..."
+            placeholder={t.addColumnPlaceholder}
             className="w-full bg-warm-50 rounded-xl px-3 py-2 text-sm text-warm-800 placeholder:text-warm-400 outline-none border border-warm-200 focus:border-rose-300 mb-3"
           />
           <div className="flex gap-2">
@@ -820,7 +843,7 @@ function AddColumnButton({ onAdd }: { onAdd: (name: string, emoji: string, color
               onClick={handleAdd}
               className="flex-1 bg-rose-500 text-white rounded-xl py-2 text-sm font-medium hover:bg-rose-600 transition-colors"
             >
-              Додати
+              {t.addColumn}
             </button>
             <button
               type="button"
@@ -838,7 +861,7 @@ function AddColumnButton({ onAdd }: { onAdd: (name: string, emoji: string, color
           onClick={() => setIsAdding(true)}
           className="w-full flex items-center gap-2 px-4 py-3 rounded-2xl text-sm text-warm-400 hover:text-rose-500 hover:bg-white/50 border-2 border-dashed border-warm-200 hover:border-rose-300 transition-all"
         >
-          <Plus size={16} /> Нова колонка
+          <Plus size={16} /> {t.newColumn}
         </motion.button>
       )}
     </div>

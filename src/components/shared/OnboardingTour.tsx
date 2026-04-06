@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Joyride, STATUS, type EventData } from "react-joyride";
+import { I18N } from "@/lib/i18n";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
 
 type OnboardingTourProps = {
   shouldRun: boolean;
@@ -11,6 +13,8 @@ type OnboardingTourProps = {
 
 export default function OnboardingTour({ shouldRun, userId }: OnboardingTourProps) {
   const pathname = usePathname();
+  const { language } = useAppLanguage();
+  const t = I18N[language];
   const [run, setRun] = useState(false);
   const [saving, setSaving] = useState(false);
   const [completedLocally, setCompletedLocally] = useState(false);
@@ -33,62 +37,62 @@ export default function OnboardingTour({ shouldRun, userId }: OnboardingTourProp
     () => [
       {
         target: "body",
-        title: "Ласкаво просимо в Nibbo 🌙✨",
-        content: "Nibbo потрібен, щоб уся сім'я тримала домашні справи в одному місці: задачі, календар, меню, нотатки, витрати й покупки — все синхронно, прозоро і без хаосу.",
+        title: t.tour.welcomeTitle,
+        content: t.tour.welcomeContent,
         disableBeacon: true,
         placement: "center" as const,
       },
       {
         target: "[data-tour='dashboard-home']",
-        title: "Головна сторінка",
-        content: "Це твій домашній екран: прогрес, події, задачі та швидкі дії в одному місці.",
+        title: t.tour.homeTitle,
+        content: t.tour.homeContent,
         disableBeacon: true,
         placement: "bottom" as const,
       },
       {
         target: "[data-tour='nav-family']",
-        title: "Сім'я та учасники",
-        content: "У розділі «Родина» є керування сім'єю, ролями та налаштуваннями учасників.",
+        title: t.tour.familyTitle,
+        content: t.tour.familyContent,
         placement: "right" as const,
       },
       {
         target: "[data-tour='xp-badge']",
-        title: "Досвід (XP)",
-        content: "XP нараховується за виконані задачі. Чим більше закритих задач — тим вищий прогрес.",
+        title: t.tour.xpTitle,
+        content: t.tour.xpContent,
         placement: "bottom" as const,
       },
       {
         target: "[data-tour='tamagotchi-3d']",
-        title: "Ваш Nibbo",
-        content: "Стан персонажа залежить від виконання задач: закриваєш більше задач — персонаж стає активнішим і сильнішим.",
+        title: t.tour.nibboTitle,
+        content: t.tour.nibboContent,
         placement: "top" as const,
       },
       {
         target: "[data-tour='nav-menu']",
-        title: "Рецепти",
-        content: "Тут починається планування меню: додавай рецепти, страви і формуй покупки з інгредієнтів.",
+        title: t.tour.recipesTitle,
+        content: t.tour.recipesContent,
         placement: "right" as const,
       },
       {
         target: "[data-tour='nav-calendar']",
-        title: "Календар",
-        content: "Потрібен, щоб планувати події та важливі дати для всієї сім'ї і не пропускати дедлайни.",
+        title: t.tour.calendarTitle,
+        content: t.tour.calendarContent,
         placement: "right" as const,
       },
       {
         target: "[data-tour='nav-notes']",
-        title: "Нотатки",
-        content: "Зручно зберігати ідеї, списки та домашні замітки в категоріях, щоб усе було структуровано.",
+        title: t.tour.notesTitle,
+        content: t.tour.notesContent,
         placement: "right" as const,
       },
       {
         target: "[data-tour='nav-budget']",
-        title: "Витрати",
-        content: "Допомагає контролювати витрати сім'ї, бачити куди йдуть гроші та тримати бюджет під контролем.",
+        title: t.tour.budgetTitle,
+        content: t.tour.budgetContent,
         placement: "right" as const,
       },
     ],
-    []
+    [t]
   );
 
   const markComplete = async () => {
@@ -166,11 +170,11 @@ export default function OnboardingTour({ shouldRun, userId }: OnboardingTourProp
         },
       }}
       locale={{
-        back: "Назад",
-        close: "Закрити",
-        last: "Готово",
-        next: "Далі",
-        skip: "Пропустити",
+        back: t.tour.back,
+        close: t.tour.close,
+        last: t.tour.done,
+        next: t.tour.next,
+        skip: t.tour.skip,
       }}
     />
   );

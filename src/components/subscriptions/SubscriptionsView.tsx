@@ -6,6 +6,8 @@ import { CalendarClock, Plus, Trash2, UserRound, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
 import { ExchangeRates } from "@/lib/exchange-rates";
+import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
 
 type FamilyRole = "OWNER" | "MEMBER";
 type BillingCycle = "MONTHLY" | "YEARLY";
@@ -53,25 +55,6 @@ type FormState = {
   payerUserId: string;
 };
 
-const statusConfig: Record<SubscriptionStatus, { label: string; className: string }> = {
-  ACTIVE: { label: "Активна", className: "bg-sage-100 text-sage-700" },
-  PAUSED: { label: "Пауза", className: "bg-amber-100 text-amber-700" },
-  CANCELLED: { label: "Скасована", className: "bg-warm-200 text-warm-700" },
-};
-
-const subscriptionCategories = [
-  "Відео та стримінг",
-  "Музика",
-  "Ігри",
-  "Освіта",
-  "Хмара та зберігання",
-  "Продуктивність",
-  "Безпека",
-  "Здоров'я та спорт",
-  "Транспорт",
-  "Інше",
-];
-
 const currencyOptions = ["UAH", "USD", "EUR"];
 
 function formatAmount(amount: number, currency: string) {
@@ -81,7 +64,7 @@ function formatAmount(amount: number, currency: string) {
   const intPart = sign ? intPartRaw.slice(1) : intPartRaw;
   const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const formattedNumber = `${sign}${grouped},${decimalPart}`;
-  const suffix = currency === "UAH" ? "грн" : currency;
+  const suffix = currency === "UAH" ? "UAH" : currency;
   return `${formattedNumber} ${suffix}`;
 }
 
@@ -106,28 +89,28 @@ function toUah(amount: number, currency: string, exchangeRates: ExchangeRates) {
 
 function getCategoryEmoji(category: string | null) {
   if (!category) return "✨";
-  if (category.includes("Відео")) return "🎬";
-  if (category.includes("Музика")) return "🎧";
-  if (category.includes("Ігри")) return "🎮";
-  if (category.includes("Освіта")) return "📚";
-  if (category.includes("Хмара")) return "☁️";
-  if (category.includes("Продуктивність")) return "🗂️";
-  if (category.includes("Безпека")) return "🛡️";
-  if (category.includes("Здоров")) return "💪";
-  if (category.includes("Транспорт")) return "🚗";
+  if (category.includes("Відео") || category.includes("Video")) return "🎬";
+  if (category.includes("Музика") || category.includes("Music")) return "🎧";
+  if (category.includes("Ігри") || category.includes("Games")) return "🎮";
+  if (category.includes("Освіта") || category.includes("Education")) return "📚";
+  if (category.includes("Хмара") || category.includes("Cloud")) return "☁️";
+  if (category.includes("Продуктивність") || category.includes("Productivity")) return "🗂️";
+  if (category.includes("Безпека") || category.includes("Security")) return "🛡️";
+  if (category.includes("Здоров") || category.includes("Health")) return "💪";
+  if (category.includes("Транспорт") || category.includes("Transport")) return "🚗";
   return "💳";
 }
 
-function getDueInfo(nextBillingDate: string) {
+function getDueInfo(nextBillingDate: string, t: typeof I18N.uk.subscriptions) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const due = new Date(nextBillingDate);
   due.setHours(0, 0, 0, 0);
   const days = Math.round((due.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-  if (days < 0) return { label: `Прострочено на ${Math.abs(days)} дн`, className: "bg-rose-100 text-rose-700 border-rose-200" };
-  if (days === 0) return { label: "Сьогодні", className: "bg-amber-100 text-amber-700 border-amber-200" };
-  if (days <= 3) return { label: `Через ${days} дн`, className: "bg-peach-100 text-peach-700 border-peach-200" };
-  return { label: `Через ${days} дн`, className: "bg-sage-100 text-sage-700 border-sage-200" };
+  if (days < 0) return { label: t.overdue.replace("{days}", String(Math.abs(days))), className: "bg-rose-100 text-rose-700 border-rose-200" };
+  if (days === 0) return { label: t.today, className: "bg-amber-100 text-amber-700 border-amber-200" };
+  if (days <= 3) return { label: t.inDays.replace("{days}", String(days)), className: "bg-peach-100 text-peach-700 border-peach-200" };
+  return { label: t.inDays.replace("{days}", String(days)), className: "bg-sage-100 text-sage-700 border-sage-200" };
 }
 
 function toForm(item: SubscriptionItem): FormState {
@@ -175,6 +158,15 @@ export default function SubscriptionsView({
   currentUserRole: FamilyRole;
   exchangeRates: ExchangeRates;
 }) {
+  const { language } = useAppLanguage();
+  const t = I18N[language].subscriptions;
+  const localeCode = language === "en" ? "en-US" : "uk-UA";
+  const statusConfig: Record<SubscriptionStatus, { label: string; className: string }> = {
+    ACTIVE: { label: t.active, className: "bg-sage-100 text-sage-700" },
+    PAUSED: { label: t.paused, className: "bg-amber-100 text-amber-700" },
+    CANCELLED: { label: t.cancelled, className: "bg-warm-200 text-warm-700" },
+  };
+  const subscriptionCategories = t.categories;
   const owner = currentUserRole === "OWNER";
   const [items, setItems] = useState(initialItems);
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | "ALL">("ALL");
@@ -242,16 +234,16 @@ export default function SubscriptionsView({
 
   const save = async () => {
     if (!form.title.trim()) {
-      toast.error("Вкажи назву сервісу");
+      toast.error(t.serviceNameRequired);
       return;
     }
     const amount = Number(form.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Сума має бути більше 0");
+      toast.error(t.amountPositive);
       return;
     }
     if (!form.nextBillingDate) {
-      toast.error("Вкажи дату наступного списання");
+      toast.error(t.nextBillingRequired);
       return;
     }
 
@@ -281,7 +273,7 @@ export default function SubscriptionsView({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({} as { error?: string }));
-        throw new Error(err.error || "Не вдалося зберегти");
+        throw new Error(err.error || t.saveError);
       }
 
       const data = (await res.json()) as SubscriptionItem;
@@ -295,27 +287,27 @@ export default function SubscriptionsView({
       );
       setShowModal(false);
       setEditingId(null);
-      toast.success(editingId ? "Підписку оновлено" : "Підписку додано");
+      toast.success(editingId ? t.updated : t.added);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Помилка");
+      toast.error(error instanceof Error ? error.message : t.genericError);
     } finally {
       setBusy(false);
     }
   };
 
   const removeItem = async (id: string) => {
-    if (!confirm("Видалити підписку?")) return;
+    if (!confirm(t.deleteConfirm)) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/subscriptions/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const err = await res.json().catch(() => ({} as { error?: string }));
-        throw new Error(err.error || "Не вдалося видалити");
+        throw new Error(err.error || t.deleteError);
       }
       setItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success("Підписку видалено");
+      toast.success(t.deleted);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Помилка");
+      toast.error(error instanceof Error ? error.message : t.genericError);
     } finally {
       setBusy(false);
     }
@@ -324,19 +316,19 @@ export default function SubscriptionsView({
   return (
     <div className="space-y-5">
       <div className="bg-gradient-to-br from-lavender-400 to-lavender-500 rounded-3xl p-5 text-white shadow-cozy">
-        <p className="text-lavender-100 text-sm">Сімейні підписки</p>
-        <h2 className="text-3xl font-bold mt-1">{formatAmount(summary.monthlyTotal, "UAH")} / міс</h2>
+        <p className="text-lavender-100 text-sm">{t.title}</p>
+        <h2 className="text-3xl font-bold mt-1">{formatAmount(summary.monthlyTotal, "UAH")} {t.perMonth}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4">
           <div className="bg-white/20 rounded-2xl px-4 py-2">
-            <p className="text-xs text-lavender-100">Активні</p>
+            <p className="text-xs text-lavender-100">{t.activeCount}</p>
             <p className="font-bold">{summary.activeCount}</p>
           </div>
           <div className="bg-white/20 rounded-2xl px-4 py-2">
-            <p className="text-xs text-lavender-100">Скоро списання</p>
+            <p className="text-xs text-lavender-100">{t.upcomingCharge}</p>
             <p className="font-bold">{summary.upcomingCount}</p>
           </div>
           <div className="bg-white/20 rounded-2xl px-4 py-2">
-            <p className="text-xs text-lavender-100">Всього</p>
+            <p className="text-xs text-lavender-100">{t.total}</p>
             <p className="font-bold">{items.length}</p>
           </div>
         </div>
@@ -344,27 +336,27 @@ export default function SubscriptionsView({
 
       <div className="bg-white/80 rounded-3xl border border-warm-100 p-4 md:p-5 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <h3 className="font-semibold text-warm-800">Реєстр підписок</h3>
+          <h3 className="font-semibold text-warm-800">{t.registryTitle}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as SubscriptionStatus | "ALL")}
               className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-700 outline-none"
             >
-              <option value="ALL">Всі статуси</option>
-              <option value="ACTIVE">Активні</option>
-              <option value="PAUSED">На паузі</option>
-              <option value="CANCELLED">Скасовані</option>
+              <option value="ALL">{t.allStatuses}</option>
+              <option value="ACTIVE">{t.onlyActive}</option>
+              <option value="PAUSED">{t.onPause}</option>
+              <option value="CANCELLED">{t.onlyCancelled}</option>
             </select>
             <select
               value={memberFilter}
               onChange={(e) => setMemberFilter(e.target.value)}
               className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-700 outline-none"
             >
-              <option value="ALL">Всі учасники</option>
+              <option value="ALL">{t.allMembers}</option>
               {members.map((member) => (
                 <option key={member.id} value={member.id}>
-                  {member.emoji} {member.name || member.email || "Учасник"}
+                  {member.emoji} {member.name || member.email || t.memberFallback}
                 </option>
               ))}
             </select>
@@ -375,21 +367,21 @@ export default function SubscriptionsView({
               className="px-4 py-2 rounded-xl bg-lavender-500 hover:bg-lavender-600 text-white text-sm font-medium disabled:opacity-60 flex items-center justify-center gap-2"
             >
               <Plus size={15} />
-              Додати
+              {t.add}
             </button>
           </div>
         </div>
-        {!owner && <p className="text-xs text-warm-400">Тільки власник сім&apos;ї може змінювати підписки.</p>}
+        {!owner && <p className="text-xs text-warm-400">{t.ownerOnly}</p>}
 
         {filteredItems.length === 0 ? (
           <div className="rounded-2xl bg-warm-50 border border-warm-100 p-8 text-center text-warm-400">
-            Підписок не знайдено
+            {t.notFound}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {filteredItems.map((item) => {
               const payer = item.members.find((member) => member.role === "PAYER")?.user;
-              const dueInfo = getDueInfo(item.nextBillingDate);
+              const dueInfo = getDueInfo(item.nextBillingDate, t);
               const categoryEmoji = getCategoryEmoji(item.category);
               return (
                 <motion.div
@@ -407,7 +399,7 @@ export default function SubscriptionsView({
                         {categoryEmoji}
                       </div>
                       <div>
-                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">{item.category || "Без категорії"}</p>
+                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">{item.category || t.noCategory}</p>
                       <h4 className="font-bold text-warm-800 text-lg leading-tight mt-0.5">{item.title}</h4>
                       </div>
                     </div>
@@ -423,31 +415,31 @@ export default function SubscriptionsView({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div className="rounded-2xl bg-white border border-warm-100 px-3 py-2.5">
-                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">Сума</p>
+                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">{t.amountLabel}</p>
                       <p className="text-base font-bold text-warm-800 mt-0.5">{formatAmount(item.amount, item.currency)}</p>
-                      <p className="text-xs text-warm-400">{item.billingCycle === "MONTHLY" ? "Щомісяця" : "Щороку"}</p>
+                      <p className="text-xs text-warm-400">{item.billingCycle === "MONTHLY" ? t.monthly : t.yearly}</p>
                     </div>
                     <div className="rounded-2xl bg-white border border-warm-100 px-3 py-2.5">
-                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">Наступне списання</p>
-                      <p className="text-base font-bold text-warm-800 mt-0.5">{new Date(item.nextBillingDate).toLocaleDateString("uk-UA")}</p>
+                      <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">{t.nextBillingLabel}</p>
+                      <p className="text-base font-bold text-warm-800 mt-0.5">{new Date(item.nextBillingDate).toLocaleDateString(localeCode)}</p>
                       {item.trialEndsAt && (
-                        <p className="text-xs text-warm-400">Тріал до {new Date(item.trialEndsAt).toLocaleDateString("uk-UA")}</p>
+                        <p className="text-xs text-warm-400">{t.trialUntil} {new Date(item.trialEndsAt).toLocaleDateString(localeCode)}</p>
                       )}
                     </div>
                   </div>
 
                   <div className="space-y-2.5">
-                    <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">Користувачі</p>
+                    <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">{t.usersLabel}</p>
                     <div className="flex flex-wrap gap-1.5 min-h-7">
-                      {item.members.length === 0 && <span className="text-xs text-warm-400">Нікого не призначено</span>}
+                      {item.members.length === 0 && <span className="text-xs text-warm-400">{t.nobodyAssigned}</span>}
                       {item.members.map((member) => (
                         <span key={member.id} className="text-xs px-2.5 py-1 rounded-full bg-warm-100 text-warm-700 border border-warm-200/70">
-                          {member.user.emoji} {member.user.name || member.user.email || "Учасник"}
+                          {member.user.emoji} {member.user.name || member.user.email || t.memberFallback}
                         </span>
                       ))}
                     </div>
                     <p className="text-sm text-warm-600">
-                      <span className="text-warm-500">Платник:</span> {payer ? `${payer.emoji} ${payer.name || payer.email || "Учасник"}` : "не вказано"}
+                      <span className="text-warm-500">{t.payerLabel}</span> {payer ? `${payer.emoji} ${payer.name || payer.email || t.memberFallback}` : t.notSpecified}
                     </p>
                   </div>
 
@@ -459,7 +451,7 @@ export default function SubscriptionsView({
                       onClick={() => openEdit(item)}
                       className="px-3.5 py-2 rounded-xl bg-white border border-warm-200 hover:bg-warm-50 text-warm-700 text-xs font-semibold disabled:opacity-60"
                     >
-                      Редагувати
+                      {t.edit}
                     </button>
                     <button
                       type="button"
@@ -468,7 +460,7 @@ export default function SubscriptionsView({
                       className="px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-semibold disabled:opacity-60 flex items-center gap-1.5"
                     >
                       <Trash2 size={13} />
-                      Видалити
+                      {t.delete}
                     </button>
                   </div>
                 </motion.div>
@@ -497,7 +489,7 @@ export default function SubscriptionsView({
                   className="relative z-10 w-full max-w-2xl max-h-[92vh] rounded-3xl bg-white shadow-cozy-lg overflow-hidden"
                 >
                   <div className="flex items-center justify-between border-b border-warm-100 px-5 py-4">
-                    <h3 className="font-bold text-warm-800">{editingId ? "Редагувати підписку" : "Нова підписка"}</h3>
+                    <h3 className="font-bold text-warm-800">{editingId ? t.editTitle : t.newTitle}</h3>
                     <button
                       type="button"
                       onClick={closeModal}
@@ -511,7 +503,7 @@ export default function SubscriptionsView({
                       <input
                         value={form.title}
                         onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                        placeholder="Назва сервісу"
+                        placeholder={t.serviceNamePlaceholder}
                         className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       />
                       <select
@@ -519,7 +511,7 @@ export default function SubscriptionsView({
                         onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
                         className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       >
-                        <option value="">Без категорії</option>
+                        <option value="">{t.noCategory}</option>
                         {subscriptionCategories.map((category) => (
                           <option key={category} value={category}>
                             {category}
@@ -532,7 +524,7 @@ export default function SubscriptionsView({
                         type="number"
                         min="0"
                         step="0.01"
-                        placeholder="Сума"
+                        placeholder={t.amountPlaceholder}
                         className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       />
                       <select
@@ -551,22 +543,22 @@ export default function SubscriptionsView({
                         onChange={(e) => setForm((prev) => ({ ...prev, billingCycle: e.target.value as BillingCycle }))}
                         className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       >
-                        <option value="MONTHLY">Щомісяця</option>
-                        <option value="YEARLY">Щороку</option>
+                        <option value="MONTHLY">{t.monthly}</option>
+                        <option value="YEARLY">{t.yearly}</option>
                       </select>
                       <select
                         value={form.status}
                         onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as SubscriptionStatus }))}
                         className="bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       >
-                        <option value="ACTIVE">Активна</option>
-                        <option value="PAUSED">Пауза</option>
-                        <option value="CANCELLED">Скасована</option>
+                        <option value="ACTIVE">{t.active}</option>
+                        <option value="PAUSED">{t.paused}</option>
+                        <option value="CANCELLED">{t.cancelled}</option>
                       </select>
                       <label className="text-xs text-warm-500 space-y-1">
                         <span className="flex items-center gap-1">
                           <CalendarClock size={13} />
-                          Наступне списання
+                          {t.nextBillingInputLabel}
                         </span>
                         <input
                           type="date"
@@ -576,7 +568,7 @@ export default function SubscriptionsView({
                         />
                       </label>
                       <label className="text-xs text-warm-500 space-y-1">
-                        <span>Кінець тріалу</span>
+                        <span>{t.trialEndLabel}</span>
                         <input
                           type="date"
                           value={form.trialEndsAt}
@@ -589,24 +581,24 @@ export default function SubscriptionsView({
                     <div className="space-y-2">
                       <p className="text-xs text-warm-500 flex items-center gap-1">
                         <UserRound size={13} />
-                        Відповідальний
+                        {t.ownerLabel}
                       </p>
                       <select
                         value={form.ownerUserId}
                         onChange={(e) => setForm((prev) => ({ ...prev, ownerUserId: e.target.value }))}
                         className="w-full bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       >
-                        <option value="">Не вказано</option>
+                        <option value="">{t.notSpecified}</option>
                         {members.map((member) => (
                           <option key={member.id} value={member.id}>
-                            {member.emoji} {member.name || member.email || "Учасник"}
+                            {member.emoji} {member.name || member.email || t.memberFallback}
                           </option>
                         ))}
                       </select>
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-xs text-warm-500">Хто користується</p>
+                      <p className="text-xs text-warm-500">{t.usageLabel}</p>
                       <div className="flex flex-wrap gap-2">
                         {members.map((member) => {
                           const selected = form.memberUserIds.includes(member.id);
@@ -621,7 +613,7 @@ export default function SubscriptionsView({
                                   : "bg-white border-warm-200 text-warm-600 hover:bg-warm-50"
                               }`}
                             >
-                              {member.emoji} {member.name || member.email || "Учасник"}
+                              {member.emoji} {member.name || member.email || t.memberFallback}
                             </button>
                           );
                         })}
@@ -629,18 +621,18 @@ export default function SubscriptionsView({
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-xs text-warm-500">Платник</p>
+                      <p className="text-xs text-warm-500">{t.payerInputLabel}</p>
                       <select
                         value={form.payerUserId}
                         onChange={(e) => setForm((prev) => ({ ...prev, payerUserId: e.target.value }))}
                         className="w-full bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none"
                       >
-                        <option value="">Не вказано</option>
+                        <option value="">{t.notSpecified}</option>
                         {members
                           .filter((member) => form.memberUserIds.includes(member.id))
                           .map((member) => (
                             <option key={member.id} value={member.id}>
-                              {member.emoji} {member.name || member.email || "Учасник"}
+                              {member.emoji} {member.name || member.email || t.memberFallback}
                             </option>
                           ))}
                       </select>
@@ -650,7 +642,7 @@ export default function SubscriptionsView({
                       value={form.note}
                       onChange={(e) => setForm((prev) => ({ ...prev, note: e.target.value }))}
                       rows={3}
-                      placeholder="Нотатка"
+                      placeholder={t.notePlaceholder}
                       className="w-full bg-warm-50 border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-800 outline-none resize-none"
                     />
                   </div>
@@ -660,7 +652,7 @@ export default function SubscriptionsView({
                       onClick={closeModal}
                       className="flex-1 py-2.5 rounded-xl bg-white border border-warm-200 text-warm-700 text-sm font-medium"
                     >
-                      Скасувати
+                      {t.cancel}
                     </button>
                     <button
                       type="button"
@@ -668,7 +660,7 @@ export default function SubscriptionsView({
                       onClick={save}
                       className="flex-1 py-2.5 rounded-xl bg-lavender-500 hover:bg-lavender-600 text-white text-sm font-medium disabled:opacity-60"
                     >
-                      {editingId ? "Зберегти" : "Створити"}
+                      {editingId ? t.save : t.create}
                     </button>
                   </div>
                 </motion.div>
