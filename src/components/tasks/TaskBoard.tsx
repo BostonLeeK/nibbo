@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   DndContext,
   DragEndEvent,
@@ -653,20 +654,28 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
           </motion.button>
         </div>
         <div className="mb-4 md:mb-6">
-          <select
-            value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)}
-            className="bg-white border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-700 outline-none w-full sm:w-auto"
-          >
-            <option value="ALL">{t.filterAll}</option>
-            <option value="ME">{t.filterMine}</option>
-            <option value="UNASSIGNED">{t.filterUnassigned}</option>
-            {users.map((user) => (
-              <option key={user.id} value={`USER:${user.id}`}>
-                {user.emoji} {user.name ?? taskI18n.userFallback}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <select
+              value={assigneeFilter}
+              onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)}
+              className="bg-white border border-warm-200 rounded-xl px-3 py-2 text-sm text-warm-700 outline-none w-full sm:w-auto"
+            >
+              <option value="ALL">{t.filterAll}</option>
+              <option value="ME">{t.filterMine}</option>
+              <option value="UNASSIGNED">{t.filterUnassigned}</option>
+              {users.map((user) => (
+                <option key={user.id} value={`USER:${user.id}`}>
+                  {user.emoji} {user.name ?? taskI18n.userFallback}
+                </option>
+              ))}
+            </select>
+            <Link
+              href="/tasks/history"
+              className="px-3 py-2 rounded-xl text-sm font-medium bg-white border border-warm-200 text-warm-700 hover:bg-warm-50 text-center"
+            >
+              {t.completedHistory}
+            </Link>
+          </div>
         </div>
 
         {boardForView && currentBoard ? (
