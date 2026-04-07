@@ -13,7 +13,7 @@ export default async function BudgetPage() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-  const [categories, expenses, incomes] = await Promise.all([
+  const [categories, expenses, incomes, subscriptionStats] = await Promise.all([
     prisma.expenseCategory.findMany({ where: { familyId }, orderBy: { name: "asc" } }),
     prisma.expense.findMany({
       where: { familyId, date: { gte: monthStart, lte: monthEnd } },
@@ -29,6 +29,15 @@ export default async function BudgetPage() {
         user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
       },
       orderBy: { date: "desc" },
+    }),
+    prisma.familySubscription.aggregate({
+      where: {
+        familyId,
+        status: "ACTIVE",
+        nextBillingDate: { gte: monthStart, lte: monthEnd },
+      },
+      _sum: { amount: true },
+      _count: { _all: true },
     }),
   ]);
 
@@ -56,6 +65,8 @@ export default async function BudgetPage() {
       initialCategories={categories}
       initialExpenses={initialExpenses}
       initialIncomes={initialIncomes}
+      monthlySubscriptionsTotal={subscriptionStats._sum.amount ?? 0}
+      monthlySubscriptionsCount={subscriptionStats._count._all}
       currentUserId={session.user.id}
     />
   );

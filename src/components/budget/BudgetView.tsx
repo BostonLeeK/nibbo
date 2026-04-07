@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
+import { Pencil, Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
@@ -17,10 +17,19 @@ interface Income { id: string; title: string; amount: number; date: string; note
 const CAT_EMOJIS = ["🛒", "🏠", "🚗", "💊", "🎮", "👕", "🍕", "✈️", "📚", "💇", "🐾", "💡", "📱", "🎁", "💰"];
 const CAT_COLORS = ["#4ade80", "#38bdf8", "#fb923c", "#f43f5e", "#818cf8", "#c084fc", "#f472b6", "#facc15"];
 
-export default function BudgetView({ initialCategories, initialExpenses, initialIncomes, currentUserId }: {
+export default function BudgetView({
+  initialCategories,
+  initialExpenses,
+  initialIncomes,
+  monthlySubscriptionsTotal,
+  monthlySubscriptionsCount,
+  currentUserId,
+}: {
   initialCategories: Category[];
   initialExpenses: Expense[];
   initialIncomes: Income[];
+  monthlySubscriptionsTotal: number;
+  monthlySubscriptionsCount: number;
   currentUserId: string;
 }) {
   const { language } = useAppLanguage();
@@ -31,6 +40,7 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddIncome, setShowAddIncome] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
   const [newIncome, setNewIncome] = useState({ title: "", amount: "", note: "", date: new Date().toISOString().split("T")[0] });
@@ -43,7 +53,8 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }, []);
 
-  const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalExpenseSpent = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalSpent = totalExpenseSpent + monthlySubscriptionsTotal;
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
   const balance = totalIncome - totalSpent;
   const expectedBalance = (plannedIncome ?? 0) - totalSpent;
@@ -143,16 +154,62 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
 
   const handleAddCategory = async () => {
     if (!newCat.name) return;
-    const res = await fetch("/api/budget", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "category", name: newCat.name, emoji: newCat.emoji, color: newCat.color, budget: newCat.budget ? parseFloat(newCat.budget) : undefined }),
-    });
-    const cat = await res.json();
-    setCategories((prev) => [...prev, cat]);
+    const payload = {
+      name: newCat.name,
+      emoji: newCat.emoji,
+      color: newCat.color,
+      budget: newCat.budget ? parseFloat(newCat.budget) : null,
+    };
+    if (editingCategoryId) {
+      const res = await fetch(`/api/budget/${editingCategoryId}?type=category`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const cat = await res.json();
+      setCategories((prev) => prev.map((item) => (item.id === cat.id ? cat : item)));
+      toast.success(t.toastCategoryUpdated);
+    } else {
+      const res = await fetch("/api/budget", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "category", ...payload }),
+      });
+      const cat = await res.json();
+      setCategories((prev) => [...prev, cat]);
+      toast.success(t.toastCategoryAdded);
+    }
     setShowAddCategory(false);
+    setEditingCategoryId(null);
     setNewCat({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
-    toast.success(t.toastCategoryAdded);
+  };
+
+  const openAddCategory = () => {
+    setEditingCategoryId(null);
+    setNewCat({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
+    setShowAddCategory(true);
+  };
+
+  const openEditCategory = (category: Category) => {
+    setEditingCategoryId(category.id);
+    setNewCat({
+      name: category.name,
+      emoji: category.emoji,
+      color: category.color,
+      budget: category.budget != null ? String(category.budget) : "",
+    });
+    setShowAddCategory(true);
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!editingCategoryId) return;
+    if (!confirm(t.deleteCategoryConfirm)) return;
+    await fetch(`/api/budget/${editingCategoryId}?type=category`, { method: "DELETE" });
+    setCategories((prev) => prev.filter((item) => item.id !== editingCategoryId));
+    setShowAddCategory(false);
+    setEditingCategoryId(null);
+    setNewCat({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
+    toast.success(t.toastDeleted);
   };
 
   return (
@@ -175,6 +232,14 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
               <p className="text-xs text-sage-100">{t.categoriesCount}</p>
               <p className="font-bold">{categories.length}</p>
             </div>
+          </div>
+          <div className="mt-3 bg-white/15 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-2">
+            <p className="text-xs text-sage-100">
+              {t.subscriptionsThisMonth} · {monthlySubscriptionsCount}
+            </p>
+            <p className="text-sm font-semibold text-white">
+              {formatCurrency(monthlySubscriptionsTotal)} <span className="text-sage-100 text-xs">({t.autoCalculated})</span>
+            </p>
           </div>
           <div className="mt-3 bg-white/20 rounded-2xl px-4 py-3 flex items-center justify-between">
             <p className="text-xs text-sage-100">{t.balanceThisMonth}</p>
@@ -240,7 +305,7 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-warm-800">{t.categoriesTitle}</h3>
-            <button onClick={() => setShowAddCategory(true)} className="text-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1">
+            <button onClick={openAddCategory} className="text-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1">
               <Plus size={14} /> {t.category}
             </button>
           </div>
@@ -251,9 +316,17 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
               return (
                 <motion.div key={cat.id} whileHover={{ y: -2 }}
                   className="bg-white/80 rounded-2xl p-4 shadow-cozy border border-warm-100">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xl">{cat.emoji}</span>
                     <span className="text-xs font-semibold text-warm-700 truncate">{cat.name}</span>
+                    </div>
+                    <button
+                      onClick={() => openEditCategory(cat)}
+                      className="text-warm-300 hover:text-sky-600 transition-colors"
+                    >
+                      <Pencil size={14} />
+                    </button>
                   </div>
                   <p className="text-lg font-bold text-warm-800">{formatCurrency(cat.spent)}</p>
                   {cat.budget && (
@@ -361,6 +434,11 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
             </div>
           )}
         </div>
+        {monthlySubscriptionsCount > 0 && (
+          <p className="text-xs text-warm-400 mt-2 px-1">
+            + {formatCurrency(monthlySubscriptionsTotal)} {t.subscriptionsThisMonth} ({t.autoCalculated})
+          </p>
+        )}
       </div>
 
       {typeof document !== "undefined" && createPortal(
@@ -478,14 +556,20 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
           {showAddCategory && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowAddCategory(false)} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+              onClick={() => {
+                setShowAddCategory(false);
+                setEditingCategoryId(null);
+              }} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               className="relative z-10 w-full max-w-sm">
               <div className="bg-white rounded-3xl shadow-cozy-lg p-4 md:p-6">
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-lg font-bold text-warm-800">{t.newCategoryTitle}</h2>
-                  <button onClick={() => setShowAddCategory(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
+                  <h2 className="text-lg font-bold text-warm-800">{editingCategoryId ? t.editCategoryTitle : t.newCategoryTitle}</h2>
+                  <button onClick={() => {
+                    setShowAddCategory(false);
+                    setEditingCategoryId(null);
+                  }} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
                 </div>
                 <div className="space-y-4">
                   <div className="flex gap-1 flex-wrap">
@@ -509,8 +593,16 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
                     placeholder={t.monthlyBudgetPlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleAddCategory}
                     className="w-full py-3 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl font-semibold">
-                    {t.create} {newCat.emoji}
+                    {editingCategoryId ? t.save : `${t.create} ${newCat.emoji}`}
                   </motion.button>
+                  {editingCategoryId && (
+                    <button
+                      onClick={handleDeleteCategory}
+                      className="w-full py-2.5 text-sm font-medium rounded-2xl border border-rose-200 text-rose-600 hover:bg-rose-50"
+                    >
+                      {t.deleteCategory}
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
