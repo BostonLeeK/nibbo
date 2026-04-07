@@ -32,6 +32,14 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  @media (hover: none) and (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+
   h1,
   h2,
   h3,
