@@ -60,6 +60,7 @@ model User {
   mealCooks     MealPlan[]      @relation("MealCook")
   notes         Note[]
   expenses      Expense[]
+  incomes       Income[]
   ownedSubscriptions FamilySubscription[] @relation("SubscriptionOwner")
   subscriptionMembers FamilySubscriptionMember[]
   shoppingItems ShoppingItem[]
@@ -92,6 +93,7 @@ model Family {
   noteCategories    NoteCategory[]
   expenseCategories ExpenseCategory[]
   expenses          Expense[]
+  incomes           Income[]
   subscriptions     FamilySubscription[]
   shoppingLists     ShoppingList[]
 }
@@ -355,6 +357,20 @@ model Expense {
   family   Family?          @relation(fields: [familyId], references: [id], onDelete: Cascade)
   category ExpenseCategory? @relation(fields: [categoryId], references: [id])
   user     User             @relation(fields: [userId], references: [id])
+}
+
+model Income {
+  id        String   @id @default(cuid())
+  title     String
+  amount    Float
+  date      DateTime @default(now())
+  userId    String
+  familyId  String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  family Family? @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id])
 }
 
 model FamilySubscription {

@@ -17,6 +17,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const exists = await prisma.expenseCategory.findFirst({ where: { id, familyId }, select: { id: true } });
     if (!exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
     await prisma.expenseCategory.delete({ where: { id } });
+  } else if (type === "income") {
+    const exists = await prisma.income.findFirst({ where: { id, familyId }, select: { id: true } });
+    if (!exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    await prisma.income.delete({ where: { id } });
   } else {
     const exists = await prisma.expense.findFirst({ where: { id, familyId }, select: { id: true } });
     if (!exists) return NextResponse.json({ error: "Not found" }, { status: 404 });

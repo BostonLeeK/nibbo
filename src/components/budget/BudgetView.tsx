@@ -12,25 +12,32 @@ import { I18N } from "@/lib/i18n";
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }
 interface Category { id: string; name: string; emoji: string; color: string; budget: number | null; }
 interface Expense { id: string; title: string; amount: number; date: string; note: string | null; category: Category | null; user: User; }
+interface Income { id: string; title: string; amount: number; date: string; note: string | null; user: User; }
 
 const CAT_EMOJIS = ["🛒", "🏠", "🚗", "💊", "🎮", "👕", "🍕", "✈️", "📚", "💇", "🐾", "💡", "📱", "🎁", "💰"];
 const CAT_COLORS = ["#4ade80", "#38bdf8", "#fb923c", "#f43f5e", "#818cf8", "#c084fc", "#f472b6", "#facc15"];
 
-export default function BudgetView({ initialCategories, initialExpenses, currentUserId }: {
+export default function BudgetView({ initialCategories, initialExpenses, initialIncomes, currentUserId }: {
   initialCategories: Category[];
   initialExpenses: Expense[];
+  initialIncomes: Income[];
   currentUserId: string;
 }) {
   const { language } = useAppLanguage();
   const t = I18N[language].budget;
   const [categories, setCategories] = useState(initialCategories);
   const [expenses, setExpenses] = useState(initialExpenses);
+  const [incomes, setIncomes] = useState(initialIncomes);
   const [showAddExpense, setShowAddExpense] = useState(false);
+  const [showAddIncome, setShowAddIncome] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
+  const [newIncome, setNewIncome] = useState({ title: "", amount: "", note: "", date: new Date().toISOString().split("T")[0] });
   const [newCat, setNewCat] = useState({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
+  const balance = totalIncome - totalSpent;
 
   const byCategory = categories.map((cat) => ({
     ...cat,
@@ -63,6 +70,32 @@ export default function BudgetView({ initialCategories, initialExpenses, current
     toast.success(t.toastDeleted);
   };
 
+  const handleAddIncome = async () => {
+    if (!newIncome.title || !newIncome.amount) return;
+    const res = await fetch("/api/budget", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "income",
+        title: newIncome.title,
+        amount: parseFloat(newIncome.amount),
+        note: newIncome.note,
+        date: new Date(newIncome.date).toISOString(),
+      }),
+    });
+    const income = await res.json();
+    setIncomes((prev) => [income, ...prev]);
+    setShowAddIncome(false);
+    setNewIncome({ title: "", amount: "", note: "", date: new Date().toISOString().split("T")[0] });
+    toast.success(t.toastIncomeAdded);
+  };
+
+  const handleDeleteIncome = async (id: string) => {
+    await fetch(`/api/budget/${id}?type=income`, { method: "DELETE" });
+    setIncomes((prev) => prev.filter((i) => i.id !== id));
+    toast.success(t.toastDeleted);
+  };
+
   const handleAddCategory = async () => {
     if (!newCat.name) return;
     const res = await fetch("/api/budget", {
@@ -84,15 +117,26 @@ export default function BudgetView({ initialCategories, initialExpenses, current
           className="bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl p-4 md:p-6 text-white shadow-cozy">
           <p className="text-sage-100 text-sm mb-1">{t.spentThisMonth}</p>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">{formatCurrency(totalSpent)}</h2>
-          <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
             <div className="bg-white/20 rounded-2xl px-4 py-2">
               <p className="text-xs text-sage-100">{t.transactions}</p>
               <p className="font-bold">{expenses.length}</p>
             </div>
             <div className="bg-white/20 rounded-2xl px-4 py-2">
+              <p className="text-xs text-sage-100">{t.incomeThisMonth}</p>
+              <p className="font-bold">{formatCurrency(totalIncome)}</p>
+            </div>
+            <div className="bg-white/20 rounded-2xl px-4 py-2">
               <p className="text-xs text-sage-100">{t.categoriesCount}</p>
               <p className="font-bold">{categories.length}</p>
             </div>
+          </div>
+          <div className="mt-3 bg-white/20 rounded-2xl px-4 py-3 flex items-center justify-between">
+            <p className="text-xs text-sage-100">{t.balanceThisMonth}</p>
+            <p className="font-bold flex items-center gap-1">
+              {balance >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+              {formatCurrency(balance)}
+            </p>
           </div>
         </motion.div>
 
@@ -134,11 +178,54 @@ export default function BudgetView({ initialCategories, initialExpenses, current
       <div className="min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <h3 className="font-bold text-warm-800">{t.monthTransactions}</h3>
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            onClick={() => setShowAddExpense(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto">
-            <Plus size={14} /> {t.addExpense}
-          </motion.button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAddIncome(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto">
+              <Plus size={14} /> {t.addIncome}
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAddExpense(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto">
+              <Plus size={14} /> {t.addExpense}
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="bg-white/70 rounded-3xl shadow-cozy border border-warm-100 overflow-hidden mb-4">
+          <div className="px-4 py-3 border-b border-warm-100 bg-sky-50/70">
+            <h4 className="font-semibold text-warm-800">{t.monthIncomes}</h4>
+          </div>
+          {incomes.length === 0 ? (
+            <div className="text-center py-10 text-warm-400">
+              <div className="text-4xl mb-3">💸</div>
+              <p>{t.emptyIncomes}</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-warm-50">
+              {incomes.map((income) => (
+                <motion.div key={income.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 hover:bg-sky-50/30 transition-colors group">
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl bg-sky-100/80">💸</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-warm-800 text-sm">{income.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-warm-400">{formatDate(income.date)}</span>
+                      <span className="text-xs text-warm-300">•</span>
+                      <span className="text-xs text-warm-400">{income.user.name}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-sm md:text-base text-sky-700">+{formatCurrency(income.amount)}</span>
+                    <button onClick={() => handleDeleteIncome(income.id)}
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="bg-white/70 rounded-3xl shadow-cozy border border-warm-100 overflow-hidden">
@@ -181,6 +268,35 @@ export default function BudgetView({ initialCategories, initialExpenses, current
 
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
+          {showAddIncome && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowAddIncome(false)} className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative z-10 w-full max-w-md">
+              <div className="bg-white rounded-3xl shadow-cozy-lg p-4 md:p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-bold text-warm-800">{t.newIncomeTitle}</h2>
+                  <button onClick={() => setShowAddIncome(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
+                </div>
+                <div className="space-y-4">
+                  <input value={newIncome.title} onChange={(e) => setNewIncome((p) => ({ ...p, title: e.target.value }))}
+                    placeholder={t.incomeTitlePlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sky-400" />
+                  <input type="number" value={newIncome.amount} onChange={(e) => setNewIncome((p) => ({ ...p, amount: e.target.value }))}
+                    placeholder={t.amountPlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sky-400" />
+                  <input type="date" value={newIncome.date} onChange={(e) => setNewIncome((p) => ({ ...p, date: e.target.value }))}
+                    className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sky-400" />
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={handleAddIncome}
+                    className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-400 text-white rounded-2xl font-semibold">
+                    {t.save} 💸
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+            </div>
+          )}
           {showAddExpense && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

@@ -24,22 +24,37 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  const expenses = await prisma.expense.findMany({
-    where: {
-      familyId,
-      date: {
-        gte: from ? new Date(from) : undefined,
-        lte: to ? new Date(to) : undefined,
+  const [expenses, incomes] = await Promise.all([
+    prisma.expense.findMany({
+      where: {
+        familyId,
+        date: {
+          gte: from ? new Date(from) : undefined,
+          lte: to ? new Date(to) : undefined,
+        },
       },
-    },
-    include: {
-      category: true,
-      user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
-    },
-    orderBy: { date: "desc" },
-  });
+      include: {
+        category: true,
+        user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+      },
+      orderBy: { date: "desc" },
+    }),
+    prisma.income.findMany({
+      where: {
+        familyId,
+        date: {
+          gte: from ? new Date(from) : undefined,
+          lte: to ? new Date(to) : undefined,
+        },
+      },
+      include: {
+        user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+      },
+      orderBy: { date: "desc" },
+    }),
+  ]);
 
-  return NextResponse.json(expenses);
+  return NextResponse.json({ expenses, incomes });
 }
 
 export async function POST(req: NextRequest) {
@@ -61,6 +76,23 @@ export async function POST(req: NextRequest) {
       },
     });
     return NextResponse.json(category);
+  }
+
+  if (body.type === "income") {
+    const income = await prisma.income.create({
+      data: {
+        title: body.title,
+        amount: body.amount,
+        date: body.date ? new Date(body.date) : new Date(),
+        userId: session.user.id,
+        familyId,
+        note: body.note,
+      },
+      include: {
+        user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+      },
+    });
+    return NextResponse.json(income);
   }
 
   if (body.categoryId) {

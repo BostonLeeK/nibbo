@@ -13,12 +13,19 @@ export default async function BudgetPage() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-  const [categories, expenses] = await Promise.all([
+  const [categories, expenses, incomes] = await Promise.all([
     prisma.expenseCategory.findMany({ where: { familyId }, orderBy: { name: "asc" } }),
     prisma.expense.findMany({
       where: { familyId, date: { gte: monthStart, lte: monthEnd } },
       include: {
         category: true,
+        user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
+      },
+      orderBy: { date: "desc" },
+    }),
+    prisma.income.findMany({
+      where: { familyId, date: { gte: monthStart, lte: monthEnd } },
+      include: {
         user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
       },
       orderBy: { date: "desc" },
@@ -35,5 +42,21 @@ export default async function BudgetPage() {
     user: e.user,
   }));
 
-  return <BudgetView initialCategories={categories} initialExpenses={initialExpenses} currentUserId={session.user.id} />;
+  const initialIncomes = incomes.map((i) => ({
+    id: i.id,
+    title: i.title,
+    amount: i.amount,
+    date: i.date.toISOString(),
+    note: i.note,
+    user: i.user,
+  }));
+
+  return (
+    <BudgetView
+      initialCategories={categories}
+      initialExpenses={initialExpenses}
+      initialIncomes={initialIncomes}
+      currentUserId={session.user.id}
+    />
+  );
 }
