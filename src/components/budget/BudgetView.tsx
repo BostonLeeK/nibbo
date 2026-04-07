@@ -747,15 +747,19 @@ export default function BudgetView({
                       placeholder={t.creditMonthlyAmount}
                       className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
                     />
-                    <input
-                      type="number"
-                      min={1}
-                      max={31}
-                      value={newCredit.paymentDay}
-                      onChange={(e) => setNewCredit((p) => ({ ...p, paymentDay: e.target.value }))}
-                      placeholder={t.creditPaymentDayPlaceholder}
-                      className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
-                    />
+                    <div>
+                      <p className="text-xs font-medium text-warm-600 mb-1.5">{t.creditPaymentDayLabel}</p>
+                      <input
+                        type="number"
+                        min={1}
+                        max={31}
+                        value={newCredit.paymentDay}
+                        onChange={(e) => setNewCredit((p) => ({ ...p, paymentDay: e.target.value }))}
+                        placeholder={t.creditPaymentDayPlaceholder}
+                        className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                      />
+                      <p className="text-xs text-warm-400 mt-1.5">{t.creditPaymentDayHint}</p>
+                    </div>
                     <input
                       type="date"
                       value={newCredit.lastPaidAt}
