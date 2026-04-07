@@ -125,6 +125,7 @@ export default function BudgetView({
       return { label: t.creditStatusClosed, className: "bg-warm-100 text-warm-500" };
     }
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const currentMonthPaid =
       credit.lastPaidAt &&
       new Date(credit.lastPaidAt).getFullYear() === now.getFullYear() &&
@@ -134,7 +135,8 @@ export default function BudgetView({
     }
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const dueDate = new Date(now.getFullYear(), now.getMonth(), Math.min(credit.paymentDay, daysInMonth));
-    const daysDiff = Math.ceil((dueDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+    const dayMs = 24 * 60 * 60 * 1000;
+    const daysDiff = Math.round((dueDate.getTime() - today.getTime()) / dayMs);
     if (daysDiff < 0) {
       return { label: t.creditStatusOverdue, className: "bg-rose-100 text-rose-600" };
     }
