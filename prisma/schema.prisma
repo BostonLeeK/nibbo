@@ -94,6 +94,7 @@ model Family {
   expenseCategories ExpenseCategory[]
   expenses          Expense[]
   incomes           Income[]
+  credits           Credit[]
   subscriptions     FamilySubscription[]
   shoppingLists     ShoppingList[]
 }
@@ -373,6 +374,23 @@ model Income {
   user   User    @relation(fields: [userId], references: [id])
 }
 
+model Credit {
+  id            String       @id @default(cuid())
+  title         String
+  bank          CreditBank
+  bankOtherName String?
+  monthlyAmount Float
+  paymentDay    Int
+  lastPaidAt    DateTime?
+  status        CreditStatus @default(ACTIVE)
+  note          String?
+  familyId      String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+}
+
 model FamilySubscription {
   id              String                 @id @default(cuid())
   title           String
@@ -422,6 +440,18 @@ enum SubscriptionStatus {
 enum SubscriptionMemberRole {
   USER
   PAYER
+}
+
+enum CreditBank {
+  MONOBANK
+  PRIVATBANK
+  PUMB
+  OTHER
+}
+
+enum CreditStatus {
+  ACTIVE
+  CLOSED
 }
 
 // --- SHOPPING ---

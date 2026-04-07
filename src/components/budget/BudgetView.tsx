@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
@@ -13,6 +13,17 @@ interface User { id: string; name: string | null; image: string | null; color: s
 interface Category { id: string; name: string; emoji: string; color: string; budget: number | null; }
 interface Expense { id: string; title: string; amount: number; date: string; note: string | null; category: Category | null; user: User; }
 interface Income { id: string; title: string; amount: number; date: string; note: string | null; user: User; }
+interface Credit {
+  id: string;
+  title: string;
+  bank: "MONOBANK" | "PRIVATBANK" | "PUMB" | "OTHER";
+  bankOtherName: string | null;
+  monthlyAmount: number;
+  paymentDay: number;
+  lastPaidAt: string | null;
+  status: "ACTIVE" | "CLOSED";
+  note: string | null;
+}
 
 const CAT_EMOJIS = ["🛒", "🏠", "🚗", "💊", "🎮", "👕", "🍕", "✈️", "📚", "💇", "🐾", "💡", "📱", "🎁", "💰"];
 const CAT_COLORS = ["#4ade80", "#38bdf8", "#fb923c", "#f43f5e", "#818cf8", "#c084fc", "#f472b6", "#facc15"];
@@ -21,15 +32,21 @@ export default function BudgetView({
   initialCategories,
   initialExpenses,
   initialIncomes,
+  initialCredits,
   monthlySubscriptionsTotal,
   monthlySubscriptionsCount,
+  monthlyCreditsTotal,
+  monthlyCreditsCount,
   currentUserId,
 }: {
   initialCategories: Category[];
   initialExpenses: Expense[];
   initialIncomes: Income[];
+  initialCredits: Credit[];
   monthlySubscriptionsTotal: number;
   monthlySubscriptionsCount: number;
+  monthlyCreditsTotal: number;
+  monthlyCreditsCount: number;
   currentUserId: string;
 }) {
   const { language } = useAppLanguage();
@@ -37,9 +54,12 @@ export default function BudgetView({
   const [categories, setCategories] = useState(initialCategories);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [incomes, setIncomes] = useState(initialIncomes);
+  const [credits, setCredits] = useState(initialCredits);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddIncome, setShowAddIncome] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [showCreditModal, setShowCreditModal] = useState(false);
+  const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
@@ -47,6 +67,16 @@ export default function BudgetView({
   const [newCat, setNewCat] = useState({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
   const [plannedIncome, setPlannedIncome] = useState<number | null>(null);
   const [plannedIncomeInput, setPlannedIncomeInput] = useState("");
+  const [newCredit, setNewCredit] = useState({
+    title: "",
+    bank: "MONOBANK" as Credit["bank"],
+    bankOtherName: "",
+    monthlyAmount: "",
+    paymentDay: "10",
+    lastPaidAt: "",
+    status: "ACTIVE" as Credit["status"],
+    note: "",
+  });
 
   const monthKey = useMemo(() => {
     const now = new Date();
@@ -54,7 +84,9 @@ export default function BudgetView({
   }, []);
 
   const totalExpenseSpent = expenses.reduce((s, e) => s + e.amount, 0);
-  const totalSpent = totalExpenseSpent + monthlySubscriptionsTotal;
+  const activeCredits = credits.filter((credit) => credit.status === "ACTIVE");
+  const creditsAutoTotal = activeCredits.reduce((sum, credit) => sum + credit.monthlyAmount, 0);
+  const totalSpent = totalExpenseSpent + monthlySubscriptionsTotal + creditsAutoTotal;
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
   const balance = totalIncome - totalSpent;
   const expectedBalance = (plannedIncome ?? 0) - totalSpent;
@@ -81,6 +113,36 @@ export default function BudgetView({
     ...cat,
     spent: expenses.filter((e) => e.category?.id === cat.id).reduce((s, e) => s + e.amount, 0),
   }));
+  const bankLabels: Record<Credit["bank"], string> = {
+    MONOBANK: t.creditBankMonobank,
+    PRIVATBANK: t.creditBankPrivatbank,
+    PUMB: t.creditBankPumb,
+    OTHER: t.creditBankOther,
+  };
+
+  const getCreditStatus = (credit: Credit) => {
+    if (credit.status === "CLOSED") {
+      return { label: t.creditStatusClosed, className: "bg-warm-100 text-warm-500" };
+    }
+    const now = new Date();
+    const currentMonthPaid =
+      credit.lastPaidAt &&
+      new Date(credit.lastPaidAt).getFullYear() === now.getFullYear() &&
+      new Date(credit.lastPaidAt).getMonth() === now.getMonth();
+    if (currentMonthPaid) {
+      return { label: t.creditStatusPaid, className: "bg-sky-100 text-sky-700" };
+    }
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const dueDate = new Date(now.getFullYear(), now.getMonth(), Math.min(credit.paymentDay, daysInMonth));
+    const daysDiff = Math.ceil((dueDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+    if (daysDiff < 0) {
+      return { label: t.creditStatusOverdue, className: "bg-rose-100 text-rose-600" };
+    }
+    if (daysDiff <= 3) {
+      return { label: t.creditStatusSoon, className: "bg-amber-100 text-amber-700" };
+    }
+    return { label: t.creditStatusActive, className: "bg-lavender-100 text-lavender-700" };
+  };
 
   const handleAddExpense = async () => {
     if (!newExpense.title || !newExpense.amount) return;
@@ -132,6 +194,99 @@ export default function BudgetView({
     await fetch(`/api/budget/${id}?type=income`, { method: "DELETE" });
     setIncomes((prev) => prev.filter((i) => i.id !== id));
     toast.success(t.toastDeleted);
+  };
+
+  const handleSaveCredit = async () => {
+    if (!newCredit.title || !newCredit.monthlyAmount || !newCredit.paymentDay) return;
+    const payload = {
+      title: newCredit.title,
+      bank: newCredit.bank,
+      bankOtherName: newCredit.bank === "OTHER" ? newCredit.bankOtherName : null,
+      monthlyAmount: Number(newCredit.monthlyAmount),
+      paymentDay: Number(newCredit.paymentDay),
+      lastPaidAt: newCredit.lastPaidAt ? new Date(newCredit.lastPaidAt).toISOString() : null,
+      status: newCredit.status,
+      note: newCredit.note || null,
+    };
+    const res = await fetch(
+      editingCreditId ? `/api/credits/${editingCreditId}` : "/api/credits",
+      {
+        method: editingCreditId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+    const credit = await res.json();
+    if (editingCreditId) {
+      setCredits((prev) => prev.map((item) => (item.id === credit.id ? credit : item)));
+      toast.success(t.toastCreditUpdated);
+    } else {
+      setCredits((prev) => [credit, ...prev]);
+      toast.success(t.toastCreditAdded);
+    }
+    setShowCreditModal(false);
+    setEditingCreditId(null);
+    setNewCredit({
+      title: "",
+      bank: "MONOBANK",
+      bankOtherName: "",
+      monthlyAmount: "",
+      paymentDay: "10",
+      lastPaidAt: "",
+      status: "ACTIVE",
+      note: "",
+    });
+  };
+
+  const openAddCredit = () => {
+    setEditingCreditId(null);
+    setNewCredit({
+      title: "",
+      bank: "MONOBANK",
+      bankOtherName: "",
+      monthlyAmount: "",
+      paymentDay: "10",
+      lastPaidAt: "",
+      status: "ACTIVE",
+      note: "",
+    });
+    setShowCreditModal(true);
+  };
+
+  const openEditCredit = (credit: Credit) => {
+    setEditingCreditId(credit.id);
+    setNewCredit({
+      title: credit.title,
+      bank: credit.bank,
+      bankOtherName: credit.bankOtherName || "",
+      monthlyAmount: String(credit.monthlyAmount),
+      paymentDay: String(credit.paymentDay),
+      lastPaidAt: credit.lastPaidAt ? credit.lastPaidAt.slice(0, 10) : "",
+      status: credit.status,
+      note: credit.note || "",
+    });
+    setShowCreditModal(true);
+  };
+
+  const handleDeleteCredit = async () => {
+    if (!editingCreditId) return;
+    if (!confirm(t.deleteCreditConfirm)) return;
+    await fetch(`/api/credits/${editingCreditId}`, { method: "DELETE" });
+    setCredits((prev) => prev.filter((item) => item.id !== editingCreditId));
+    setShowCreditModal(false);
+    setEditingCreditId(null);
+    toast.success(t.toastDeleted);
+  };
+
+  const markCreditPaidToday = async (creditId: string) => {
+    const res = await fetch(`/api/credits/${creditId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lastPaidAt: new Date().toISOString() }),
+    });
+    const updated = await res.json();
+    setCredits((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    toast.success(t.toastCreditMarkedPaid);
   };
 
   const handleSavePlan = () => {
@@ -239,6 +394,15 @@ export default function BudgetView({
             </p>
             <p className="text-sm font-semibold text-white">
               {formatCurrency(monthlySubscriptionsTotal)} <span className="text-sage-100 text-xs">({t.autoCalculated})</span>
+            </p>
+          </div>
+          <div className="mt-2 bg-white/15 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-2">
+            <p className="text-xs text-sage-100">
+              {t.creditsThisMonth} · {activeCredits.length || monthlyCreditsCount}
+            </p>
+            <p className="text-sm font-semibold text-white">
+              {formatCurrency(creditsAutoTotal || monthlyCreditsTotal)}{" "}
+              <span className="text-sage-100 text-xs">({t.autoCalculated})</span>
             </p>
           </div>
           <div className="mt-3 bg-white/20 rounded-2xl px-4 py-3 flex items-center justify-between">
@@ -350,6 +514,11 @@ export default function BudgetView({
           <h3 className="font-bold text-warm-800">{t.monthTransactions}</h3>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={openAddCredit}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-lavender-500 to-indigo-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto">
+              <Plus size={14} /> {t.addCredit}
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => setShowAddIncome(true)}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-400 text-white rounded-2xl text-sm font-medium shadow-cozy w-full sm:w-auto">
               <Plus size={14} /> {t.addIncome}
@@ -360,6 +529,69 @@ export default function BudgetView({
               <Plus size={14} /> {t.addExpense}
             </motion.button>
           </div>
+        </div>
+
+        <div className="bg-white/70 rounded-3xl shadow-cozy border border-warm-100 overflow-hidden mb-4">
+          <div className="px-4 py-3 border-b border-warm-100 bg-lavender-50/70">
+            <h4 className="font-semibold text-warm-800">{t.creditsTitle}</h4>
+          </div>
+          {credits.length === 0 ? (
+            <div className="text-center py-10 text-warm-400">
+              <div className="text-4xl mb-3">🏦</div>
+              <p>{t.emptyCredits}</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-warm-50">
+              {credits.map((credit) => {
+                const statusBadge = getCreditStatus(credit);
+                return (
+                  <motion.div
+                    key={credit.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="px-3 md:px-5 py-3 hover:bg-lavender-50/20 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-warm-800 text-sm truncate">{credit.title}</p>
+                        <p className="text-xs text-warm-500 mt-0.5">
+                          {credit.bank === "OTHER" ? credit.bankOtherName || bankLabels.OTHER : bankLabels[credit.bank]}
+                        </p>
+                        <p className="text-xs text-warm-400 mt-0.5">
+                          {t.paymentDay} {credit.paymentDay}
+                          {credit.lastPaidAt ? ` • ${t.lastPayment}: ${formatDate(credit.lastPaidAt)}` : ""}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-sm text-warm-800">{formatCurrency(credit.monthlyAmount)}</p>
+                        <span className={`inline-block mt-1 text-[11px] px-2 py-1 rounded-full font-semibold ${statusBadge.className}`}>
+                          {statusBadge.label}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 mt-2">
+                      {credit.status === "ACTIVE" && (
+                        <button
+                          onClick={() => markCreditPaidToday(credit.id)}
+                          className="text-xs px-2.5 py-1.5 rounded-lg border border-sky-200 text-sky-700 hover:bg-sky-50 flex items-center gap-1"
+                        >
+                          <Check size={12} />
+                          {t.markPaidToday}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openEditCredit(credit)}
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-warm-200 text-warm-600 hover:bg-warm-50 flex items-center gap-1"
+                      >
+                        <Pencil size={12} />
+                        {t.editCredit}
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="bg-white/70 rounded-3xl shadow-cozy border border-warm-100 overflow-hidden mb-4">
@@ -439,10 +671,124 @@ export default function BudgetView({
             + {formatCurrency(monthlySubscriptionsTotal)} {t.subscriptionsThisMonth} ({t.autoCalculated})
           </p>
         )}
+        {activeCredits.length > 0 && (
+          <p className="text-xs text-warm-400 mt-1 px-1">
+            + {formatCurrency(creditsAutoTotal)} {t.creditsThisMonth} ({t.autoCalculated})
+          </p>
+        )}
       </div>
 
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
+          {showCreditModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                  setShowCreditModal(false);
+                  setEditingCreditId(null);
+                }}
+                className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 16 }}
+                className="relative z-10 w-full max-w-md"
+              >
+                <div className="bg-white rounded-3xl shadow-cozy-lg p-4 md:p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-lg font-bold text-warm-800">
+                      {editingCreditId ? t.editCreditTitle : t.newCreditTitle}
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setShowCreditModal(false);
+                        setEditingCreditId(null);
+                      }}
+                      className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <input
+                      value={newCredit.title}
+                      onChange={(e) => setNewCredit((p) => ({ ...p, title: e.target.value }))}
+                      placeholder={t.creditTitlePlaceholder}
+                      className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                    />
+                    <select
+                      value={newCredit.bank}
+                      onChange={(e) => setNewCredit((p) => ({ ...p, bank: e.target.value as Credit["bank"] }))}
+                      className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                    >
+                      <option value="MONOBANK">{bankLabels.MONOBANK}</option>
+                      <option value="PRIVATBANK">{bankLabels.PRIVATBANK}</option>
+                      <option value="PUMB">{bankLabels.PUMB}</option>
+                      <option value="OTHER">{bankLabels.OTHER}</option>
+                    </select>
+                    {newCredit.bank === "OTHER" && (
+                      <input
+                        value={newCredit.bankOtherName}
+                        onChange={(e) => setNewCredit((p) => ({ ...p, bankOtherName: e.target.value }))}
+                        placeholder={t.creditBankOtherName}
+                        className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                      />
+                    )}
+                    <input
+                      type="number"
+                      value={newCredit.monthlyAmount}
+                      onChange={(e) => setNewCredit((p) => ({ ...p, monthlyAmount: e.target.value }))}
+                      placeholder={t.creditMonthlyAmount}
+                      className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                    />
+                    <input
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={newCredit.paymentDay}
+                      onChange={(e) => setNewCredit((p) => ({ ...p, paymentDay: e.target.value }))}
+                      placeholder={t.creditPaymentDayPlaceholder}
+                      className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                    />
+                    <input
+                      type="date"
+                      value={newCredit.lastPaidAt}
+                      onChange={(e) => setNewCredit((p) => ({ ...p, lastPaidAt: e.target.value }))}
+                      className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                    />
+                    <select
+                      value={newCredit.status}
+                      onChange={(e) => setNewCredit((p) => ({ ...p, status: e.target.value as Credit["status"] }))}
+                      className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400"
+                    >
+                      <option value="ACTIVE">{t.creditStatusActive}</option>
+                      <option value="CLOSED">{t.creditStatusClosed}</option>
+                    </select>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleSaveCredit}
+                      className="w-full py-3 bg-gradient-to-r from-lavender-500 to-indigo-400 text-white rounded-2xl font-semibold"
+                    >
+                      {t.save}
+                    </motion.button>
+                    {editingCreditId && (
+                      <button
+                        onClick={handleDeleteCredit}
+                        className="w-full py-2.5 text-sm font-medium rounded-2xl border border-rose-200 text-rose-600 hover:bg-rose-50"
+                      >
+                        {t.deleteCredit}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
           {showPlanModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div
