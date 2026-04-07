@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
@@ -31,13 +31,40 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddIncome, setShowAddIncome] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
   const [newIncome, setNewIncome] = useState({ title: "", amount: "", note: "", date: new Date().toISOString().split("T")[0] });
   const [newCat, setNewCat] = useState({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
+  const [plannedIncome, setPlannedIncome] = useState<number | null>(null);
+  const [plannedIncomeInput, setPlannedIncomeInput] = useState("");
+
+  const monthKey = useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }, []);
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
   const balance = totalIncome - totalSpent;
+  const expectedBalance = (plannedIncome ?? 0) - totalSpent;
+  const planDelta = plannedIncome !== null ? totalIncome - plannedIncome : null;
+  const planStatus =
+    plannedIncome === null
+      ? { label: t.statusNoPlan, className: "bg-warm-100 text-warm-500" }
+      : planDelta !== null && planDelta < 0
+      ? { label: t.statusRisk, className: "bg-rose-100 text-rose-600" }
+      : { label: t.statusOnTrack, className: "bg-sky-100 text-sky-700" };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(`nibbo:budget:planIncome:${monthKey}`);
+    if (!raw) return;
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed)) {
+      setPlannedIncome(parsed);
+      setPlannedIncomeInput(String(parsed));
+    }
+  }, [monthKey]);
 
   const byCategory = categories.map((cat) => ({
     ...cat,
@@ -96,6 +123,24 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
     toast.success(t.toastDeleted);
   };
 
+  const handleSavePlan = () => {
+    const parsed = Number(plannedIncomeInput);
+    if (!Number.isFinite(parsed) || parsed <= 0) return;
+    setPlannedIncome(parsed);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(`nibbo:budget:planIncome:${monthKey}`, String(parsed));
+    }
+    setShowPlanModal(false);
+  };
+
+  const handleClearPlan = () => {
+    setPlannedIncome(null);
+    setPlannedIncomeInput("");
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(`nibbo:budget:planIncome:${monthKey}`);
+    }
+  };
+
   const handleAddCategory = async () => {
     if (!newCat.name) return;
     const res = await fetch("/api/budget", {
@@ -138,6 +183,58 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
               {formatCurrency(balance)}
             </p>
           </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-white/80 rounded-3xl p-4 md:p-5 shadow-cozy border border-warm-100">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-warm-800">{t.planningTitle}</h3>
+              <p className="text-xs text-warm-500 mt-1">{t.planningHint}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <span className={`text-[11px] px-2 py-1 rounded-full font-semibold ${planStatus.className}`}>
+                {planStatus.label}
+              </span>
+              <button
+                onClick={() => setShowPlanModal(true)}
+                className="text-xs text-sky-600 hover:text-sky-700 font-medium"
+              >
+                {plannedIncome === null ? t.setPlan : t.editPlan}
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2.5">
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-warm-500">{t.plannedIncome}</p>
+              <p className="font-semibold text-warm-800">
+                {plannedIncome === null ? t.noPlan : formatCurrency(plannedIncome)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-warm-500">{t.expectedBalance}</p>
+              <p className={`font-semibold ${expectedBalance >= 0 ? "text-sky-700" : "text-rose-600"}`}>
+                {plannedIncome === null ? "—" : formatCurrency(expectedBalance)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-warm-500">{t.actualBalance}</p>
+              <p className={`font-semibold ${balance >= 0 ? "text-sky-700" : "text-rose-600"}`}>
+                {formatCurrency(balance)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-warm-500">{t.deltaFromPlan}</p>
+              <p className={`font-semibold ${planDelta === null ? "text-warm-400" : planDelta >= 0 ? "text-sky-700" : "text-rose-600"}`}>
+                {planDelta === null ? "—" : formatCurrency(planDelta)}
+              </p>
+            </div>
+          </div>
+          {plannedIncome !== null && (
+            <button onClick={handleClearPlan} className="mt-3 text-xs text-warm-400 hover:text-rose-500 font-medium">
+              {t.clearPlan}
+            </button>
+          )}
         </motion.div>
 
         <div>
@@ -268,6 +365,47 @@ export default function BudgetView({ initialCategories, initialExpenses, initial
 
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
+          {showPlanModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowPlanModal(false)}
+                className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 16 }}
+                className="relative z-10 w-full max-w-md"
+              >
+                <div className="bg-white rounded-3xl shadow-cozy-lg p-4 md:p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-lg font-bold text-warm-800">{t.planModalTitle}</h2>
+                    <button onClick={() => setShowPlanModal(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
+                  </div>
+                  <div className="space-y-4">
+                    <input
+                      type="number"
+                      value={plannedIncomeInput}
+                      onChange={(e) => setPlannedIncomeInput(e.target.value)}
+                      placeholder={t.amountPlaceholder}
+                      className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sky-400"
+                    />
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleSavePlan}
+                      className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-400 text-white rounded-2xl font-semibold"
+                    >
+                      {t.save}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
           {showAddIncome && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
