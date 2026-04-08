@@ -288,7 +288,7 @@ export default function FamilyManagement() {
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-white"
                   style={{ backgroundColor: m.color || "#f43f5e" }}
                 >
-                  {m.emoji || "🌸"}
+                  {m.name?.[0] || "U"}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-warm-800">{m.name || m.email || t.memberFallback}</p>

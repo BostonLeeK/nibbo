@@ -7,6 +7,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { useCozyConfig } from "@/hooks/useCozyConfig";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 import { I18N } from "@/lib/i18n";
+import { Sparkles } from "lucide-react";
 
 interface TaskTamagotchi3DProps {
   doneToday: number;
@@ -36,7 +37,6 @@ function resolveMood(doneToday: number, doneWeek: number, t: TamagotchiText) {
       bloom: "from-violet-500/20 via-indigo-400/15 to-rose-400/20",
       speed: 1.8,
       distort: 0.25,
-      emoji: "🚀",
       canvasFrom: "#ede9fe",
       canvasTo: "#ddd6fe",
       modelScale: 1.95,
@@ -55,7 +55,6 @@ function resolveMood(doneToday: number, doneWeek: number, t: TamagotchiText) {
       bloom: "from-sky-400/20 via-cyan-300/15 to-sage-400/20",
       speed: 1.35,
       distort: 0.19,
-      emoji: "✨",
       canvasFrom: "#ecfeff",
       canvasTo: "#cffafe",
       modelScale: 1.86,
@@ -74,7 +73,6 @@ function resolveMood(doneToday: number, doneWeek: number, t: TamagotchiText) {
       bloom: "from-orange-400/20 via-rose-300/15 to-pink-300/20",
       speed: 1.1,
       distort: 0.14,
-      emoji: "🌱",
       canvasFrom: "#fff7ed",
       canvasTo: "#ffe4e6",
       modelScale: 1.8,
@@ -92,7 +90,6 @@ function resolveMood(doneToday: number, doneWeek: number, t: TamagotchiText) {
     bloom: "from-slate-300/25 via-zinc-200/15 to-rose-200/20",
     speed: 0.85,
     distort: 0.08,
-    emoji: "😴",
     canvasFrom: "#f8fafc",
     canvasTo: "#e2e8f0",
     modelScale: 1.72,
@@ -328,7 +325,9 @@ export default function TaskTamagotchi3D({ doneToday, doneWeek, myOpen, doneTota
           <h3 className="font-semibold text-warm-800 text-sm">{mascotName}</h3>
           <p className="text-xs text-warm-500 mt-1">{mood.subtitle}</p>
         </div>
-        <div className="text-xl relative z-10">{mood.emoji}</div>
+        <div className="relative z-10">
+          <Sparkles size={18} className="text-warm-500" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center relative z-10">

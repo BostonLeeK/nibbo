@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     data: {
       title: body.title,
       content: body.content,
-      emoji: body.emoji || "📓",
+      emoji: body.emoji || "note",
       color: body.color || "#faf3e0",
       pinned: body.pinned || false,
       authorId: session.user.id,

@@ -8,7 +8,7 @@ import {
   parseISO, addHours,
 } from "date-fns";
 import { uk, enUS } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, MapPin, MoonStar, Plus, X } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
@@ -31,7 +31,6 @@ const EVENT_COLORS = [
   "#38bdf8", "#818cf8", "#c084fc", "#f472b6",
 ];
 
-const EVENT_EMOJIS = ["📅", "🎉", "🏃", "💊", "🍽️", "✈️", "🎂", "🎓", "💼", "🌟"];
 const MONTH_COZY_BACKGROUNDS = [
   "url('/calendar/cozy-winter.svg')",
   "url('/calendar/cozy-winter.svg')",
@@ -61,7 +60,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [newEvent, setNewEvent] = useState({
-    title: "", description: "", emoji: "📅", color: "#8b5cf6",
+    title: "", description: "", emoji: "event", color: "#8b5cf6",
     startDate: "", startTime: "10:00", endTime: "11:00",
     allDay: false, location: "", assigneeId: "",
     subscriptionId: "",
@@ -126,7 +125,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
     const event = await res.json();
     setEvents((prev) => [...prev, event]);
     setShowAddEvent(false);
-    setNewEvent({ title: "", description: "", emoji: "📅", color: "#8b5cf6", startDate: "", startTime: "10:00", endTime: "11:00", allDay: false, location: "", assigneeId: "", subscriptionId: "", weeklyRepeat: false, weeklyDay: 1 });
+    setNewEvent({ title: "", description: "", emoji: "event", color: "#8b5cf6", startDate: "", startTime: "10:00", endTime: "11:00", allDay: false, location: "", assigneeId: "", subscriptionId: "", weeklyRepeat: false, weeklyDay: 1 });
     toast.success(t.addEventToast);
   };
 
@@ -201,7 +200,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                   <div className="space-y-1">
                     {dayEvents.slice(0, 2).map((event) => (
                       <div key={event.id} className="text-xs text-warm-700 truncate">
-                        {event.emoji} {event.title}
+                        {event.title}
                       </div>
                     ))}
                     {dayEvents.length > 2 && (
@@ -238,7 +237,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-warm-800">{event.emoji} {event.title}</p>
+                        <p className="text-sm font-semibold text-warm-800">{event.title}</p>
                         {!event.allDay && (
                           <p className="text-xs text-warm-500 mt-1">
                             {formatTime(event.startDate)} — {formatTime(event.endDate)}
@@ -302,7 +301,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                           className="text-xs px-1.5 py-0.5 rounded-md text-white truncate"
                           style={{ backgroundColor: e.color }}
                         >
-                          {e.emoji} {e.title}
+                          {e.title}
                         </div>
                       ))}
                       {dayEvents.length > 2 && (
@@ -338,7 +337,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
 
             {selectedDayEvents.length === 0 ? (
               <div className="text-center py-8 text-warm-400">
-                <div className="text-3xl mb-2">🌙</div>
+                <MoonStar className="mx-auto mb-2 h-7 w-7" />
                 <p className="text-sm">{t.nothingPlanned}</p>
               </div>
             ) : (
@@ -354,7 +353,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-warm-800 text-sm">
-                          {event.emoji} {event.title}
+                          {event.title}
                         </p>
                         {!event.allDay && (
                           <p className="text-xs text-warm-500 mt-1">
@@ -367,7 +366,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                           </p>
                         )}
                         {event.location && (
-                          <p className="text-xs text-warm-400 mt-1">📍 {event.location}</p>
+                          <p className="text-xs text-warm-400 mt-1 flex items-center gap-1"><MapPin size={12} /> {event.location}</p>
                         )}
                         {event.subscription && (
                           <p className="text-xs text-lavender-600 mt-1">{t.subscriptionLabel}: {event.subscription.title}</p>
@@ -398,13 +397,12 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
           </motion.div>
         ) : (
           <div className="bg-white/60 rounded-3xl p-5 text-center text-warm-400 border border-warm-100">
-            <div className="text-3xl mb-2">📅</div>
+            <div className="mb-2 flex justify-center"><CalendarDays className="h-7 w-7 text-warm-400" /></div>
             <p className="text-sm">{t.chooseDayHint}</p>
           </div>
         )}
       </div>
 
-      {/* Add Event Modal */}
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showAddEvent && (
@@ -431,18 +429,11 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                 </div>
 
                 <div className="space-y-4">
-                  {/* Emoji & Color row */}
                   <div className="flex gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-warm-50 border border-warm-200 flex items-center justify-center text-2xl cursor-pointer hover:bg-warm-100 transition-colors">
-                      {newEvent.emoji}
+                    <div className="w-12 h-12 rounded-2xl bg-warm-50 border border-warm-200 flex items-center justify-center">
+                      <CalendarDays size={20} className="text-warm-600" />
                     </div>
                     <div className="flex gap-1 items-center flex-wrap">
-                      {EVENT_EMOJIS.slice(0, 5).map((e) => (
-                        <button key={e} onClick={() => setNewEvent((p) => ({ ...p, emoji: e }))}
-                          className={`text-lg w-8 h-8 rounded-lg flex items-center justify-center transition-all ${newEvent.emoji === e ? "bg-lavender-100 ring-2 ring-lavender-400" : "hover:bg-warm-50"}`}>
-                          {e}
-                        </button>
-                      ))}
                       {EVENT_COLORS.map((c) => (
                         <button key={c} onClick={() => setNewEvent((p) => ({ ...p, color: c }))}
                           className={`w-6 h-6 rounded-full transition-all ${newEvent.color === c ? "ring-2 ring-offset-1 ring-warm-400 scale-110" : "hover:scale-105"}`}
@@ -504,7 +495,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                   <select value={newEvent.assigneeId} onChange={(e) => setNewEvent((p) => ({ ...p, assigneeId: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400">
                     <option value="">{t.assigneeOptional}</option>
-                    {users.map((u) => <option key={u.id} value={u.id}>{u.emoji} {u.name}</option>)}
+                    {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                   <select value={newEvent.subscriptionId} onChange={(e) => setNewEvent((p) => ({ ...p, subscriptionId: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-lavender-400">
@@ -515,7 +506,7 @@ export default function CalendarView({ initialEvents, users, currentUserId, subs
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddEvent}
                     className="w-full py-3 bg-gradient-to-r from-lavender-500 to-lavender-400 text-white rounded-2xl font-semibold hover:shadow-cozy transition-all">
-                    {t.addEventCta} {newEvent.emoji}
+                    {t.addEventCta}
                   </motion.button>
                 </div>
               </div>

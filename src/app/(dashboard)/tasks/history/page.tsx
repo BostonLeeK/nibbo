@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { ensureUserFamily } from "@/lib/family";
@@ -112,7 +113,9 @@ export default async function TasksHistoryPage() {
 
       {groups.length === 0 ? (
         <div className="rounded-2xl border border-lavender-200 bg-white/75 px-5 py-8 text-center">
-          <div className="text-4xl mb-3">✨</div>
+          <div className="mb-3 flex justify-center">
+            <Sparkles className="h-9 w-9 text-lavender-500" />
+          </div>
           <h2 className="text-lg font-semibold text-warm-800">{t.emptyTitle}</h2>
           <p className="text-sm text-warm-500 mt-2 max-w-lg mx-auto">{t.emptyText}</p>
         </div>

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format, addDays, startOfWeek } from "date-fns";
 import { uk, enUS } from "date-fns/locale";
 import Link from "next/link";
-import { Plus, X, Copy, ClipboardList, ImagePlus, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, X, Copy, ClipboardList, ImagePlus, Pencil, Trash2, Eye, UtensilsCrossed, CalendarDays, BookOpen, Store, Flame, Users, ChefHat } from "lucide-react";
 import { MEAL_TYPE_CONFIG } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
@@ -148,7 +148,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
   const [viewRecipeSource, setViewRecipeSource] = useState<"recipes" | "market">("recipes");
   const [marketLoadingId, setMarketLoadingId] = useState<string | null>(null);
   const [newRecipe, setNewRecipe] = useState<RecipeForm>({
-    name: "", description: "", emoji: "🍽️", category: t.categories[1] ?? "",
+    name: "", description: "", emoji: "meal", category: t.categories[1] ?? "",
     prepTime: "", cookTime: "", calories: "", servings: "4",
     ingredients: [{ name: "", amount: "", unit: "" }],
   });
@@ -172,7 +172,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
     setNewRecipe({
       name: "",
       description: "",
-      emoji: "🍽️",
+      emoji: "meal",
       category: t.categories[1] ?? "",
       prepTime: "",
       cookTime: "",
@@ -464,7 +464,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
         const create = await fetch("/api/shopping", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "list", name: t.fromMenuListName, emoji: "🍽️" }),
+          body: JSON.stringify({ type: "list", name: t.fromMenuListName, emoji: "shopping" }),
         });
         if (!create.ok) throw new Error();
         const list = await create.json();
@@ -491,7 +491,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
     }
   };
 
-  const FOOD_EMOJIS = ["🍽️", "🥗", "🍝", "🥘", "🍲", "🥩", "🍳", "🥐", "🍕", "🥪", "🍜", "🥑", "🍱", "🥦", "🍰"];
+  const FOOD_EMOJIS = ["meal"];
   const CATEGORIES = t.categories;
   const getDayCalories = (day: Date) =>
     mealPlans.reduce((sum, p) => (
@@ -548,7 +548,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               />
             </div>
           ) : (
-            <div className="text-lg mb-1">{meal.recipe?.emoji || "🍽️"}</div>
+            <div className="mb-1"><UtensilsCrossed size={16} className="text-warm-600" /></div>
           )}
           <p className="text-xs font-semibold text-warm-800 leading-tight line-clamp-2">
             {meal.recipe?.name || meal.note || "—"}
@@ -585,13 +585,13 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
       {/* Tabs */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 md:mb-6">
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {[{ id: "planner", label: t.tabPlanner, emoji: "📅" }, { id: "recipes", label: t.tabRecipes, emoji: "📖" }, { id: "market", label: t.tabMarket, emoji: "🛍️" }].map((tabItem) => (
+          {[{ id: "planner", label: t.tabPlanner, Icon: CalendarDays }, { id: "recipes", label: t.tabRecipes, Icon: BookOpen }, { id: "market", label: t.tabMarket, Icon: Store }].map((tabItem) => (
             <motion.button key={tabItem.id} whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }}
               onClick={() => setTab(tabItem.id as Tab)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${
                 tab === tabItem.id ? "bg-white shadow-cozy text-warm-800" : "text-warm-500 hover:bg-white/50"
               }`}>
-              <span>{tabItem.emoji}</span> {tabItem.label}
+              <tabItem.Icon size={15} /> {tabItem.label}
             </motion.button>
           ))}
         </div>
@@ -773,8 +773,8 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <div className="flex gap-2 flex-wrap mb-3">
                 <span className="text-xs bg-peach-50 text-peach-600 px-2 py-1 rounded-full">{recipe.category}</span>
                 {recipe.prepTime && <span className="text-xs bg-sage-50 text-sage-600 px-2 py-1 rounded-full">⏱ {recipe.prepTime}m</span>}
-                {recipe.calories != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full">🔥 {recipe.calories} kcal</span>}
-                <span className="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-full">👥 {recipe.servings}</span>
+                {recipe.calories != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full inline-flex items-center gap-1"><Flame size={12} /> {recipe.calories} kcal</span>}
+                <span className="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-full inline-flex items-center gap-1"><Users size={12} /> {recipe.servings}</span>
               </div>
               {recipe.ingredients.length > 0 && (
                 <div className="border-t border-warm-100 pt-3">
@@ -858,8 +858,8 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <div className="flex gap-2 flex-wrap mb-3">
                 <span className="text-xs bg-peach-50 text-peach-600 px-2 py-1 rounded-full">{recipe.category}</span>
                 {recipe.prepTime && <span className="text-xs bg-sage-50 text-sage-600 px-2 py-1 rounded-full">⏱ {recipe.prepTime}m</span>}
-                {recipe.calories != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full">🔥 {recipe.calories} kcal</span>}
-                <span className="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-full">👥 {recipe.servings}</span>
+                {recipe.calories != null && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full inline-flex items-center gap-1"><Flame size={12} /> {recipe.calories} kcal</span>}
+                <span className="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-full inline-flex items-center gap-1"><Users size={12} /> {recipe.servings}</span>
               </div>
               <motion.button
                 type="button"
@@ -921,7 +921,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddMeal}
                     className="w-full py-3 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl font-semibold">
-                    {t.add} 🍽️
+                    {t.add}
                   </motion.button>
                 </div>
               </div>
@@ -1066,7 +1066,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
               <div className="overflow-y-auto overscroll-contain p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-warm-800">
-                    {editingRecipeId ? t.editRecipeTitle : t.newRecipeTitle} 👨‍🍳
+                    {editingRecipeId ? t.editRecipeTitle : t.newRecipeTitle} <ChefHat size={16} className="inline ml-1" />
                   </h2>
                   <button type="button" onClick={closeAddRecipeModal} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center">
                     <X size={16} />
@@ -1125,8 +1125,8 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   <div className="flex gap-2 flex-wrap">
                     {FOOD_EMOJIS.map((e) => (
                       <button key={e} onClick={() => setNewRecipe((p) => ({ ...p, emoji: e }))}
-                        className={`text-xl w-9 h-9 rounded-xl flex items-center justify-center transition-all ${newRecipe.emoji === e ? "bg-peach-100 ring-2 ring-peach-400" : "hover:bg-warm-50"}`}>
-                        {e}
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${newRecipe.emoji === e ? "bg-peach-100 ring-2 ring-peach-400" : "hover:bg-warm-50"}`}>
+                        <UtensilsCrossed size={16} className="text-warm-600" />
                       </button>
                     ))}
                   </div>

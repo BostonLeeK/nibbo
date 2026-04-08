@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     data: {
       title: body.title,
       description: body.description,
-      emoji: body.emoji || "📅",
+      emoji: body.emoji || "event",
       color: body.color || "#8b5cf6",
       startDate: new Date(body.startDate),
       endDate: new Date(body.endDate),

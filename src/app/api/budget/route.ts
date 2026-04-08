@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const category = await prisma.expenseCategory.create({
       data: {
         name: body.name,
-        emoji: body.emoji || "💰",
+        emoji: body.emoji || "category",
         color: body.color || "#4ade80",
         budget: body.budget,
         familyId,

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, Pencil, Trash2, GripHorizontal } from "lucide-react";
+import { Plus, Pencil, Trash2, GripHorizontal, X } from "lucide-react";
 import { PRIORITY_CONFIG } from "@/lib/utils";
 import TaskCard from "./TaskCard";
 import type { TaskBoardColumn, TaskBoardTask, TaskBoardUser } from "@/lib/task-board";
@@ -256,7 +256,7 @@ export default function TaskColumn({
               onClick={closeAdd}
               className="px-3 bg-warm-100 text-warm-600 rounded-xl py-2 text-xs hover:bg-warm-200 transition-colors"
             >
-              ✕
+              <X size={14} />
             </button>
           </div>
         </motion.div>

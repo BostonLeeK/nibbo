@@ -20,7 +20,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Nibbo - Ваш цифровий дім 🏠",
+  title: "Nibbo - Ваш цифровий дім",
   description: "Затишна домашня CRM система для всієї родини",
   manifest: "/manifest.webmanifest",
   icons: {

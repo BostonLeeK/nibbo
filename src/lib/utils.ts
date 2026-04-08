@@ -53,17 +53,17 @@ export function dashboardHeaderLabels(now: Date = new Date()) {
 }
 
 export const PRIORITY_CONFIG = {
-  LOW: { label: "Низький", color: "bg-sage-100 text-sage-700", emoji: "🟢" },
-  MEDIUM: { label: "Середній", color: "bg-sky-100 text-sky-700", emoji: "🔵" },
-  HIGH: { label: "Високий", color: "bg-peach-100 text-peach-700", emoji: "🟠" },
-  URGENT: { label: "Терміново", color: "bg-rose-100 text-rose-700", emoji: "🔴" },
+  LOW: { label: "Низький", color: "bg-sage-100 text-sage-700", emoji: "" },
+  MEDIUM: { label: "Середній", color: "bg-sky-100 text-sky-700", emoji: "" },
+  HIGH: { label: "Високий", color: "bg-peach-100 text-peach-700", emoji: "" },
+  URGENT: { label: "Терміново", color: "bg-rose-100 text-rose-700", emoji: "" },
 } as const;
 
 export const MEAL_TYPE_CONFIG = {
-  BREAKFAST: { label: "Сніданок", emoji: "🌅", color: "bg-cream-100" },
-  LUNCH: { label: "Обід", emoji: "☀️", color: "bg-peach-100" },
-  DINNER: { label: "Вечеря", emoji: "🌙", color: "bg-lavender-100" },
-  SNACK: { label: "Перекус", emoji: "🍎", color: "bg-sage-100" },
+  BREAKFAST: { label: "Сніданок", emoji: "", color: "bg-cream-100" },
+  LUNCH: { label: "Обід", emoji: "", color: "bg-peach-100" },
+  DINNER: { label: "Вечеря", emoji: "", color: "bg-lavender-100" },
+  SNACK: { label: "Перекус", emoji: "", color: "bg-sage-100" },
 } as const;
 
 export const USER_COLORS = [
@@ -72,6 +72,5 @@ export const USER_COLORS = [
 ];
 
 export const USER_EMOJIS = [
-  "🌸", "🦋", "🌟", "🐱", "🦊", "🐰", "🐨", "🦄",
-  "🌺", "🍀", "✨", "🌈", "🎀", "🍓", "🌙", "☀️",
+  "user",
 ];

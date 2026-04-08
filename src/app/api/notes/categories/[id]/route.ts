@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     where: { id },
     data: {
       ...(body.name !== undefined && { name: String(body.name || "").trim() || "Категорія" }),
-      ...(body.emoji !== undefined && { emoji: body.emoji || "📂" }),
+      ...(body.emoji !== undefined && { emoji: body.emoji || "category" }),
       ...(body.color !== undefined && { color: body.color || "#f5f3ff" }),
       ...(body.parentId !== undefined && { parentId: body.parentId || null }),
     },

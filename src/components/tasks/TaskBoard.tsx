@@ -22,7 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import toast from "react-hot-toast";
-import { Plus, Settings2 } from "lucide-react";
+import { Columns3, GripVertical, Plus, Settings2, SquareKanban, X } from "lucide-react";
 import {
   normalizeBoardsPayload,
   type TaskBoardBoard,
@@ -136,7 +136,7 @@ function SortableBoardTab({
         {...attributes}
         {...listeners}
       >
-        ⣿
+        <GripVertical size={14} />
       </button>
       <button
         type="button"
@@ -147,7 +147,6 @@ function SortableBoardTab({
           className="w-2 h-2 rounded-full"
           style={{ backgroundColor: board.color }}
         />
-        <span>{board.emoji}</span>
         <span>{board.name}</span>
       </button>
       <button
@@ -665,7 +664,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
               <option value="UNASSIGNED">{t.filterUnassigned}</option>
               {users.map((user) => (
                 <option key={user.id} value={`USER:${user.id}`}>
-                  {user.emoji} {user.name ?? taskI18n.userFallback}
+                  {user.name ?? taskI18n.userFallback}
                 </option>
               ))}
             </select>
@@ -699,7 +698,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
                           : "bg-white text-warm-600 border border-warm-200"
                       }`}
                     >
-                      {column.emoji} {column.name} ({column.tasks.length})
+                      {column.name} ({column.tasks.length})
                     </button>
                   ))}
                 </div>
@@ -764,7 +763,7 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
               {activeColumn && (
                 <div className="w-[calc(100vw-2.5rem)] sm:w-72 opacity-90 rotate-1">
                   <div className="bg-white/90 rounded-3xl border border-rose-200 shadow-cozy p-4">
-                    <span className="text-lg mr-2">{activeColumn.emoji}</span>
+                    <Columns3 size={16} className="inline mr-2 text-warm-500" />
                     <span className="font-semibold text-warm-800">{activeColumn.name}</span>
                   </div>
                 </div>
@@ -774,7 +773,9 @@ export default function TaskBoard({ initialBoards, users, currentUserId }: TaskB
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-5xl mb-4">📋</div>
+              <div className="mb-4 flex justify-center">
+                <SquareKanban className="h-11 w-11 text-warm-400" />
+              </div>
               <h3 className="text-lg font-semibold text-warm-700 mb-2">{t.noBoardsTitle}</h3>
               <p className="text-warm-400 text-sm mb-4">{t.noBoardsHint}</p>
               <motion.button
@@ -825,7 +826,7 @@ function AddColumnButton({ onAdd }: { onAdd: (name: string, emoji: string, color
 
   const handleAdd = () => {
     if (!name.trim()) return;
-    onAdd(name, "📝", "#e7e5e4");
+    onAdd(name, "column", "#e7e5e4");
     setName("");
     setIsAdding(false);
   };
@@ -859,7 +860,7 @@ function AddColumnButton({ onAdd }: { onAdd: (name: string, emoji: string, color
               onClick={() => setIsAdding(false)}
               className="px-4 bg-warm-100 text-warm-600 rounded-xl py-2 text-sm hover:bg-warm-200 transition-colors"
             >
-              ✕
+              <X size={14} />
             </button>
           </div>
         </motion.div>
