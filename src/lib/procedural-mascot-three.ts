@@ -245,6 +245,16 @@ export function buildProceduralMascot(
   const blobGeo = buildBlobGeometry(dna, noise3D);
   blobGeo.computeBoundingBox();
   const bb = blobGeo.boundingBox!;
+  blobGeo.computeVertexNormals();
+  const basePosAttr = blobGeo.attributes.position as THREE.BufferAttribute;
+  const baseNormAttr = blobGeo.attributes.normal as THREE.BufferAttribute;
+  const vCount = basePosAttr.count;
+  const baseBlobPositions = new Float32Array(vCount * 3);
+  baseBlobPositions.set(basePosAttr.array as Float32Array);
+  const baseBlobNormals = new Float32Array(vCount * 3);
+  baseBlobNormals.set(baseNormAttr.array as Float32Array);
+  blobGeo.userData.baseBlobPositions = baseBlobPositions;
+  blobGeo.userData.baseBlobNormals = baseBlobNormals;
 
   const rimGeo = inflateAlongNormal(blobGeo, 0.034);
   const rimCol = hsl((dna.hueRim + 0.04) % 1, 0.75, 0.58);

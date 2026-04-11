@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import TaskTamagotchi3D from "@/components/shared/TaskTamagotchi3D";
+import { unlockedFamilyAchievementIds } from "@/lib/family-achievements";
 
 const LAB_DEFAULT_FAMILY_ID = "c9a63100-0000-4000-8000-000000000000";
 
@@ -12,24 +13,28 @@ const PRESETS = [
     title: "Sleepy",
     caption: "Немає руху по задачах",
     stats: { doneToday: 0, doneWeek: 0, myOpen: 9, doneTotal: 2 },
+    familyXp: 20,
   },
   {
     key: "neutral",
     title: "Neutral",
     caption: "Початок прогресу",
     stats: { doneToday: 1, doneWeek: 4, myOpen: 7, doneTotal: 11 },
+    familyXp: 120,
   },
   {
     key: "smile",
     title: "Smile",
     caption: "Стабільний темп",
     stats: { doneToday: 2, doneWeek: 9, myOpen: 4, doneTotal: 23 },
+    familyXp: 720,
   },
   {
     key: "happy",
     title: "Happy",
     caption: "Максимальна форма",
     stats: { doneToday: 5, doneWeek: 18, myOpen: 1, doneTotal: 44 },
+    familyXp: 3200,
   },
 ] as const;
 
@@ -106,6 +111,8 @@ export default function TamagotchiLabClient() {
                 doneWeek={preset.stats.doneWeek}
                 myOpen={preset.stats.myOpen}
                 doneTotal={preset.stats.doneTotal}
+                familyXp={preset.familyXp}
+                unlockedAchievementIds={unlockedFamilyAchievementIds(preset.familyXp)}
               />
             </section>
           ))}

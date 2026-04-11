@@ -33,6 +33,8 @@ interface DashboardClientProps {
   familyId: string;
   stats: { taskCount: number; eventCount: number; shoppingCount: number };
   personalTaskStats: { myOpen: number; doneToday: number; doneWeek: number; doneTotal: number };
+  familyXp: number;
+  unlockedAchievementIds: string[];
   upcomingEvents: any[];
   recentTasks: any[];
 }
@@ -52,10 +54,17 @@ type PersonalTaskStats = {
   doneTotal: number;
 };
 
+type DashboardTaskStatsResponse = PersonalTaskStats & {
+  familyXp: number;
+  unlockedAchievementIds: string[];
+};
+
 export default function DashboardClient({
   familyId,
   stats,
   personalTaskStats,
+  familyXp,
+  unlockedAchievementIds,
   upcomingEvents,
   recentTasks,
 }: DashboardClientProps) {
@@ -64,6 +73,8 @@ export default function DashboardClient({
   const [show3D, setShow3D] = useState(false);
   const [tasks, setTasks] = useState<DashboardTask[]>(recentTasks as DashboardTask[]);
   const [tamagotchiStats, setTamagotchiStats] = useState<PersonalTaskStats>(personalTaskStats);
+  const [familyXpState, setFamilyXpState] = useState(familyXp);
+  const [unlockedAchievementIdsState, setUnlockedAchievementIdsState] = useState(unlockedAchievementIds);
   const [confirmTask, setConfirmTask] = useState<DashboardTask | null>(null);
   const [busyComplete, setBusyComplete] = useState(false);
   const modelRef = useRef<HTMLDivElement | null>(null);
@@ -100,12 +111,24 @@ export default function DashboardClient({
     };
   }, []);
 
+  useEffect(() => {
+    setFamilyXpState(familyXp);
+    setUnlockedAchievementIdsState(unlockedAchievementIds);
+  }, [familyXp, unlockedAchievementIds]);
+
   const refreshTamagotchiStats = async () => {
     try {
       const res = await fetch("/api/dashboard/task-stats");
       if (!res.ok) return;
-      const data = (await res.json()) as PersonalTaskStats;
-      setTamagotchiStats(data);
+      const data = (await res.json()) as DashboardTaskStatsResponse;
+      setTamagotchiStats({
+        myOpen: data.myOpen,
+        doneToday: data.doneToday,
+        doneWeek: data.doneWeek,
+        doneTotal: data.doneTotal,
+      });
+      setFamilyXpState(data.familyXp);
+      setUnlockedAchievementIdsState(data.unlockedAchievementIds);
     } catch {}
   };
 
@@ -168,6 +191,8 @@ export default function DashboardClient({
             doneWeek={tamagotchiStats.doneWeek}
             myOpen={tamagotchiStats.myOpen}
             doneTotal={tamagotchiStats.doneTotal}
+            familyXp={familyXpState}
+            unlockedAchievementIds={unlockedAchievementIdsState}
           />
         ) : (
           <div className="h-[360px] bg-white/75 rounded-3xl border border-warm-100 shadow-cozy animate-pulse" />

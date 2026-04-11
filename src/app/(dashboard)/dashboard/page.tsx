@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { ensureUserFamily } from "@/lib/family";
 import { AUTO_BILLING_MARKER } from "@/lib/subscription-calendar";
 import { userCreditedTaskWhere } from "@/lib/task-xp";
+import { familyXpFromCompletedTaskCount, unlockedFamilyAchievementIds } from "@/lib/family-achievements";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -19,7 +20,7 @@ export default async function DashboardPage() {
   const startToday = kyivStartOfTodayUtc();
   const startWeek = kyivStartOfWeekUtc();
 
-  const [taskCount, eventCount, shoppingCount, myOpen, doneToday, doneWeek, doneTotal] =
+  const [taskCount, eventCount, shoppingCount, myOpen, doneToday, doneWeek, doneTotal, familyCompletedTasks] =
     await Promise.all([
       prisma.task.count({ where: { completed: false, column: { board: { familyId } } } }),
       prisma.event.count({
@@ -38,7 +39,13 @@ export default async function DashboardPage() {
         where: { ...mine, completed: true, completedAt: { gte: startWeek }, column: { board: { familyId } } },
       }),
       prisma.task.count({ where: { ...mine, completed: true, column: { board: { familyId } } } }),
+      prisma.task.count({
+        where: { completed: true, column: { board: { familyId } } },
+      }),
     ]);
+
+  const familyXp = familyXpFromCompletedTaskCount(familyCompletedTasks);
+  const unlockedAchievementIds = unlockedFamilyAchievementIds(familyXp);
 
   const upcomingEvents = await prisma.event.findMany({
     where: {
@@ -63,6 +70,8 @@ export default async function DashboardPage() {
       familyId={familyId}
       stats={{ taskCount, eventCount, shoppingCount }}
       personalTaskStats={{ myOpen, doneToday, doneWeek, doneTotal }}
+      familyXp={familyXp}
+      unlockedAchievementIds={unlockedAchievementIds}
       upcomingEvents={upcomingEvents}
       recentTasks={recentTasks}
     />

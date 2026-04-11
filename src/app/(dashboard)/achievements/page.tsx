@@ -2,7 +2,7 @@ import AchievementsView from "@/components/achievements/AchievementsView";
 import { auth } from "@/lib/auth";
 import { ensureUserFamily } from "@/lib/family";
 import { prisma } from "@/lib/prisma";
-import { POINTS_PER_TASK_COMPLETION } from "@/lib/task-points";
+import { FAMILY_ACHIEVEMENT_THRESHOLDS, familyXpFromCompletedTaskCount } from "@/lib/family-achievements";
 import { redirect } from "next/navigation";
 
 type LeaderboardRow = {
@@ -17,14 +17,11 @@ type FamilyInfoRow = {
   shareInLeaderboard: boolean;
 };
 
-const achievements = [
-  { id: "first-steps", title: "Перша іскра", threshold: 50 },
-  { id: "warm-routine", title: "Домашній ритм", threshold: 300 },
-  { id: "cozy-family", title: "Серце дому", threshold: 600 },
-  { id: "task-masters", title: "Майстер справ", threshold: 1200 },
-  { id: "legend", title: "Хранитель затишку", threshold: 2500 },
-  { id: "master-of-nibbo", title: "Легенда оселі", threshold: 5000 },
-];
+const achievements = FAMILY_ACHIEVEMENT_THRESHOLDS.map((a) => ({
+  id: a.id,
+  threshold: a.threshold,
+  title: "",
+}));
 
 export default async function AchievementsPage() {
   const session = await auth();
@@ -63,12 +60,12 @@ export default async function AchievementsPage() {
   ]);
 
   const familyInfo = familyInfoRows[0] ?? null;
-  const points = familyCompletedTasks * POINTS_PER_TASK_COMPLETION;
+  const points = familyXpFromCompletedTaskCount(familyCompletedTasks);
   const rows = leaderboard.map((row, index) => ({
     rank: index + 1,
     familyId: row.familyId,
     familyName: row.familyName,
-    points: row.completedTasks * POINTS_PER_TASK_COMPLETION,
+    points: familyXpFromCompletedTaskCount(row.completedTasks),
   }));
   const myRank = rows.find((row) => row.familyId === familyId) ?? null;
 
