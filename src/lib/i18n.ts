@@ -11,6 +11,7 @@ export const I18N = {
     openMenuAria: "Відкрити меню",
     closeMenuAria: "Закрити меню",
     nav: {
+      profile: "Профіль",
       dashboard: "Головна",
       family: "Родина",
       tasks: "Задачі",
@@ -211,8 +212,6 @@ export const I18N = {
       subtitle: "Затишне місце для вашої родини",
       footer:
         "Тут ви можете організувати свою родину та управляти домашніми справами",
-      feedbackLine: "Знайшли баг або є ідея?",
-      feedbackLink: "Зворотний зв'язок",
       signingIn: "Входимо...",
       signInWithGoogle: "Увійти через Google",
       features: {
@@ -226,6 +225,8 @@ export const I18N = {
     },
     profile: {
       userFallback: "User",
+      pageBack: "До додатку",
+      personalSection: "Профіль та вигляд",
       title: "Профіль",
       uploadPhoto: "Завантажити фото",
       namePlaceholder: "Ім'я",
@@ -247,6 +248,23 @@ export const I18N = {
         "Вийти з цієї сім'ї? Тобі буде створено нову власну сім'ю.",
       acceptInviteConfirm:
         "Прийняти запрошення до сім'ї «{familyName}»?\nТи вийдеш зі своєї поточної сім'ї. Якщо вона порожня, її буде видалено.",
+      deleteAccountSection: "Видалення акаунта",
+      deleteAccountHint:
+        "Безповоротно: профіль, сесії та доступ до даних будуть видалені.",
+      deleteOwnershipHint:
+        "Ти власник сім'ї. Обери нового власника — йому перейдуть права та твої записи в спільних даних (задачі, нотатки тощо).",
+      deleteSuccessorLabel: "Новий власник сім'ї",
+      deleteSuccessorPlaceholder: "Обери учасника",
+      deleteConfirmEmailLabel: "Підтвердь email акаунта",
+      deleteConfirmEmailPlaceholder: "email",
+      deleteAccountButton: "Видалити акаунт назавжди",
+      deleteAccountBusy: "Видалення…",
+      deleteAccountFinalConfirm:
+        "Остаточно видалити акаунт? Цю дію не можна скасувати.",
+      deleteNoEmail: "Без email у профілі видалення недоступне.",
+      deleteNeedSuccessor: "Обери, кому передати сім'ю.",
+      deleteInvalidEmail: "Email не збігається з акаунтом.",
+      deleteAccountError: "Не вдалося видалити акаунт. Спробуй пізніше.",
     },
     family: {
       title: "Керування родиною",
@@ -764,6 +782,7 @@ export const I18N = {
     openMenuAria: "Open menu",
     closeMenuAria: "Close menu",
     nav: {
+      profile: "Profile",
       dashboard: "Home",
       family: "Family",
       tasks: "Tasks",
@@ -963,8 +982,6 @@ export const I18N = {
     login: {
       subtitle: "A cozy place for your family",
       footer: "Here you can organize your family and manage household tasks",
-      feedbackLine: "Found a bug or have an idea?",
-      feedbackLink: "Feedback",
       signingIn: "Signing in...",
       signInWithGoogle: "Sign in with Google",
       features: {
@@ -978,6 +995,8 @@ export const I18N = {
     },
     profile: {
       userFallback: "User",
+      pageBack: "Back to app",
+      personalSection: "Profile & appearance",
       title: "Profile",
       uploadPhoto: "Upload photo",
       namePlaceholder: "Name",
@@ -999,6 +1018,23 @@ export const I18N = {
         "Leave this family? A new personal family will be created for you.",
       acceptInviteConfirm:
         'Accept invitation to family "{familyName}"?\nYou will leave your current family. If it\'s empty, it will be deleted.',
+      deleteAccountSection: "Delete account",
+      deleteAccountHint:
+        "Permanent: your profile, sessions, and access to data will be removed.",
+      deleteOwnershipHint:
+        "You are the family owner. Pick the next owner — they receive ownership and your contributions in shared data (tasks, notes, etc.).",
+      deleteSuccessorLabel: "New family owner",
+      deleteSuccessorPlaceholder: "Choose a member",
+      deleteConfirmEmailLabel: "Confirm your account email",
+      deleteConfirmEmailPlaceholder: "email",
+      deleteAccountButton: "Delete account permanently",
+      deleteAccountBusy: "Deleting…",
+      deleteAccountFinalConfirm:
+        "Permanently delete your account? This cannot be undone.",
+      deleteNoEmail: "Account email is missing; deletion is unavailable.",
+      deleteNeedSuccessor: "Choose who should receive the family.",
+      deleteInvalidEmail: "Email does not match your account.",
+      deleteAccountError: "Could not delete account. Try again later.",
     },
     family: {
       title: "Family management",

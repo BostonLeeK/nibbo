@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import { LogOut, Sparkles } from "lucide-react";
 import Image from "next/image";
 import NotificationBell from "./NotificationBell";
-import ProfileModal from "./ProfileModal";
 import { TASK_POINTS_AWARDED_EVENT } from "@/lib/task-points";
 import { I18N } from "@/lib/i18n";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
@@ -27,11 +25,8 @@ interface HeaderProps {
 }
 
 export default function Header({ user: u, initialPoints, isAdmin = false }: HeaderProps) {
-  const router = useRouter();
   const { language, setLanguage } = useAppLanguage();
   const t = I18N[language];
-  const [user, setUser] = useState(u);
-  const [openProfile, setOpenProfile] = useState(false);
   const [points, setPoints] = useState(initialPoints);
 
   useEffect(() => {
@@ -92,7 +87,7 @@ export default function Header({ user: u, initialPoints, isAdmin = false }: Head
     <header className="md:h-16 bg-white/60 backdrop-blur-md border-b border-warm-100 flex items-center px-3 md:px-6 py-2 md:py-0 gap-2 md:gap-4">
       <div className="flex-1">
         <p className="text-xs md:text-sm font-semibold text-warm-700">
-          {greeting}, <span className="text-rose-500">{user.name?.split(" ")[0] || t.header.friendFallback}</span>
+          {greeting}, <span className="text-rose-500">{u.name?.split(" ")[0] || t.header.friendFallback}</span>
         </p>
         <div className="hidden md:flex items-center gap-2">
           <p className="text-xs text-warm-400">{dateLabel}</p>
@@ -148,44 +143,28 @@ export default function Header({ user: u, initialPoints, isAdmin = false }: Head
         >
           <LogOut size={16} />
         </motion.button>
-        <button
+        <Link
           data-tour="profile-button"
-          type="button"
-          onClick={() => setOpenProfile(true)}
-          className="w-8 h-8 md:w-9 md:h-9 rounded-xl overflow-hidden ring-2 ring-rose-100"
+          href="/profile"
+          className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-2 ring-rose-100 transition hover:ring-rose-200 md:h-9 md:w-9"
+          aria-label={t.profile.title}
         >
-          {user.image ? (
+          {u.image ? (
             <Image
-              src={user.image}
-              alt={user.name || t.task.userFallback}
+              src={u.image}
+              alt=""
               width={36}
               height={36}
-              className="w-8 h-8 md:w-9 md:h-9 object-cover"
-              unoptimized={user.image.startsWith("/api/users/avatar/")}
+              className="h-full w-full object-cover"
+              unoptimized={u.image.startsWith("/api/users/avatar/")}
             />
           ) : (
-            <div className="w-8 h-8 md:w-9 md:h-9 text-sm text-white flex items-center justify-center" style={{ backgroundColor: user.color }}>
-              {user.name?.[0] || t.task.userFallback[0]}
+            <div className="flex h-full w-full items-center justify-center text-sm text-white" style={{ backgroundColor: u.color }}>
+              {u.name?.[0] || t.task.userFallback[0]}
             </div>
           )}
-        </button>
+        </Link>
       </div>
-      <ProfileModal
-        open={openProfile}
-        onClose={() => setOpenProfile(false)}
-        user={{
-          id: user.id,
-          name: user.name ?? null,
-          email: user.email ?? null,
-          image: user.image ?? null,
-          color: user.color,
-          emoji: user.emoji,
-        }}
-        onSaved={(next) => {
-          setUser(next);
-          router.refresh();
-        }}
-      />
     </header>
   );
 }

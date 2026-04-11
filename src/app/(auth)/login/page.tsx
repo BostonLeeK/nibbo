@@ -3,7 +3,6 @@
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { CalendarDays, CreditCard, NotebookPen, ShoppingCart, SquareKanban, UtensilsCrossed } from "lucide-react";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
@@ -150,12 +149,6 @@ export default function LoginPage() {
 
           <p className="text-xs text-warm-400 mt-4">
             {t.footer}
-          </p>
-          <p className="text-xs text-warm-500 mt-3">
-            {t.feedbackLine}{" "}
-            <Link href="/feedback" className="font-semibold text-rose-600 hover:text-rose-700 underline-offset-2 hover:underline">
-              {t.feedbackLink}
-            </Link>
           </p>
         </div>
       </motion.div>

@@ -293,29 +293,40 @@ export default function Sidebar({ user: u }: SidebarProps) {
           })}
         </div>
         <div className="shrink-0 border-t border-warm-100 p-4">
-          <div className="flex items-center gap-3 p-3 rounded-2xl bg-warm-50">
-            {user.image ? (
-              <Image
-                src={user.image}
-                alt={user.name || "User"}
-                width={36}
-                height={36}
-                className="rounded-full ring-2 ring-rose-200"
-                unoptimized={user.image.startsWith("/api/users/avatar/")}
-              />
-            ) : (
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-lg text-white"
-                style={{ backgroundColor: user.color || "#f43f5e" }}
-              >
-                {user.name?.[0] || "U"}
-              </div>
+          <Link
+            href="/profile"
+            className={cn(
+              "block rounded-2xl p-3 outline-none transition focus-visible:ring-2 focus-visible:ring-lavender-300 focus-visible:ring-offset-2",
+              pathname === "/profile"
+                ? "border border-lavender-200/90 bg-lavender-50/70 shadow-sm"
+                : "border border-transparent bg-warm-50 hover:border-warm-200/80 hover:bg-warm-100/90"
             )}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-warm-800 text-sm truncate">{user.name}</p>
-              <p className="text-xs text-warm-400 truncate">{user.email}</p>
+            aria-label={t.nav.profile}
+          >
+            <div className="flex items-center gap-3">
+              {user.image ? (
+                <Image
+                  src={user.image}
+                  alt=""
+                  width={36}
+                  height={36}
+                  className="rounded-full ring-2 ring-warm-200/90"
+                  unoptimized={user.image.startsWith("/api/users/avatar/")}
+                />
+              ) : (
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-white"
+                  style={{ backgroundColor: user.color || "#f43f5e" }}
+                >
+                  {user.name?.[0] || "U"}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-warm-800">{user.name}</p>
+                <p className="truncate text-xs text-warm-400">{user.email}</p>
+              </div>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
     </>
