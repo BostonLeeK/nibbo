@@ -1,13 +1,20 @@
-import * as THREE from "three";
-import type { NoiseFunction3D } from "simplex-noise";
 import type { MascotDNA } from "@/lib/mascot-dna";
-import { createMascotSurfaceNoise3D, sampleMascotSurfaceFbm } from "@/lib/mascot-surface-noise";
+import {
+  createMascotSurfaceNoise3D,
+  sampleMascotSurfaceFbm,
+} from "@/lib/mascot-surface-noise";
+import type { NoiseFunction3D } from "simplex-noise";
+import * as THREE from "three";
 
 function hsl(h: number, s: number, l: number) {
   return new THREE.Color().setHSL(((h % 1) + 1) % 1, s, l);
 }
 
-function buildEyeGroup(dna: MascotDNA, irisHueShift: number, mirrored: boolean): THREE.Group {
+function buildEyeGroup(
+  dna: MascotDNA,
+  irisHueShift: number,
+  mirrored: boolean,
+): THREE.Group {
   const g = new THREE.Group();
   const S = dna.eyeSize;
   const mx = mirrored ? -1 : 1;
@@ -27,7 +34,7 @@ function buildEyeGroup(dna: MascotDNA, irisHueShift: number, mirrored: boolean):
   sclera.renderOrder = 0;
   g.add(sclera);
 
-  const irisHue = ((dna.eyeIrisHue + irisHueShift) % 1 + 1) % 1;
+  const irisHue = (((dna.eyeIrisHue + irisHueShift) % 1) + 1) % 1;
   const irisCol = hsl(irisHue, dna.eyeIrisSat, dna.eyeIrisLight);
   const irisR = S * 0.39;
   const irisGeo = new THREE.SphereGeometry(irisR, 24, 20);
@@ -54,7 +61,7 @@ function buildEyeGroup(dna: MascotDNA, irisHueShift: number, mirrored: boolean):
       metalness: 0.18,
       clearcoat: 0.65,
       clearcoatRoughness: 0.18,
-    })
+    }),
   );
   pupil.renderOrder = 2;
   pupil.position.z = S * 0.91;
@@ -78,7 +85,12 @@ function buildEyeGroup(dna: MascotDNA, irisHueShift: number, mirrored: boolean):
 
   const catchHi = new THREE.Mesh(
     new THREE.SphereGeometry(S * 0.055, 10, 8),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.88, depthWrite: false })
+    new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.88,
+      depthWrite: false,
+    }),
   );
   catchHi.renderOrder = 4;
   catchHi.position.set(S * 0.18 * mx, S * 0.14, S * 0.96);
@@ -86,7 +98,12 @@ function buildEyeGroup(dna: MascotDNA, irisHueShift: number, mirrored: boolean):
 
   const catchLo = new THREE.Mesh(
     new THREE.SphereGeometry(S * 0.028, 8, 6),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, depthWrite: false })
+    new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.4,
+      depthWrite: false,
+    }),
   );
   catchLo.renderOrder = 4;
   catchLo.position.set(S * -0.07 * mx, S * -0.11, S * 0.93);
@@ -110,14 +127,22 @@ function disposeGroup(root: THREE.Group) {
   root.clear();
 }
 
-function buildBlobGeometry(dna: MascotDNA, noise3D: NoiseFunction3D): THREE.BufferGeometry {
+function buildBlobGeometry(
+  dna: MascotDNA,
+  noise3D: NoiseFunction3D,
+): THREE.BufferGeometry {
   const geo = new THREE.SphereGeometry(0.72, 64, 48);
   const pos = geo.attributes.position as THREE.BufferAttribute;
   const rx = 0.72 * dna.beanXZ;
   const ry = 0.72 * dna.beanY;
   const rz = 0.72 * dna.beanZD;
   const rotQ = new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(dna.surfaceNoiseEulerX, dna.surfaceNoiseEulerY, dna.surfaceNoiseEulerZ, "XYZ")
+    new THREE.Euler(
+      dna.surfaceNoiseEulerX,
+      dna.surfaceNoiseEulerY,
+      dna.surfaceNoiseEulerZ,
+      "XYZ",
+    ),
   );
   const u = new THREE.Vector3();
   const dir = new THREE.Vector3();
@@ -130,7 +155,8 @@ function buildBlobGeometry(dna: MascotDNA, noise3D: NoiseFunction3D): THREE.Buff
     const nz = u.z;
     dir.copy(u).applyQuaternion(rotQ);
     const fbm = sampleMascotSurfaceFbm(noise3D, dir.x, dir.y, dir.z, dna);
-    const puddle = THREE.MathUtils.smoothstep(-ny, -0.06, 0.68) * dna.puddleStrength;
+    const puddle =
+      THREE.MathUtils.smoothstep(-ny, -0.06, 0.68) * dna.puddleStrength;
     const spread = 1 + dna.klyaksaSpread * puddle;
     const lift = dna.klyaksaFlat * puddle * ry * 0.52;
     base.set(nx * rx * spread, ny * ry + lift, nz * rz * spread);
@@ -138,14 +164,22 @@ function buildBlobGeometry(dna: MascotDNA, noise3D: NoiseFunction3D): THREE.Buff
     if (gn.lengthSq() < 1e-12) gn.copy(base).normalize();
     else gn.normalize();
     const disp = THREE.MathUtils.clamp(fbm, -1, 1) * dna.surfaceNoiseAmp;
-    pos.setXYZ(i, base.x + gn.x * disp, base.y + gn.y * disp, base.z + gn.z * disp);
+    pos.setXYZ(
+      i,
+      base.x + gn.x * disp,
+      base.y + gn.y * disp,
+      base.z + gn.z * disp,
+    );
   }
   pos.needsUpdate = true;
   geo.computeVertexNormals();
   return geo;
 }
 
-function inflateAlongNormal(geo: THREE.BufferGeometry, delta: number): THREE.BufferGeometry {
+function inflateAlongNormal(
+  geo: THREE.BufferGeometry,
+  delta: number,
+): THREE.BufferGeometry {
   const g = geo.clone();
   g.computeVertexNormals();
   const pos = g.attributes.position as THREE.BufferAttribute;
@@ -163,7 +197,10 @@ function inflateAlongNormal(geo: THREE.BufferGeometry, delta: number): THREE.Buf
 }
 
 function shellAxes(dna: MascotDNA) {
-  const e = 1 + dna.surfaceNoiseAmp * 0.55 + dna.klyaksaSpread * dna.puddleStrength * 0.14;
+  const e =
+    1 +
+    dna.surfaceNoiseAmp * 0.55 +
+    dna.klyaksaSpread * dna.puddleStrength * 0.14;
   return {
     rx: 0.72 * dna.beanXZ * e,
     ry: 0.72 * dna.beanY * e,
@@ -196,7 +233,10 @@ export interface ProceduralMascotHandles {
   dispose: () => void;
 }
 
-export function buildProceduralMascot(dna: MascotDNA, familyId: string): ProceduralMascotHandles {
+export function buildProceduralMascot(
+  dna: MascotDNA,
+  familyId: string,
+): ProceduralMascotHandles {
   const root = new THREE.Group();
   const body = new THREE.Group();
   const bodyCore = new THREE.Group();
@@ -216,8 +256,16 @@ export function buildProceduralMascot(dna: MascotDNA, familyId: string): Procedu
   rimMesh.renderOrder = -1;
 
   const bodyCol = hsl(dna.hueBody, dna.satBody, dna.lightBody);
-  const deepCol = hsl(dna.hueBody, Math.min(0.95, dna.satBody + 0.08), dna.lightBody * 0.62);
-  const glowEdge = hsl((dna.hueRim + 0.36) % 1, Math.min(0.9, 0.52 + dna.satBody * 0.22), Math.min(0.7, 0.44 + dna.lightBody * 0.2));
+  const deepCol = hsl(
+    dna.hueBody,
+    Math.min(0.95, dna.satBody + 0.08),
+    dna.lightBody * 0.62,
+  );
+  const glowEdge = hsl(
+    (dna.hueRim + 0.36) % 1,
+    Math.min(0.9, 0.52 + dna.satBody * 0.22),
+    Math.min(0.7, 0.44 + dna.lightBody * 0.2),
+  );
   const pearl = hsl((dna.hueRim + 0.55) % 1, 0.45, 0.72);
   const specPearl = hsl((dna.hueRim + 0.59) % 1, 0.5, 0.74);
 
@@ -235,7 +283,10 @@ export function buildProceduralMascot(dna: MascotDNA, familyId: string): Procedu
     clearcoatRoughness: 0.22,
     iridescence: 0.92,
     iridescenceIOR: dna.iridescenceIOR,
-    iridescenceThicknessRange: [dna.iridescenceThicknessMin, dna.iridescenceThicknessMax],
+    iridescenceThicknessRange: [
+      dna.iridescenceThicknessMin,
+      dna.iridescenceThicknessMax,
+    ],
     sheen: 0.85,
     sheenRoughness: 0.38,
     sheenColor: pearl,
@@ -297,8 +348,14 @@ export function buildProceduralMascot(dna: MascotDNA, familyId: string): Procedu
   const eyeXR = halfGap + dna.eyeRightX;
   const eyeYL = eyeY0 + dna.eyeLeftY;
   const eyeYR = eyeY0 + dna.eyeRightY;
-  const ezL = surfaceZ(rx, ry, rz, Math.abs(eyeXL), eyeYL) + dna.eyeSize * 0.28 + dna.eyeZPuff;
-  const ezR = surfaceZ(rx, ry, rz, Math.abs(eyeXR), eyeYR) + dna.eyeSize * 0.28 + dna.eyeZPuff;
+  const ezL =
+    surfaceZ(rx, ry, rz, Math.abs(eyeXL), eyeYL) +
+    dna.eyeSize * 0.28 +
+    dna.eyeZPuff;
+  const ezR =
+    surfaceZ(rx, ry, rz, Math.abs(eyeXR), eyeYR) +
+    dna.eyeSize * 0.28 +
+    dna.eyeZPuff;
 
   const leftEye = buildEyeGroup(dna, dna.eyeIrisHueShiftL, false);
   leftEye.position.set(eyeXL, eyeYL, ezL);
@@ -308,14 +365,19 @@ export function buildProceduralMascot(dna: MascotDNA, familyId: string): Procedu
   leftEye.rotation.z = dna.eyeTilt + dna.eyeTiltAsym;
   const rightEye = buildEyeGroup(dna, dna.eyeIrisHueShiftR, true);
   rightEye.position.set(eyeXR, eyeYR, ezR);
-  rightEye.scale.set(dna.eyeScaleR, dna.eyeOvalY * dna.eyeOvalR, dna.eyeSquashZ);
+  rightEye.scale.set(
+    dna.eyeScaleR,
+    dna.eyeOvalY * dna.eyeOvalR,
+    dna.eyeSquashZ,
+  );
   rightEye.rotation.order = "XYZ";
   rightEye.rotation.x = dna.eyeRotX;
   rightEye.rotation.z = -dna.eyeTilt + dna.eyeTiltAsym;
 
   body.add(leftEye, rightEye);
 
-  const mouthY = eyeY0 - dna.mouthDrop + dna.mouthLift - Math.max(0.038, dna.eyeSize * 0.11);
+  const mouthY =
+    eyeY0 - dna.mouthDrop + dna.mouthLift - Math.max(0.038, dna.eyeSize * 0.11);
   const mouthMz =
     surfaceZ(rx, ry, rz, 0, mouthY) +
     dna.eyeSize * 0.44 +
@@ -339,7 +401,12 @@ export function buildProceduralMascot(dna: MascotDNA, familyId: string): Procedu
   const lipAlong = dna.mouthWidth * 0.96;
   const lipCyl = Math.max(lipAlong - 2 * lipR, 0.016);
   const lipInner = new THREE.CapsuleGeometry(lipR, lipCyl, 6, 16);
-  const lipOuter = new THREE.CapsuleGeometry(lipR * 1.28, lipCyl + lipR * 0.2, 5, 12);
+  const lipOuter = new THREE.CapsuleGeometry(
+    lipR * 1.28,
+    lipCyl + lipR * 0.2,
+    5,
+    12,
+  );
   const outlineMat = new THREE.MeshBasicMaterial({
     color: new THREE.Color("#1a050d"),
     polygonOffset: true,
@@ -363,8 +430,15 @@ export function buildProceduralMascot(dna: MascotDNA, familyId: string): Procedu
   const arc = 0.58 * dna.mouthSmileArc;
   const mouthSmileMat = mouthMat.clone();
   const mouthSmile = new THREE.Mesh(
-    new THREE.TorusGeometry(smileR, dna.mouthTube * 1.38, 12, 40, -Math.PI * arc, Math.PI * arc),
-    mouthSmileMat
+    new THREE.TorusGeometry(
+      smileR,
+      dna.mouthTube * 1.38,
+      12,
+      40,
+      -Math.PI * arc,
+      Math.PI * arc,
+    ),
+    mouthSmileMat,
   );
   mouthSmile.position.set(0, mouthY - 0.018, mouthMz + 0.018);
   mouthSmile.rotation.set(Math.PI * 0.5, 0.06, Math.PI + dna.mouthRotZ);
@@ -381,7 +455,10 @@ export function buildProceduralMascot(dna: MascotDNA, familyId: string): Procedu
     polygonOffsetFactor: -4,
     polygonOffsetUnits: -4,
   });
-  const mouthSleepy = new THREE.Mesh(new THREE.CapsuleGeometry(sleepyTube, sleepyCyl, 4, 12), sleepyMouthMat);
+  const mouthSleepy = new THREE.Mesh(
+    new THREE.CapsuleGeometry(sleepyTube, sleepyCyl, 4, 12),
+    sleepyMouthMat,
+  );
   mouthSleepy.rotation.set(0.06, 0, Math.PI / 2 + dna.mouthRotZ * 0.25);
   mouthSleepy.position.set(0, mouthY - 0.03, mouthMz + 0.014);
   mouthSleepy.renderOrder = 4;
