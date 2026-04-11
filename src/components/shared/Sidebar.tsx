@@ -69,10 +69,14 @@ export default function Sidebar({ user: u }: SidebarProps) {
     <>
       <aside className="md:hidden bg-white/85 backdrop-blur-md shadow-sm">
         <div className={mobileTopBarClass}>
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <Image src="/favicon.svg" alt="Nibbo logo" width={24} height={24} className="shrink-0" />
-            <h1 className="truncate font-bold text-warm-800 text-base leading-tight">Nibbo</h1>
-          </div>
+          <Link
+            href="/dashboard"
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-xl py-1 pl-0.5 pr-2 -my-1 outline-none ring-rose-200 transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2"
+            aria-label={`Nibbo — ${t.nav.dashboard}`}
+          >
+            <Image src="/favicon.svg" alt="" width={24} height={24} className="shrink-0" aria-hidden />
+            <span className="truncate font-bold text-warm-800 text-base leading-tight">Nibbo</span>
+          </Link>
           <button
             type="button"
             onClick={() => setOpenMobileMenu(true)}
@@ -94,7 +98,14 @@ export default function Sidebar({ user: u }: SidebarProps) {
             <div className="flex h-full flex-col">
               <div className={mobileTopBarClass}>
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <Image src="/favicon.svg" alt="Nibbo logo" width={24} height={24} className="shrink-0" />
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setOpenMobileMenu(false)}
+                    className="shrink-0 rounded-xl p-0.5 outline-none ring-rose-200 transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2"
+                    aria-label={`Nibbo — ${t.nav.dashboard}`}
+                  >
+                    <Image src="/favicon.svg" alt="" width={24} height={24} aria-hidden />
+                  </Link>
                   <h2 className="truncate font-bold text-warm-800 text-base leading-tight">{t.mobileMenuTitle}</h2>
                 </div>
                 <button
@@ -183,13 +194,17 @@ export default function Sidebar({ user: u }: SidebarProps) {
         className="hidden md:flex w-64 h-full bg-white/80 backdrop-blur-md border-r border-warm-100 flex-col shadow-cozy z-10"
       >
         <div className="p-6 border-b border-warm-100">
-          <div className="flex items-center gap-3">
-            <Image src="/favicon.svg" alt="Nibbo logo" width={32} height={32} />
-            <div>
-              <h1 className="font-bold text-warm-800 text-lg leading-tight">Nibbo</h1>
-              <p className="text-xs text-warm-400">{t.dashboardHomeTagline}</p>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 rounded-2xl -m-2 p-2 outline-none ring-rose-200 transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2"
+            aria-label={`Nibbo — ${t.nav.dashboard}`}
+          >
+            <Image src="/favicon.svg" alt="" width={32} height={32} aria-hidden />
+            <div className="min-w-0">
+              <span className="block font-bold text-warm-800 text-lg leading-tight">Nibbo</span>
+              <span className="block text-xs text-warm-400">{t.dashboardHomeTagline}</span>
             </div>
-          </div>
+          </Link>
         </div>
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {

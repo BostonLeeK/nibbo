@@ -14,7 +14,11 @@ import { useAppLanguage } from "@/hooks/useAppLanguage";
 import { I18N } from "@/lib/i18n";
 
 function isLocalUpload(src: string | null | undefined) {
-  return Boolean(src?.startsWith("/uploads/") || src?.startsWith("/api/recipes/image/"));
+  return Boolean(
+    src?.startsWith("/uploads/") ||
+      src?.startsWith("/api/recipes/image/") ||
+      (typeof src === "string" && src.includes(".blob.vercel-storage.com"))
+  );
 }
 
 interface User { id: string; name: string | null; image: string | null; color: string; emoji: string; }

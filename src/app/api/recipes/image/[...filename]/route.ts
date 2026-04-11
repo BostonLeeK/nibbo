@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { decodeBlobPath } from "@/lib/blob-path";
-import { ensureUserFamily } from "@/lib/family";
 import { NextRequest, NextResponse } from "next/server";
 import { get } from "@vercel/blob";
 
@@ -14,8 +13,6 @@ export async function GET(
   if (!session?.user?.id) {
     return new NextResponse(null, { status: 401 });
   }
-  const familyId = await ensureUserFamily(session.user.id);
-  if (!familyId) return new NextResponse(null, { status: 401 });
 
   const { filename } = await params;
   const token = Array.isArray(filename) ? filename.join("/") : filename;
@@ -23,10 +20,12 @@ export async function GET(
   if (!pathname) return new NextResponse(null, { status: 404 });
   const segments = pathname.split("/");
   if (segments.length < 4 || segments[0] !== "recipes") return new NextResponse(null, { status: 404 });
-  if (segments[1] !== familyId) return new NextResponse(null, { status: 403 });
 
   try {
-    const blob = await get(pathname, { access: "private", useCache: false });
+    let blob = await get(pathname, { access: "private", useCache: true });
+    if (!blob || blob.statusCode !== 200 || !blob.stream) {
+      blob = await get(pathname, { access: "public", useCache: true });
+    }
     if (!blob || blob.statusCode !== 200 || !blob.stream) return new NextResponse(null, { status: 404 });
     return new NextResponse(blob.stream, {
       status: 200,

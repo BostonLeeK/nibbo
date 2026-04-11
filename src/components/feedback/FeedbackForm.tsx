@@ -33,6 +33,7 @@ export function FeedbackForm(props: {
   const [sending, setSending] = useState(false);
 
   const backLabel = props.signedIn ? t.backDashboard : t.backLogin;
+  const tNav = I18N[language].nav;
 
   const onFiles = useCallback((list: FileList | null) => {
     if (!list || list.length === 0) {
@@ -112,7 +113,14 @@ export function FeedbackForm(props: {
           >
             ← {backLabel}
           </Link>
-          <Image src="/favicon.svg" alt="Nibbo" width={32} height={32} className="opacity-90" />
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-2xl px-2 py-1.5 text-warm-800 outline-none ring-rose-200 transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2"
+            aria-label={`Nibbo — ${tNav.dashboard}`}
+          >
+            <Image src="/favicon.svg" alt="" width={32} height={32} className="opacity-90" aria-hidden />
+            <span className="font-heading text-lg font-bold tracking-tight">Nibbo</span>
+          </Link>
         </div>
 
         <div className="rounded-3xl border border-warm-100 bg-white/90 p-6 shadow-cozy md:p-8">
