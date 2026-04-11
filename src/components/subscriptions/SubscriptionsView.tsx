@@ -102,18 +102,17 @@ function getCategoryEmoji(category: string | null) {
 }
 
 type DueInfoText = {
-  overdue: string;
   today: string;
   inDays: string;
 };
 
-function getDueInfo(nextBillingDate: string, t: DueInfoText) {
+function getDueInfo(nextBillingDate: string, t: DueInfoText): { label: string; className: string } | null {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const due = new Date(nextBillingDate);
   due.setHours(0, 0, 0, 0);
   const days = Math.round((due.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-  if (days < 0) return { label: t.overdue.replace("{days}", String(Math.abs(days))), className: "bg-rose-100 text-rose-700 border-rose-200" };
+  if (days < 0) return null;
   if (days === 0) return { label: t.today, className: "bg-amber-100 text-amber-700 border-amber-200" };
   if (days <= 3) return { label: t.inDays.replace("{days}", String(days)), className: "bg-peach-100 text-peach-700 border-peach-200" };
   return { label: t.inDays.replace("{days}", String(days)), className: "bg-sage-100 text-sage-700 border-sage-200" };
@@ -384,7 +383,8 @@ export default function SubscriptionsView({
             {t.notFound}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-warm-100/50 p-3.5 md:p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
             {filteredItems.map((item) => {
               const payer = item.members.find((member) => member.role === "PAYER")?.user;
               const dueInfo = getDueInfo(item.nextBillingDate, t);
@@ -395,7 +395,7 @@ export default function SubscriptionsView({
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   whileHover={{ y: -2 }}
-                  className="relative overflow-hidden rounded-3xl border border-warm-100/80 bg-gradient-to-br from-white via-rose-50/20 to-lavender-50/30 p-4 md:p-5 space-y-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_28px_rgba(15,23,42,0.08)] transition-shadow"
+                  className="relative overflow-hidden rounded-3xl border border-warm-200 bg-gradient-to-br from-white from-40% via-white to-lavender-50/35 p-4 md:p-5 space-y-4 shadow-[0_2px_14px_rgba(28,25,23,0.07)] ring-1 ring-warm-900/[0.04] hover:shadow-[0_14px_36px_rgba(28,25,23,0.11)] hover:ring-warm-900/[0.07] transition-[box-shadow,ring]"
                 >
                   <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-lavender-100/35 blur-2xl" />
                   <div className="absolute -bottom-10 -left-8 w-24 h-24 rounded-full bg-peach-100/30 blur-2xl" />
@@ -413,9 +413,11 @@ export default function SubscriptionsView({
                       <span className={`text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm ${statusConfig[item.status].className}`}>
                         {statusConfig[item.status].label}
                       </span>
-                      <span className={`text-[11px] px-2 py-1 rounded-full border font-semibold ${dueInfo.className}`}>
-                        {dueInfo.label}
-                      </span>
+                      {dueInfo && (
+                        <span className={`text-[11px] px-2 py-1 rounded-full border font-semibold ${dueInfo.className}`}>
+                          {dueInfo.label}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -472,6 +474,7 @@ export default function SubscriptionsView({
                 </motion.div>
               );
             })}
+            </div>
           </div>
         )}
       </div>
