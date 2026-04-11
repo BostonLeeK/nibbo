@@ -53,7 +53,7 @@ export function normalizeBoardsPayload(raw: unknown): TaskBoardBoard[] {
     return {
       id: String(b.id),
       name: String(b.name ?? ""),
-      emoji: String(b.emoji ?? "📋"),
+      emoji: String(b.emoji ?? "board"),
       color: String(b.color ?? "#f43f5e"),
       order: typeof b.order === "number" ? b.order : 0,
       columns: columns.map((col) => {
@@ -62,7 +62,7 @@ export function normalizeBoardsPayload(raw: unknown): TaskBoardBoard[] {
         return {
           id: String(c.id),
           name: String(c.name ?? ""),
-          emoji: String(c.emoji ?? "📝"),
+          emoji: String(c.emoji ?? "column"),
           color: String(c.color ?? "#e7e5e4"),
           order: typeof c.order === "number" ? c.order : 0,
           tasks: tasks.map((t) => {

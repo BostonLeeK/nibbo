@@ -92,7 +92,7 @@ export default function Header({ user: u, initialPoints, isAdmin = false }: Head
     <header className="md:h-16 bg-white/60 backdrop-blur-md border-b border-warm-100 flex items-center px-3 md:px-6 py-2 md:py-0 gap-2 md:gap-4">
       <div className="flex-1">
         <p className="text-xs md:text-sm font-semibold text-warm-700">
-          {greeting}, <span className="text-rose-500">{user.name?.split(" ")[0] || t.header.friendFallback}</span> 🌸
+          {greeting}, <span className="text-rose-500">{user.name?.split(" ")[0] || t.header.friendFallback}</span>
         </p>
         <div className="hidden md:flex items-center gap-2">
           <p className="text-xs text-warm-400">{dateLabel}</p>
@@ -165,7 +165,7 @@ export default function Header({ user: u, initialPoints, isAdmin = false }: Head
             />
           ) : (
             <div className="w-8 h-8 md:w-9 md:h-9 text-sm text-white flex items-center justify-center" style={{ backgroundColor: user.color }}>
-              {user.emoji}
+              {user.name?.[0] || t.task.userFallback[0]}
             </div>
           )}
         </button>

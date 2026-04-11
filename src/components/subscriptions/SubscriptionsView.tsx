@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarClock, Plus, Trash2, UserRound, X } from "lucide-react";
+import { CalendarClock, Circle, Plus, Trash2, UserRound, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
 import { ExchangeRates } from "@/lib/exchange-rates";
@@ -85,20 +85,6 @@ function toMonthlyAmount(amount: number, billingCycle: BillingCycle) {
 function toUah(amount: number, currency: string, exchangeRates: ExchangeRates) {
   const rate = exchangeRates[currency as keyof ExchangeRates] ?? 1;
   return amount * rate;
-}
-
-function getCategoryEmoji(category: string | null) {
-  if (!category) return "✨";
-  if (category.includes("Відео") || category.includes("Video")) return "🎬";
-  if (category.includes("Музика") || category.includes("Music")) return "🎧";
-  if (category.includes("Ігри") || category.includes("Games")) return "🎮";
-  if (category.includes("Освіта") || category.includes("Education")) return "📚";
-  if (category.includes("Хмара") || category.includes("Cloud")) return "☁️";
-  if (category.includes("Продуктивність") || category.includes("Productivity")) return "🗂️";
-  if (category.includes("Безпека") || category.includes("Security")) return "🛡️";
-  if (category.includes("Здоров") || category.includes("Health")) return "💪";
-  if (category.includes("Транспорт") || category.includes("Transport")) return "🚗";
-  return "💳";
 }
 
 type DueInfoText = {
@@ -361,7 +347,7 @@ export default function SubscriptionsView({
               <option value="ALL">{t.allMembers}</option>
               {members.map((member) => (
                 <option key={member.id} value={member.id}>
-                  {member.emoji} {member.name || member.email || t.memberFallback}
+                  {member.name || member.email || t.memberFallback}
                 </option>
               ))}
             </select>
@@ -388,7 +374,6 @@ export default function SubscriptionsView({
             {filteredItems.map((item) => {
               const payer = item.members.find((member) => member.role === "PAYER")?.user;
               const dueInfo = getDueInfo(item.nextBillingDate, t);
-              const categoryEmoji = getCategoryEmoji(item.category);
               return (
                 <motion.div
                   key={item.id}
@@ -401,8 +386,8 @@ export default function SubscriptionsView({
                   <div className="absolute -bottom-10 -left-8 w-24 h-24 rounded-full bg-peach-100/30 blur-2xl" />
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-white/90 border border-warm-100 flex items-center justify-center text-lg shadow-sm">
-                        {categoryEmoji}
+                      <div className="w-10 h-10 rounded-2xl bg-white/90 border border-warm-100 flex items-center justify-center shadow-sm">
+                        <Circle size={16} className="text-warm-500" />
                       </div>
                       <div>
                       <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">{item.category || t.noCategory}</p>
@@ -442,12 +427,12 @@ export default function SubscriptionsView({
                       {item.members.length === 0 && <span className="text-xs text-warm-400">{t.nobodyAssigned}</span>}
                       {item.members.map((member) => (
                         <span key={member.id} className="text-xs px-2.5 py-1 rounded-full bg-warm-100 text-warm-700 border border-warm-200/70">
-                          {member.user.emoji} {member.user.name || member.user.email || t.memberFallback}
+                          {member.user.name || member.user.email || t.memberFallback}
                         </span>
                       ))}
                     </div>
                     <p className="text-sm text-warm-600">
-                      <span className="text-warm-500">{t.payerLabel}</span> {payer ? `${payer.emoji} ${payer.name || payer.email || t.memberFallback}` : t.notSpecified}
+                      <span className="text-warm-500">{t.payerLabel}</span> {payer ? `${payer.name || payer.email || t.memberFallback}` : t.notSpecified}
                     </p>
                   </div>
 
@@ -600,7 +585,7 @@ export default function SubscriptionsView({
                         <option value="">{t.notSpecified}</option>
                         {members.map((member) => (
                           <option key={member.id} value={member.id}>
-                            {member.emoji} {member.name || member.email || t.memberFallback}
+                            {member.name || member.email || t.memberFallback}
                           </option>
                         ))}
                       </select>
@@ -622,7 +607,7 @@ export default function SubscriptionsView({
                                   : "bg-white border-warm-200 text-warm-600 hover:bg-warm-50"
                               }`}
                             >
-                              {member.emoji} {member.name || member.email || t.memberFallback}
+                              {member.name || member.email || t.memberFallback}
                             </button>
                           );
                         })}
@@ -641,7 +626,7 @@ export default function SubscriptionsView({
                           .filter((member) => form.memberUserIds.includes(member.id))
                           .map((member) => (
                             <option key={member.id} value={member.id}>
-                              {member.emoji} {member.name || member.email || t.memberFallback}
+                              {member.name || member.email || t.memberFallback}
                             </option>
                           ))}
                       </select>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pin, Trash2, X, Search, Save, FolderPlus } from "lucide-react";
+import { Plus, Pin, Trash2, X, Search, Save, FolderPlus, NotebookPen } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
@@ -26,8 +26,8 @@ interface Note {
 const NOTE_COLORS = [
   "#faf3e0", "#fff1f4", "#f5f3ff", "#f0fdf4", "#f0f9ff", "#fff7ed", "#fdf2f8",
 ];
-const NOTE_EMOJIS = ["📓", "💭", "🌟", "💡", "🎯", "📝", "💌", "🌸", "✨", "🍀"];
-const CATEGORY_EMOJIS = ["📂", "📁", "🧠", "🏠", "💼", "💡", "🎯", "🗂️"];
+const NOTE_EMOJIS = ["note"];
+const CATEGORY_EMOJIS = ["category"];
 const CATEGORY_COLORS = ["#f5f3ff", "#fff1f4", "#f0f9ff", "#f0fdf4", "#fff7ed", "#faf3e0"];
 
 export default function NotesView({
@@ -45,12 +45,12 @@ export default function NotesView({
   const [categories, setCategories] = useState(initialCategories);
   const [search, setSearch] = useState("");
   const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [editDraft, setEditDraft] = useState({ title: "", content: "", emoji: "📓", color: "#faf3e0", tags: "", categoryId: "" });
+  const [editDraft, setEditDraft] = useState({ title: "", content: "", emoji: "note", color: "#faf3e0", tags: "", categoryId: "" });
   const [showAdd, setShowAdd] = useState(false);
-  const [newNote, setNewNote] = useState({ title: "", content: "", emoji: "📓", color: "#faf3e0", tags: "", categoryId: "" });
+  const [newNote, setNewNote] = useState({ title: "", content: "", emoji: "note", color: "#faf3e0", tags: "", categoryId: "" });
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: "", emoji: "📂", color: "#f5f3ff", parentId: "" });
+  const [newCategory, setNewCategory] = useState({ name: "", emoji: "category", color: "#f5f3ff", parentId: "" });
 
   const childrenMap = new Map<string, NoteCategory[]>();
   for (const c of categories) {
@@ -116,7 +116,7 @@ export default function NotesView({
     const note = await res.json();
     setNotes((prev) => [note, ...prev]);
     setShowAdd(false);
-    setNewNote({ title: "", content: "", emoji: "📓", color: "#faf3e0", tags: "", categoryId: "" });
+    setNewNote({ title: "", content: "", emoji: "note", color: "#faf3e0", tags: "", categoryId: "" });
     toast.success(t.toastSaved);
   };
 
@@ -182,7 +182,7 @@ export default function NotesView({
     const category = await res.json();
     setCategories((prev) => [...prev, category]);
     setShowAddCategory(false);
-    setNewCategory({ name: "", emoji: "📂", color: "#f5f3ff", parentId: "" });
+    setNewCategory({ name: "", emoji: "category", color: "#f5f3ff", parentId: "" });
     toast.success(t.toastCategoryAdded);
   };
 
@@ -207,7 +207,7 @@ export default function NotesView({
     setNewNote({
       title: "",
       content: "",
-      emoji: "📓",
+      emoji: "note",
       color: "#faf3e0",
       tags: "",
       categoryId: selectedCategoryId ?? "",
@@ -314,7 +314,7 @@ export default function NotesView({
             onClick={() => setSelectedCategoryId(null)}
             className={`px-3 py-1.5 rounded-xl text-xs border ${selectedCategoryId === null ? "bg-rose-100 border-rose-300 text-rose-700" : "bg-white border-warm-200 text-warm-600"}`}
           >
-            📌 {t.root}
+            {t.root}
           </button>
           {rootCategories.map((cat) => (
             <button
@@ -377,7 +377,7 @@ export default function NotesView({
 
       {visibleNotes.length === 0 && (
         <div className="text-center py-16 text-warm-400">
-          <div className="text-5xl mb-4">📓</div>
+          <div className="mb-4 flex justify-center"><NotebookPen className="h-10 w-10 text-warm-400" /></div>
           <p className="text-lg font-semibold mb-2">{t.emptyTitle}</p>
           <p className="text-sm">{t.emptyHint}</p>
         </div>

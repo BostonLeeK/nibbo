@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Upload } from "lucide-react";
+import { UserRound, X, Upload } from "lucide-react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
-import { USER_COLORS, USER_EMOJIS } from "@/lib/utils";
+import { USER_COLORS } from "@/lib/utils";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 import { I18N } from "@/lib/i18n";
 
@@ -30,7 +30,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
   const { language } = useAppLanguage();
   const t = I18N[language].profile;
   const [name, setName] = useState(user.name ?? "");
-  const [emoji, setEmoji] = useState(user.emoji || "🌸");
+  const [emoji, setEmoji] = useState(user.emoji || "user");
   const [color, setColor] = useState(user.color || "#f43f5e");
   const [busy, setBusy] = useState(false);
   const [familyBusy, setFamilyBusy] = useState(false);
@@ -47,7 +47,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
   useEffect(() => {
     if (!open) return;
     setName(user.name ?? "");
-    setEmoji(user.emoji || "🌸");
+    setEmoji(user.emoji || "user");
     setColor(user.color || "#f43f5e");
   }, [open, user.name, user.emoji, user.color]);
 
@@ -206,8 +206,8 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                   {user.image ? (
                     <Image src={user.image} alt={user.name || t.userFallback} width={52} height={52} className="rounded-2xl ring-2 ring-rose-100 object-cover" unoptimized={user.image.startsWith("/api/users/avatar/")} />
                   ) : (
-                    <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-2xl text-white" style={{ backgroundColor: color }}>
-                      {emoji}
+                    <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-white" style={{ backgroundColor: color }}>
+                      <UserRound size={24} />
                     </div>
                   )}
                   <label className="inline-flex items-center gap-2 px-3 py-2 text-xs bg-warm-100 hover:bg-warm-200 text-warm-700 rounded-xl cursor-pointer">
@@ -224,17 +224,8 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                 />
                 <div>
                   <p className="text-xs font-semibold text-warm-500 mb-2">{t.iconLabel}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {USER_EMOJIS.map((e) => (
-                      <button
-                        key={e}
-                        type="button"
-                        onClick={() => setEmoji(e)}
-                        className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center ${emoji === e ? "bg-rose-100 ring-2 ring-rose-300" : "bg-warm-50 hover:bg-warm-100"}`}
-                      >
-                        {e}
-                      </button>
-                    ))}
+                  <div className="w-9 h-9 rounded-xl bg-warm-50 border border-warm-200 flex items-center justify-center">
+                    <UserRound size={16} className="text-warm-600" />
                   </div>
                 </div>
                 <div>
@@ -268,7 +259,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                           className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white"
                           style={{ backgroundColor: m.color || "#f43f5e" }}
                         >
-                          {m.emoji || "🌸"}
+                          {m.name?.[0] || "U"}
                         </div>
                         <span className="text-xs text-warm-700">{m.name || m.email || t.memberFallback}</span>
                       </div>

@@ -7,7 +7,19 @@ import dynamic from "next/dynamic";
 import { formatDate, formatTime, PRIORITY_CONFIG } from "@/lib/utils";
 import { useCozyConfig } from "@/hooks/useCozyConfig";
 import { createPortal } from "react-dom";
-import { Check, X } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  ClipboardList,
+  CreditCard,
+  MoonStar,
+  NotebookPen,
+  ShoppingCart,
+  Sparkles,
+  SquareKanban,
+  UtensilsCrossed,
+  X,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { TASK_POINTS_AWARDED_EVENT } from "@/lib/task-points";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
@@ -123,18 +135,18 @@ export default function DashboardClient({
   };
 
   const statCards = [
-    { label: t.stats.activeTasks, value: stats.taskCount, emoji: "📋", color: "from-rose-400 to-rose-500", href: "/tasks" },
-    { label: t.stats.upcomingEvents, value: stats.eventCount, emoji: "📅", color: "from-lavender-400 to-lavender-500", href: "/calendar" },
-    { label: t.stats.toBuy, value: stats.shoppingCount, emoji: "🛒", color: "from-sage-400 to-sage-500", href: "/shopping" },
+    { label: t.stats.activeTasks, value: stats.taskCount, Icon: SquareKanban, color: "from-rose-400 to-rose-500", href: "/tasks" },
+    { label: t.stats.upcomingEvents, value: stats.eventCount, Icon: CalendarDays, color: "from-lavender-400 to-lavender-500", href: "/calendar" },
+    { label: t.stats.toBuy, value: stats.shoppingCount, Icon: ShoppingCart, color: "from-sage-400 to-sage-500", href: "/shopping" },
   ];
 
   const quickLinks = [
-    { href: "/tasks", emoji: "📋", label: t.quickLinks.newTask, color: "bg-rose-50 hover:bg-rose-100 border-rose-200" },
-    { href: "/calendar", emoji: "📅", label: t.quickLinks.newEvent, color: "bg-lavender-50 hover:bg-lavender-100 border-lavender-200" },
-    { href: "/menu", emoji: "🍽️", label: t.quickLinks.planMenu, color: "bg-peach-50 hover:bg-peach-100 border-peach-200" },
-    { href: "/notes", emoji: "📓", label: t.quickLinks.note, color: "bg-cream-50 hover:bg-cream-100 border-cream-200" },
-    { href: "/budget", emoji: "💰", label: t.quickLinks.expense, color: "bg-sage-50 hover:bg-sage-100 border-sage-200" },
-    { href: "/shopping", emoji: "🛒", label: t.quickLinks.addPurchase, color: "bg-sky-50 hover:bg-sky-100 border-sky-200" },
+    { href: "/tasks", Icon: SquareKanban, label: t.quickLinks.newTask, color: "bg-rose-50 hover:bg-rose-100 border-rose-200" },
+    { href: "/calendar", Icon: CalendarDays, label: t.quickLinks.newEvent, color: "bg-lavender-50 hover:bg-lavender-100 border-lavender-200" },
+    { href: "/menu", Icon: UtensilsCrossed, label: t.quickLinks.planMenu, color: "bg-peach-50 hover:bg-peach-100 border-peach-200" },
+    { href: "/notes", Icon: NotebookPen, label: t.quickLinks.note, color: "bg-cream-50 hover:bg-cream-100 border-cream-200" },
+    { href: "/budget", Icon: CreditCard, label: t.quickLinks.expense, color: "bg-sage-50 hover:bg-sage-100 border-sage-200" },
+    { href: "/shopping", Icon: ShoppingCart, label: t.quickLinks.addPurchase, color: "bg-sky-50 hover:bg-sky-100 border-sky-200" },
   ];
 
   return (
@@ -168,7 +180,7 @@ export default function DashboardClient({
               transition={{ duration: cozyMotion.duration }}
               className={`bg-gradient-to-br ${card.color} rounded-3xl p-4 md:p-6 text-white shadow-cozy cursor-pointer`}
             >
-              <div className="text-3xl md:text-4xl mb-2 md:mb-3">{card.emoji}</div>
+              <card.Icon className="mb-2 md:mb-3 h-8 w-8 md:h-9 md:w-9" />
               <div className="text-2xl md:text-3xl font-bold">{card.value}</div>
               <div className="text-sm opacity-90 mt-1">{card.label}</div>
             </motion.div>
@@ -187,7 +199,7 @@ export default function DashboardClient({
                 transition={{ duration: cozyMotion.duration }}
                 className={`${link.color} border rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer transition-all`}
               >
-                <span className="text-xl">{link.emoji}</span>
+                <link.Icon size={18} />
                 <span className="text-sm font-medium text-warm-700">{link.label}</span>
               </motion.div>
             </Link>
@@ -199,7 +211,7 @@ export default function DashboardClient({
         <div className="bg-white/70 rounded-3xl p-4 md:p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
-              <span>📅</span> {t.upcomingEventsTitle}
+              <CalendarDays size={18} /> {t.upcomingEventsTitle}
             </h3>
             <Link href="/calendar" className="text-xs text-rose-500 hover:text-rose-600 font-medium">
               {t.all}
@@ -208,7 +220,7 @@ export default function DashboardClient({
           <div className="space-y-3">
             {upcomingEvents.length === 0 ? (
               <div className="text-center py-6 text-warm-400">
-                <div className="text-3xl mb-2">🌙</div>
+                <MoonStar className="mx-auto mb-2 h-7 w-7" />
                 <p className="text-sm">{t.noEvents}</p>
               </div>
             ) : (
@@ -223,7 +235,7 @@ export default function DashboardClient({
                     style={{ backgroundColor: event.color }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-warm-800 text-sm truncate">{event.emoji} {event.title}</p>
+                    <p className="font-medium text-warm-800 text-sm truncate">{event.title}</p>
                     <p className="text-xs text-warm-400">
                       {formatDate(event.startDate)} {!event.allDay && `• ${formatTime(event.startDate)}`}
                     </p>
@@ -234,7 +246,7 @@ export default function DashboardClient({
                       style={{ backgroundColor: event.assignee.color || "#f43f5e" }}
                       title={event.assignee.name}
                     >
-                      {event.assignee.emoji || event.assignee.name?.[0]}
+                      {event.assignee.name?.[0]}
                     </div>
                   )}
                 </motion.div>
@@ -246,7 +258,7 @@ export default function DashboardClient({
         <div className="bg-white/70 rounded-3xl p-4 md:p-5 shadow-cozy border border-warm-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-warm-800 flex items-center gap-2">
-              <span>📋</span> {t.activeTasksTitle}
+              <ClipboardList size={18} /> {t.activeTasksTitle}
             </h3>
             <Link href="/tasks" className="text-xs text-rose-500 hover:text-rose-600 font-medium">
               {t.all}
@@ -255,7 +267,7 @@ export default function DashboardClient({
           <div className="space-y-3">
             {tasks.length === 0 ? (
               <div className="text-center py-6 text-warm-400">
-                <div className="text-3xl mb-2">✨</div>
+                <Sparkles className="mx-auto mb-2 h-7 w-7" />
                 <p className="text-sm">{t.allTasksDone}</p>
               </div>
             ) : (
@@ -269,11 +281,11 @@ export default function DashboardClient({
                     whileHover={{ x: 4 }}
                     className="flex items-center gap-3 p-3 rounded-2xl hover:bg-warm-50 transition-colors"
                   >
-                    <span className="text-sm">{priority.emoji}</span>
+                    <span className="text-xs font-semibold text-warm-500">{priority.label}</span>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-warm-800 text-sm truncate">{task.title}</p>
                       {task.dueDate && (
-                        <p className="text-xs text-warm-400">{formatDate(task.dueDate)}</p>
+                      <p className="text-xs text-warm-400">{formatDate(task.dueDate)}</p>
                       )}
                     </div>
                     <button
@@ -290,7 +302,7 @@ export default function DashboardClient({
                         style={{ backgroundColor: task.assignee.color || "#f43f5e" }}
                         title={task.assignee.name ?? undefined}
                       >
-                        {task.assignee.emoji || task.assignee.name?.[0]}
+                        {task.assignee.name?.[0]}
                       </div>
                     )}
                   </motion.div>

@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: body.name,
         description: body.description,
-        emoji: body.emoji || "📋",
+        emoji: body.emoji || "board",
         color: body.color || "#f43f5e",
         order,
         familyId,
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const column = await prisma.taskColumn.create({
       data: {
         name: body.name,
-        emoji: body.emoji || "📝",
+        emoji: body.emoji || "column",
         color: body.color || "#e7e5e4",
         boardId: body.boardId,
         order: body.order ?? 0,

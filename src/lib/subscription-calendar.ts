@@ -46,7 +46,7 @@ export async function syncSubscriptionBillingEvents(input: {
   const rows = dates.map((date) => ({
     title: `Списання: ${input.title}`,
     description: `${AUTO_BILLING_MARKER} ${input.title}`,
-    emoji: "💳",
+    emoji: "subscription",
     color: "#8b5cf6",
     startDate: date,
     endDate: date,

@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const list = await prisma.shoppingList.create({
       data: {
         name: body.name,
-        emoji: body.emoji || "🛒",
+        emoji: body.emoji || "shopping",
         familyId,
       },
       include: { items: true },

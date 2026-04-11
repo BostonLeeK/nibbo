@@ -13,8 +13,6 @@ interface User { id: string; name: string | null; image: string | null; color: s
 interface ShoppingItem { id: string; name: string; quantity: string | null; unit: string | null; checked: boolean; category: string | null; addedBy: User; }
 interface ShoppingList { id: string; name: string; emoji: string; items: ShoppingItem[]; }
 
-const LIST_EMOJIS = ["🛒", "🏪", "🛍️", "🥕", "🧺", "🏬"];
-
 export default function ShoppingView({ initialLists, currentUserId }: { initialLists: ShoppingList[]; currentUserId: string }) {
   const { language } = useAppLanguage();
   const t = I18N[language].shopping;
@@ -22,7 +20,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
   const [activeList, setActiveList] = useState(lists[0]?.id || "");
   const [showAddList, setShowAddList] = useState(false);
   const [newListName, setNewListName] = useState("");
-  const [newListEmoji, setNewListEmoji] = useState("🛒");
+  const [newListEmoji, setNewListEmoji] = useState("shopping");
   const [newItem, setNewItem] = useState({ name: "", quantity: "", unit: "", category: "" });
 
   const currentList = lists.find((l) => l.id === activeList);
@@ -89,7 +87,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
               "shrink-0 min-w-[180px] md:min-w-0 flex items-center gap-3 p-3 rounded-2xl text-left transition-all",
               activeList === list.id ? "bg-white shadow-cozy text-warm-800" : "text-warm-500 hover:bg-white/50"
             )}>
-            <span className="text-xl">{list.emoji}</span>
+            <ShoppingCart size={18} className="text-warm-500" />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm truncate">{list.name}</p>
               <p className="text-xs text-warm-400">{list.items.length} {t.listItemsCount}</p>
@@ -110,7 +108,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
           <div className="bg-white/80 rounded-3xl p-5 shadow-cozy border border-warm-100 mb-4">
             <div className="flex items-center justify-between gap-2 mb-3">
               <div>
-                <h2 className="text-lg md:text-xl font-bold text-warm-800">{currentList.emoji} {currentList.name}</h2>
+                <h2 className="text-lg md:text-xl font-bold text-warm-800">{currentList.name}</h2>
                 <p className="text-sm text-warm-400">
                   {checkedItems.length} {t.boughtProgressLabel} {currentList.items.length} {t.boughtProgressDone}
                 </p>
@@ -164,7 +162,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
                 <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-white"
                     style={{ backgroundColor: item.addedBy.color }}>
-                    {item.addedBy.emoji || item.addedBy.name?.[0]}
+                    {item.addedBy.name?.[0]}
                   </div>
                   <button onClick={() => handleDeleteItem(item.id)} className="text-warm-300 hover:text-rose-500 transition-colors">
                     <Trash2 size={14} />
@@ -198,7 +196,9 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
 
             {currentList.items.length === 0 && (
               <div className="text-center py-12 text-warm-400">
-                <div className="text-5xl mb-3">🛒</div>
+                <div className="mb-3 flex justify-center">
+                  <ShoppingCart className="h-12 w-12 text-warm-400" />
+                </div>
                 <p className="font-semibold mb-1">{t.emptyListTitle}</p>
                 <p className="text-sm">{t.emptyListHint}</p>
               </div>
@@ -208,7 +208,9 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
       ) : (
         <div className="flex-1 flex items-center justify-center text-warm-400">
           <div className="text-center">
-            <div className="text-5xl mb-4">🛒</div>
+            <div className="mb-4 flex justify-center">
+              <ShoppingCart className="h-12 w-12 text-warm-400" />
+            </div>
             <p className="font-semibold mb-4">{t.noListsTitle}</p>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => setShowAddList(true)}
@@ -219,7 +221,6 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
         </div>
       )}
 
-      {/* Add List Modal */}
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showAddList && (
@@ -235,20 +236,15 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
                   <button onClick={() => setShowAddList(false)} className="w-8 h-8 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-500 flex items-center justify-center"><X size={16} /></button>
                 </div>
                 <div className="space-y-4">
-                  <div className="flex gap-2 flex-wrap">
-                    {LIST_EMOJIS.map((e) => (
-                      <button key={e} onClick={() => setNewListEmoji(e)}
-                        className={`text-2xl w-10 h-10 rounded-xl flex items-center justify-center transition-all ${newListEmoji === e ? "bg-rose-100 ring-2 ring-rose-400 scale-110" : "hover:bg-warm-50"}`}>
-                        {e}
-                      </button>
-                    ))}
+                  <div className="w-10 h-10 rounded-xl bg-warm-50 border border-warm-200 flex items-center justify-center">
+                    <ShoppingCart size={18} className="text-warm-600" />
                   </div>
                   <input value={newListName} onChange={(e) => setNewListName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddList()}
                     placeholder={t.addListPlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-rose-300" />
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleAddList}
                     className="w-full py-3 bg-gradient-to-r from-rose-500 to-rose-400 text-white rounded-2xl font-semibold">
-                    {t.create} {newListEmoji}
+                    {t.create}
                   </motion.button>
                 </div>
               </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Pencil, Plus, Trash2, X, TrendingDown, TrendingUp } from "lucide-react";
+import { Check, Circle, Landmark, Pencil, Plus, Trash2, Wallet, X, TrendingDown, TrendingUp } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
@@ -25,7 +25,7 @@ interface Credit {
   note: string | null;
 }
 
-const CAT_EMOJIS = ["🛒", "🏠", "🚗", "💊", "🎮", "👕", "🍕", "✈️", "📚", "💇", "🐾", "💡", "📱", "🎁", "💰"];
+const CAT_EMOJIS = ["category"];
 const CAT_COLORS = ["#4ade80", "#38bdf8", "#fb923c", "#f43f5e", "#818cf8", "#c084fc", "#f472b6", "#facc15"];
 
 export default function BudgetView({
@@ -64,7 +64,7 @@ export default function BudgetView({
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
   const [newIncome, setNewIncome] = useState({ title: "", amount: "", note: "", date: new Date().toISOString().split("T")[0] });
-  const [newCat, setNewCat] = useState({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
+  const [newCat, setNewCat] = useState({ name: "", emoji: "category", color: "#4ade80", budget: "" });
   const [plannedIncome, setPlannedIncome] = useState<number | null>(null);
   const [plannedIncomeInput, setPlannedIncomeInput] = useState("");
   const [newCredit, setNewCredit] = useState({
@@ -338,12 +338,12 @@ export default function BudgetView({
     }
     setShowAddCategory(false);
     setEditingCategoryId(null);
-    setNewCat({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
+    setNewCat({ name: "", emoji: "category", color: "#4ade80", budget: "" });
   };
 
   const openAddCategory = () => {
     setEditingCategoryId(null);
-    setNewCat({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
+    setNewCat({ name: "", emoji: "category", color: "#4ade80", budget: "" });
     setShowAddCategory(true);
   };
 
@@ -365,7 +365,7 @@ export default function BudgetView({
     setCategories((prev) => prev.filter((item) => item.id !== editingCategoryId));
     setShowAddCategory(false);
     setEditingCategoryId(null);
-    setNewCat({ name: "", emoji: "💰", color: "#4ade80", budget: "" });
+    setNewCat({ name: "", emoji: "category", color: "#4ade80", budget: "" });
     toast.success(t.toastDeleted);
   };
 
@@ -539,7 +539,7 @@ export default function BudgetView({
           </div>
           {credits.length === 0 ? (
             <div className="text-center py-10 text-warm-400">
-              <div className="text-4xl mb-3">🏦</div>
+              <div className="mb-3 flex justify-center"><Landmark className="h-9 w-9 text-warm-400" /></div>
               <p>{t.emptyCredits}</p>
             </div>
           ) : (
@@ -602,7 +602,7 @@ export default function BudgetView({
           </div>
           {incomes.length === 0 ? (
             <div className="text-center py-10 text-warm-400">
-              <div className="text-4xl mb-3">💸</div>
+              <div className="mb-3 flex justify-center"><Wallet className="h-9 w-9 text-warm-400" /></div>
               <p>{t.emptyIncomes}</p>
             </div>
           ) : (
@@ -610,7 +610,7 @@ export default function BudgetView({
               {incomes.map((income) => (
                 <motion.div key={income.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 hover:bg-sky-50/30 transition-colors group">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl bg-sky-100/80">💸</div>
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-sky-100/80"><Wallet size={18} className="text-sky-700" /></div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-warm-800 text-sm">{income.title}</p>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -635,7 +635,7 @@ export default function BudgetView({
         <div className="bg-white/70 rounded-3xl shadow-cozy border border-warm-100 overflow-hidden">
           {expenses.length === 0 ? (
             <div className="text-center py-12 text-warm-400">
-              <div className="text-4xl mb-3">💸</div>
+              <div className="mb-3 flex justify-center"><Wallet className="h-9 w-9 text-warm-400" /></div>
               <p>{t.emptyExpenses}</p>
             </div>
           ) : (
@@ -645,7 +645,7 @@ export default function BudgetView({
                   className="flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 hover:bg-warm-50/50 transition-colors group">
                   <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
                     style={{ backgroundColor: (expense.category?.color || "#e7e5e4") + "20" }}>
-                    {expense.category?.emoji || "💰"}
+                    <Circle size={16} className="text-warm-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-warm-800 text-sm">{expense.title}</p>
@@ -858,7 +858,7 @@ export default function BudgetView({
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddIncome}
                     className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-400 text-white rounded-2xl font-semibold">
-                    {t.save} 💸
+                    {t.save}
                   </motion.button>
                 </div>
               </div>
@@ -892,7 +892,7 @@ export default function BudgetView({
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddExpense}
                     className="w-full py-3 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl font-semibold">
-                    {t.save} 💰
+                    {t.save}
                   </motion.button>
                 </div>
               </div>

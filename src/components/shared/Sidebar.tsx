@@ -6,20 +6,31 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import {
+  CalendarDays,
+  CreditCard,
+  House,
+  Menu,
+  NotebookPen,
+  ShoppingCart,
+  SquareKanban,
+  Users,
+  UtensilsCrossed,
+  X,
+} from "lucide-react";
 import { I18N } from "@/lib/i18n";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 
 const navItems = [
-  { href: "/dashboard", key: "dashboard", emoji: "🏠" },
-  { href: "/family", key: "family", emoji: "👨‍👩‍👧‍👦" },
-  { href: "/tasks", key: "tasks", emoji: "📋" },
-  { href: "/calendar", key: "calendar", emoji: "📅" },
-  { href: "/menu", key: "menu", emoji: "🍽️" },
-  { href: "/notes", key: "notes", emoji: "📓" },
-  { href: "/budget", key: "budget", emoji: "💰" },
-  { href: "/subscriptions", key: "subscriptions", emoji: "📺" },
-  { href: "/shopping", key: "shopping", emoji: "🛒" },
+  { href: "/dashboard", key: "dashboard", Icon: House },
+  { href: "/family", key: "family", Icon: Users },
+  { href: "/tasks", key: "tasks", Icon: SquareKanban },
+  { href: "/calendar", key: "calendar", Icon: CalendarDays },
+  { href: "/menu", key: "menu", Icon: UtensilsCrossed },
+  { href: "/notes", key: "notes", Icon: NotebookPen },
+  { href: "/budget", key: "budget", Icon: CreditCard },
+  { href: "/subscriptions", key: "subscriptions", Icon: CreditCard },
+  { href: "/shopping", key: "shopping", Icon: ShoppingCart },
 ];
 
 interface SidebarProps {
@@ -33,7 +44,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ user: u }: SidebarProps) {
-  const user = u ?? { name: null, email: null, image: null, color: "#f43f5e", emoji: "🌸" };
+  const user = u ?? { name: null, email: null, image: null, color: "#f43f5e", emoji: "user" };
   const { language } = useAppLanguage();
   const t = I18N[language];
   const pathname = usePathname();
@@ -106,7 +117,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
                             : "bg-warm-50 text-warm-700"
                         )}
                       >
-                        <span className="text-2xl">{item.emoji}</span>
+                        <item.Icon size={20} />
                         <span>{t.nav[item.key as keyof typeof t.nav]}</span>
                       </motion.div>
                     </Link>
@@ -129,7 +140,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
                       className="w-10 h-10 rounded-full flex items-center justify-center text-base text-white"
                       style={{ backgroundColor: user.color || "#f43f5e" }}
                     >
-                      {user.emoji || "🌸"}
+                      {user.name?.[0] || "U"}
                     </div>
                   )}
                   <div className="min-w-0">
@@ -190,7 +201,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
                         transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                       />
                     )}
-                    <span className="text-xl relative z-10">{item.emoji}</span>
+                    <item.Icon size={18} className="relative z-10" />
                     <span className="relative z-10">{t.nav[item.key as keyof typeof t.nav]}</span>
                     {isActive && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-rose-400 relative z-10" />
@@ -217,7 +228,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
                 className="w-9 h-9 rounded-full flex items-center justify-center text-lg text-white"
                 style={{ backgroundColor: user.color || "#f43f5e" }}
               >
-                {user.emoji || "🌸"}
+                {user.name?.[0] || "U"}
               </div>
             )}
             <div className="flex-1 min-w-0">

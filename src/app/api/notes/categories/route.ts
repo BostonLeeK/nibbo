@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const category = await prisma.noteCategory.create({
     data: {
       name: String(body.name || "").trim() || "Категорія",
-      emoji: body.emoji || "📂",
+      emoji: body.emoji || "category",
       color: body.color || "#f5f3ff",
       parentId: body.parentId || null,
       familyId,

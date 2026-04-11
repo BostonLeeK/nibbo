@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { LayoutGrid, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 import { I18N } from "@/lib/i18n";
 
-const EMOJIS = ["📋", "🏠", "💼", "🎯", "🌟", "🛠️", "📚", "🎨", "🌱", "🚀"];
 const COLORS = ["#f43f5e", "#fb923c", "#facc15", "#4ade80", "#38bdf8", "#818cf8", "#c084fc", "#f472b6"];
 
 interface AddBoardModalProps {
@@ -30,7 +29,7 @@ export default function AddBoardModal({
   const { language } = useAppLanguage();
   const t = I18N[language].task.addBoardModal;
   const [name, setName] = useState("");
-  const [selectedEmoji, setSelectedEmoji] = useState("📋");
+  const [selectedEmoji, setSelectedEmoji] = useState("board");
   const [selectedColor, setSelectedColor] = useState("#f43f5e");
 
   const isEdit = Boolean(editBoard);
@@ -43,7 +42,7 @@ export default function AddBoardModal({
       setSelectedColor(editBoard.color);
     } else {
       setName("");
-      setSelectedEmoji("📋");
+      setSelectedEmoji("board");
       setSelectedColor("#f43f5e");
     }
   }, [open, editBoard]);
@@ -57,7 +56,7 @@ export default function AddBoardModal({
     }
     if (!isEdit) {
       setName("");
-      setSelectedEmoji("📋");
+      setSelectedEmoji("board");
       setSelectedColor("#f43f5e");
     }
   };
@@ -107,18 +106,8 @@ export default function AddBoardModal({
 
                 <div>
                   <label className="text-sm font-medium text-warm-600 mb-2 block">{t.iconLabel}</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {EMOJIS.map((e) => (
-                      <button
-                        key={e}
-                        onClick={() => setSelectedEmoji(e)}
-                        className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
-                          selectedEmoji === e ? "bg-rose-100 ring-2 ring-rose-400 scale-110" : "bg-warm-50 hover:bg-warm-100"
-                        }`}
-                      >
-                        {e}
-                      </button>
-                    ))}
+                  <div className="w-10 h-10 rounded-xl bg-warm-50 border border-warm-200 flex items-center justify-center">
+                    <LayoutGrid size={18} className="text-warm-600" />
                   </div>
                 </div>
 
@@ -144,7 +133,7 @@ export default function AddBoardModal({
                   onClick={handleSubmit}
                   className="w-full py-3 bg-gradient-to-r from-rose-500 to-rose-400 text-white rounded-2xl font-semibold hover:shadow-cozy transition-all mt-2"
                 >
-                  {isEdit ? `${t.save} ${selectedEmoji}` : `${t.createBoard} ${selectedEmoji}`}
+                  {isEdit ? t.save : t.createBoard}
                 </motion.button>
                 {isEdit && editBoard && onDeleteBoard && (
                   <button

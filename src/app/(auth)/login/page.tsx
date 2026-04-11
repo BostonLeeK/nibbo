@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Image from "next/image";
+import { CalendarDays, CreditCard, NotebookPen, ShoppingCart, SquareKanban, UtensilsCrossed } from "lucide-react";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 import { I18N } from "@/lib/i18n";
 
@@ -17,32 +18,64 @@ export default function LoginPage() {
     await signIn("google", { callbackUrl: "/dashboard" });
   };
 
-  const decorations = ["🌸", "🍀", "⭐", "🌙", "🎀", "🦋", "🌺", "✨"];
+  const decorations = [SquareKanban, CalendarDays, UtensilsCrossed, NotebookPen, CreditCard, ShoppingCart];
+  const backgroundDecorations = Array.from({ length: 36 }, (_, index) => {
+    const Icon = decorations[index % decorations.length];
+    const col = index % 6;
+    const row = Math.floor(index / 6);
+    const left = 6 + col * 17 + ((index * 7) % 9) - 4;
+    const top = 5 + row * 16 + ((index * 11) % 7) - 3;
+    const size = 18 + (index % 4) * 8;
+    return {
+      Icon,
+      left,
+      top,
+      size,
+      duration: 4.5 + (index % 6) * 0.6,
+      delay: (index % 8) * 0.25,
+      rotate: (index % 2 === 0 ? 1 : -1) * (5 + (index % 3) * 4),
+      opacity: 0.12 + (index % 4) * 0.05,
+    };
+  });
+  const accentDecorations = [
+    { Icon: NotebookPen, left: "10%", top: "12%", size: 96, opacity: 0.08 },
+    { Icon: CalendarDays, left: "78%", top: "16%", size: 120, opacity: 0.07 },
+    { Icon: ShoppingCart, left: "70%", top: "72%", size: 110, opacity: 0.07 },
+    { Icon: CreditCard, left: "18%", top: "74%", size: 88, opacity: 0.08 },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream-50 via-rose-50/40 to-lavender-50/30 flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Floating decorations */}
-      {decorations.map((emoji, i) => (
+      {accentDecorations.map((item, i) => (
         <motion.div
-          key={i}
-          className="absolute text-2xl select-none pointer-events-none"
-          style={{
-            left: `${10 + (i * 12) % 80}%`,
-            top: `${5 + (i * 13) % 80}%`,
-          }}
+          key={`accent-${i}`}
+          className="absolute text-rose-300/70 pointer-events-none"
+          style={{ left: item.left, top: item.top, opacity: item.opacity }}
+          animate={{ y: [0, -14, 0], rotate: [-4, 4, -4], scale: [1, 1.04, 1] }}
+          transition={{ duration: 9 + i * 1.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <item.Icon size={item.size} strokeWidth={1.25} />
+        </motion.div>
+      ))}
+      {backgroundDecorations.map((item, i) => (
+        <motion.div
+          key={`bg-${i}`}
+          className="absolute text-rose-300/70 select-none pointer-events-none"
+          style={{ left: `${item.left}%`, top: `${item.top}%`, opacity: item.opacity }}
           animate={{
-            y: [0, -20, 0],
-            rotate: [-5, 5, -5],
-            opacity: [0.4, 0.8, 0.4],
+            y: [0, -16, 0],
+            rotate: [-item.rotate, item.rotate, -item.rotate],
+            scale: [1, 1.08, 1],
+            opacity: [item.opacity, item.opacity + 0.12, item.opacity],
           }}
           transition={{
-            duration: 3 + i * 0.5,
+            duration: item.duration,
             repeat: Infinity,
-            delay: i * 0.3,
+            delay: item.delay,
             ease: "easeInOut",
           }}
         >
-          {emoji}
+          <item.Icon size={item.size} />
         </motion.div>
       ))}
 
@@ -53,7 +86,6 @@ export default function LoginPage() {
         className="w-full max-w-md"
       >
         <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-cozy-lg p-10 text-center border border-white/60">
-          {/* Logo */}
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -67,28 +99,28 @@ export default function LoginPage() {
             {t.subtitle}
           </p>
 
-          {/* Features preview */}
           <div className="grid grid-cols-3 gap-3 mb-8">
             {[
-              { emoji: "📋", label: t.features.tasks },
-              { emoji: "📅", label: t.features.calendar },
-              { emoji: "🍽️", label: t.features.menu },
-              { emoji: "📓", label: t.features.notes },
-              { emoji: "💰", label: t.features.budget },
-              { emoji: "🛒", label: t.features.shopping },
+              { Icon: SquareKanban, label: t.features.tasks },
+              { Icon: CalendarDays, label: t.features.calendar },
+              { Icon: UtensilsCrossed, label: t.features.menu },
+              { Icon: NotebookPen, label: t.features.notes },
+              { Icon: CreditCard, label: t.features.budget },
+              { Icon: ShoppingCart, label: t.features.shopping },
             ].map((f) => (
               <motion.div
                 key={f.label}
                 whileHover={{ scale: 1.05, y: -2 }}
                 className="bg-cream-50 rounded-2xl p-3 border border-cream-200"
               >
-                <div className="text-2xl mb-1">{f.emoji}</div>
+                <div className="mb-1 flex justify-center">
+                  <f.Icon size={20} className="text-warm-600" />
+                </div>
                 <div className="text-xs text-warm-500 font-medium">{f.label}</div>
               </motion.div>
             ))}
           </div>
 
-          {/* Google Sign In */}
           <motion.button
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98 }}
