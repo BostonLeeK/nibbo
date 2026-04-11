@@ -60,6 +60,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardClient
+      familyId={familyId}
       stats={{ taskCount, eventCount, shoppingCount }}
       personalTaskStats={{ myOpen, doneToday, doneWeek, doneTotal }}
       upcomingEvents={upcomingEvents}

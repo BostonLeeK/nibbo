@@ -30,6 +30,7 @@ const TaskTamagotchi3D = dynamic(() => import("./TaskTamagotchi3D"), {
 });
 
 interface DashboardClientProps {
+  familyId: string;
   stats: { taskCount: number; eventCount: number; shoppingCount: number };
   personalTaskStats: { myOpen: number; doneToday: number; doneWeek: number; doneTotal: number };
   upcomingEvents: any[];
@@ -52,6 +53,7 @@ type PersonalTaskStats = {
 };
 
 export default function DashboardClient({
+  familyId,
   stats,
   personalTaskStats,
   upcomingEvents,
@@ -161,6 +163,7 @@ export default function DashboardClient({
       <div ref={modelRef} data-tour="tamagotchi-3d" className="min-h-[360px]">
         {show3D ? (
           <TaskTamagotchi3D
+            familyId={familyId}
             doneToday={tamagotchiStats.doneToday}
             doneWeek={tamagotchiStats.doneWeek}
             myOpen={tamagotchiStats.myOpen}
