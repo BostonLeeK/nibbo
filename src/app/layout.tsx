@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { cookies } from "next/headers";
 import { APP_LANGUAGE_COOKIE_KEY } from "@/lib/i18n";
 import { AppLanguageProvider } from "@/components/shared/AppLanguageProvider";
+import { getMetadataBaseUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,13 +20,55 @@ const nunito = Nunito({
   weight: ["600", "700", "800"],
 });
 
+const site = getMetadataBaseUrl();
+const defaultTitle = "Nibbo — ваш цифровий дім";
+const defaultDescription =
+  "Завдання, календар родини, бюджет, нотатки, меню й список покупок — усе в одному затишному сервісі для всієї родини.";
+
 export const metadata: Metadata = {
-  title: "Nibbo - Ваш цифровий дім",
-  description: "Затишна домашня CRM система для всієї родини",
+  metadataBase: site,
+  applicationName: "Nibbo",
+  title: {
+    default: defaultTitle,
+    template: "%s · Nibbo",
+  },
+  description: defaultDescription,
+  keywords: [
+    "Nibbo",
+    "родина",
+    "задачі",
+    "календар",
+    "бюджет",
+    "CRM",
+    "домашня організація",
+  ],
+  authors: [{ name: "Nibbo" }],
+  creator: "Nibbo",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/icon.svg", type: "image/svg+xml" }],
     shortcut: ["/favicon.svg"],
+  },
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "uk_UA",
+    alternateLocale: ["en_US"],
+    url: site.href,
+    siteName: "Nibbo",
+    title: defaultTitle,
+    description: defaultDescription,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultTitle,
+    description: defaultDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

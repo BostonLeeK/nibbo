@@ -4,7 +4,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Nibbo",
     short_name: "Nibbo",
-    description: "Затишна домашня CRM система для всієї родини",
+    description:
+      "Завдання, календар родини, бюджет, нотатки, меню й список покупок — усе в одному затишному сервісі для всієї родини.",
     start_url: "/",
     display: "standalone",
     background_color: "#fff8f1",
