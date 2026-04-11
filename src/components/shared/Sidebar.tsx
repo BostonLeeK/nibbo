@@ -17,6 +17,7 @@ import {
   SquareKanban,
   Users,
   UtensilsCrossed,
+  MessageSquareText,
   X,
 } from "lucide-react";
 import { I18N } from "@/lib/i18n";
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/budget", key: "budget", Icon: CreditCard },
   { href: "/subscriptions", key: "subscriptions", Icon: Repeat2 },
   { href: "/shopping", key: "shopping", Icon: ShoppingCart },
+  { href: "/feedback", key: "feedback", Icon: MessageSquareText },
 ];
 
 interface SidebarProps {
