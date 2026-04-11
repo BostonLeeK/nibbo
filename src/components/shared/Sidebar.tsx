@@ -12,6 +12,7 @@ import {
   House,
   Menu,
   NotebookPen,
+  Repeat2,
   ShoppingCart,
   SquareKanban,
   Users,
@@ -21,6 +22,12 @@ import {
 import { I18N } from "@/lib/i18n";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 
+const mobileMenuIconBtnClass =
+  "min-h-[44px] min-w-[44px] shrink-0 rounded-2xl border-2 border-rose-300/80 bg-white text-rose-600 shadow-sm flex items-center justify-center transition-transform touch-manipulation active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2";
+
+const mobileTopBarClass =
+  "flex min-h-[52px] shrink-0 items-center justify-between gap-2 border-b border-warm-100 px-3 py-2";
+
 const navItems = [
   { href: "/dashboard", key: "dashboard", Icon: House },
   { href: "/family", key: "family", Icon: Users },
@@ -29,7 +36,7 @@ const navItems = [
   { href: "/menu", key: "menu", Icon: UtensilsCrossed },
   { href: "/notes", key: "notes", Icon: NotebookPen },
   { href: "/budget", key: "budget", Icon: CreditCard },
-  { href: "/subscriptions", key: "subscriptions", Icon: CreditCard },
+  { href: "/subscriptions", key: "subscriptions", Icon: Repeat2 },
   { href: "/shopping", key: "shopping", Icon: ShoppingCart },
 ];
 
@@ -58,19 +65,19 @@ export default function Sidebar({ user: u }: SidebarProps) {
 
   return (
     <>
-      <aside className="md:hidden bg-white/85 backdrop-blur-md border-b border-warm-100 px-3 py-2 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image src="/favicon.svg" alt="Nibbo logo" width={24} height={24} />
-            <h1 className="font-bold text-warm-800 text-base leading-tight">Nibbo</h1>
+      <aside className="md:hidden bg-white/85 backdrop-blur-md shadow-sm">
+        <div className={mobileTopBarClass}>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Image src="/favicon.svg" alt="Nibbo logo" width={24} height={24} className="shrink-0" />
+            <h1 className="truncate font-bold text-warm-800 text-base leading-tight">Nibbo</h1>
           </div>
           <button
             type="button"
             onClick={() => setOpenMobileMenu(true)}
-            className="w-9 h-9 rounded-xl bg-white border border-warm-200 text-warm-700 flex items-center justify-center"
+            className={mobileMenuIconBtnClass}
             aria-label={t.openMenuAria}
           >
-            <Menu size={18} />
+            <Menu size={20} strokeWidth={2} aria-hidden />
           </button>
         </div>
       </aside>
@@ -82,22 +89,22 @@ export default function Sidebar({ user: u }: SidebarProps) {
             exit={{ opacity: 0 }}
             className="md:hidden fixed inset-0 z-[60] bg-white"
           >
-            <div className="h-full flex flex-col p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Image src="/favicon.svg" alt="Nibbo logo" width={30} height={30} />
-                  <h2 className="text-xl font-bold text-warm-800">{t.mobileMenuTitle}</h2>
+            <div className="flex h-full flex-col">
+              <div className={mobileTopBarClass}>
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <Image src="/favicon.svg" alt="Nibbo logo" width={24} height={24} className="shrink-0" />
+                  <h2 className="truncate font-bold text-warm-800 text-base leading-tight">{t.mobileMenuTitle}</h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setOpenMobileMenu(false)}
-                  className="w-10 h-10 rounded-xl bg-warm-100 text-warm-700 flex items-center justify-center"
+                  className={mobileMenuIconBtnClass}
                   aria-label={t.closeMenuAria}
                 >
-                  <X size={20} />
+                  <X size={20} strokeWidth={2} aria-hidden />
                 </button>
               </div>
-              <nav className="flex-1 space-y-2 overflow-y-auto">
+              <nav className="flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden px-3 pb-2 pt-3">
                 {navItems.map((item) => {
                   const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
                   const tourKey =
@@ -117,20 +124,30 @@ export default function Sidebar({ user: u }: SidebarProps) {
                       <motion.div
                         whileTap={{ scale: 0.98 }}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-4 rounded-2xl font-semibold text-base transition-all",
+                          "flex min-h-[52px] items-center gap-3 rounded-2xl border px-3 py-2.5 text-[15px] font-semibold leading-snug transition-colors",
                           isActive
-                            ? "bg-gradient-to-r from-rose-50 to-rose-100 text-rose-700"
-                            : "bg-warm-50 text-warm-700"
+                            ? "border-rose-200/90 bg-gradient-to-r from-rose-50 to-rose-100 text-rose-700 shadow-sm"
+                            : "border-warm-100 bg-warm-50/90 text-warm-800 shadow-sm"
                         )}
                       >
-                        <item.Icon size={20} />
-                        <span>{t.nav[item.key as keyof typeof t.nav]}</span>
+                        <span
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border",
+                            isActive
+                              ? "border-rose-200/70 bg-white text-rose-600"
+                              : "border-warm-100/80 bg-white text-warm-600"
+                          )}
+                          aria-hidden
+                        >
+                          <item.Icon size={18} strokeWidth={2} />
+                        </span>
+                        <span className="min-w-0 flex-1">{t.nav[item.key as keyof typeof t.nav]}</span>
                       </motion.div>
                     </Link>
                   );
                 })}
               </nav>
-              <div className="mt-4 p-3 rounded-2xl bg-warm-50 border border-warm-100">
+              <div className="mx-3 mb-3 mt-4 rounded-2xl border border-warm-100 bg-warm-50 p-3">
                 <div className="flex items-center gap-3">
                   {user.image ? (
                     <Image
