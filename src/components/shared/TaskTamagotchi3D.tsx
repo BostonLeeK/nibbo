@@ -1012,32 +1012,6 @@ export default function TaskTamagotchi3D({
           />
         </div>
       </div>
-
-      <div className="relative z-10 mt-4 pt-4 border-t border-warm-100/70">
-        <p className="text-base font-bold text-violet-800">{t.cardMotto.replace("{name}", mascotName)}</p>
-        <p className="text-xs font-semibold text-warm-500 mt-2 tracking-wide">{t.storySite}</p>
-        <p className="text-sm text-warm-800 mt-2">
-          <span className="font-semibold text-warm-700">{t.familyXpLabel}:</span>{" "}
-          <span className="font-mono tabular-nums">{familyXp}</span> XP
-        </p>
-        {unlockedOrderedIds.length > 0 ? (
-          <div className="mt-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-warm-500">{t.achievementsLabel}</p>
-            <ul className="mt-2 flex flex-wrap gap-1.5">
-              {unlockedOrderedIds.map((id) => (
-                <li
-                  key={id}
-                  className="text-xs rounded-full bg-white/90 border border-lavender-200/80 px-2.5 py-1 text-warm-800"
-                >
-                  {familyAchievementLabel(id, lang)}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <p className="text-xs text-warm-500 mt-2">{t.achievementsEmpty}</p>
-        )}
-      </div>
     </div>
   );
 }
