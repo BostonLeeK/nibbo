@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: body.name,
         description: body.description,
-        emoji: body.emoji || "meal",
+        emoji: body.emoji || "🍽️",
         prepTime: body.prepTime,
         cookTime: body.cookTime,
         servings: body.servings || 4,

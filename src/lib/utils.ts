@@ -81,7 +81,28 @@ const LEGACY_EMOJI_TOKENS = new Set([
   "category",
   "event",
   "shopping",
+  "subscription",
 ]);
+
+const EMOJI_TOKEN_TO_DISPLAY: Record<string, string> = {
+  meal: "🍽️",
+  board: "📋",
+  shopping: "🛒",
+  note: "📝",
+  category: "💳",
+  event: "📅",
+  user: "🌸",
+  subscription: "📆",
+};
+
+export const DEFAULT_RECIPE_EMOJI = "🍽️";
+
+export function displayEmojiToken(value: string | null | undefined): string {
+  if (value == null) return "";
+  const v = value.trim();
+  if (!v) return "";
+  return EMOJI_TOKEN_TO_DISPLAY[v] ?? v;
+}
 
 export function normalizeProfileEmoji(value: string | null | undefined) {
   if (!value || LEGACY_EMOJI_TOKENS.has(value)) return DEFAULT_USER_EMOJI;

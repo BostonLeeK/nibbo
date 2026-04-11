@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { APP_LANGUAGE_COOKIE_KEY } from "@/lib/i18n";
 import { AppLanguageProvider } from "@/components/shared/AppLanguageProvider";
 import { getMetadataBaseUrl } from "@/lib/site-url";
+import { OG_ALT, OG_SIZE } from "@/lib/og-share-card";
 import "./globals.css";
 
 const inter = Inter({
@@ -60,11 +61,21 @@ export const metadata: Metadata = {
     siteName: "Nibbo",
     title: defaultTitle,
     description: defaultDescription,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: OG_SIZE.width,
+        height: OG_SIZE.height,
+        alt: OG_ALT,
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: defaultTitle,
     description: defaultDescription,
+    images: ["/twitter-image"],
   },
   robots: {
     index: true,

@@ -17,6 +17,7 @@ export function ogShareImageResponse() {
           paddingLeft: 72,
           paddingRight: 72,
           background: "linear-gradient(135deg, #fff7ed 0%, #fce7f3 38%, #ede9fe 72%, #faf5ff 100%)",
+          fontFamily: "system-ui, -apple-system, Segoe UI, Helvetica, sans-serif",
         }}
       >
         <div
@@ -42,7 +43,7 @@ export function ogShareImageResponse() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <span style={{ fontSize: 78, fontWeight: 800, color: "#1c1917", letterSpacing: -2 }}>Nibbo</span>
             <span style={{ fontSize: 32, fontWeight: 600, color: "#44403c", maxWidth: 920, lineHeight: 1.35 }}>
-              Завдання, календар родини, бюджет, нотатки, меню й покупки — усе в одному затишному місці.
+              Tasks, family calendar, budget, notes, meals & shopping — your cozy home hub in one place.
             </span>
           </div>
         </div>

@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: body.name,
         description: body.description || null,
-        emoji: body.emoji || "meal",
+        emoji: body.emoji || "🍽️",
         prepTime: body.prepTime ?? null,
         cookTime: body.cookTime ?? null,
         servings: body.servings || 4,

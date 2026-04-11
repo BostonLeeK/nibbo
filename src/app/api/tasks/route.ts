@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const column = await prisma.taskColumn.create({
       data: {
         name: body.name,
-        emoji: body.emoji || "column",
+        emoji: body.emoji || "📋",
         color: body.color || "#e7e5e4",
         boardId: body.boardId,
         order: body.order ?? 0,

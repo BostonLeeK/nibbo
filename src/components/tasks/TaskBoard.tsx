@@ -826,7 +826,7 @@ function AddColumnButton({ onAdd }: { onAdd: (name: string, emoji: string, color
 
   const handleAdd = () => {
     if (!name.trim()) return;
-    onAdd(name, "column", "#e7e5e4");
+    onAdd(name.trim(), "📋", "#e7e5e4");
     setName("");
     setIsAdding(false);
   };

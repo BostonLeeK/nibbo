@@ -7,7 +7,7 @@ import { format, addDays, startOfWeek } from "date-fns";
 import { uk, enUS } from "date-fns/locale";
 import Link from "next/link";
 import { Plus, X, Copy, ClipboardList, ImagePlus, Pencil, Trash2, Eye, UtensilsCrossed, CalendarDays, BookOpen, Store, Flame, Users, ChefHat } from "lucide-react";
-import { MEAL_TYPE_CONFIG } from "@/lib/utils";
+import { DEFAULT_RECIPE_EMOJI, MEAL_TYPE_CONFIG, displayEmojiToken, normalizeProfileEmoji } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
@@ -148,7 +148,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
   const [viewRecipeSource, setViewRecipeSource] = useState<"recipes" | "market">("recipes");
   const [marketLoadingId, setMarketLoadingId] = useState<string | null>(null);
   const [newRecipe, setNewRecipe] = useState<RecipeForm>({
-    name: "", description: "", emoji: "meal", category: t.categories[1] ?? "",
+    name: "", description: "", emoji: DEFAULT_RECIPE_EMOJI, category: t.categories[1] ?? "",
     prepTime: "", cookTime: "", calories: "", servings: "4",
     ingredients: [{ name: "", amount: "", unit: "" }],
   });
@@ -172,7 +172,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
     setNewRecipe({
       name: "",
       description: "",
-      emoji: "meal",
+      emoji: DEFAULT_RECIPE_EMOJI,
       category: t.categories[1] ?? "",
       prepTime: "",
       cookTime: "",
@@ -190,7 +190,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
     setNewRecipe({
       name: recipe.name,
       description: recipe.description ?? "",
-      emoji: recipe.emoji,
+      emoji: displayEmojiToken(recipe.emoji) || DEFAULT_RECIPE_EMOJI,
       category: recipe.category,
       prepTime: recipe.prepTime != null ? String(recipe.prepTime) : "",
       cookTime: recipe.cookTime != null ? String(recipe.cookTime) : "",
@@ -464,7 +464,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
         const create = await fetch("/api/shopping", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "list", name: t.fromMenuListName, emoji: "shopping" }),
+          body: JSON.stringify({ type: "list", name: t.fromMenuListName, emoji: "🛒" }),
         });
         if (!create.ok) throw new Error();
         const list = await create.json();
@@ -491,7 +491,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
     }
   };
 
-  const FOOD_EMOJIS = ["meal"];
+  const FOOD_EMOJIS = [DEFAULT_RECIPE_EMOJI, "🥗", "🍝", "🥘"];
   const CATEGORIES = t.categories;
   const getDayCalories = (day: Date) =>
     mealPlans.reduce((sum, p) => (
@@ -560,7 +560,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
             <div className="flex items-center gap-1 mt-1.5">
               <div className="w-4 h-4 rounded-full flex items-center justify-center text-xs text-white"
                 style={{ backgroundColor: meal.cook.color }}>
-                {meal.cook.emoji || meal.cook.name?.[0]}
+                {normalizeProfileEmoji(meal.cook.emoji) || meal.cook.name?.[0]}
               </div>
               <span className="text-xs text-warm-400 truncate">{meal.cook.name}</span>
             </div>
@@ -764,7 +764,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-5xl">
-                    {recipe.emoji}
+                    {displayEmojiToken(recipe.emoji) || DEFAULT_RECIPE_EMOJI}
                   </div>
                 )}
               </div>
@@ -849,7 +849,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-5xl">
-                    {recipe.emoji}
+                    {displayEmojiToken(recipe.emoji) || DEFAULT_RECIPE_EMOJI}
                   </div>
                 )}
               </div>
@@ -911,12 +911,20 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                   <select value={selectedRecipeId} onChange={(e) => setSelectedRecipeId(e.target.value)}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400">
                     <option value="">{t.chooseRecipe}</option>
-                    {recipes.map((r) => <option key={r.id} value={r.id}>{r.emoji} {r.name}</option>)}
+                    {recipes.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {displayEmojiToken(r.emoji) || DEFAULT_RECIPE_EMOJI} {r.name}
+                      </option>
+                    ))}
                   </select>
                   <select value={selectedCookId} onChange={(e) => setSelectedCookId(e.target.value)}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-peach-400">
                     <option value="">{t.whoCooks}</option>
-                    {users.map((u) => <option key={u.id} value={u.id}>{u.emoji} {u.name}</option>)}
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {normalizeProfileEmoji(u.emoji)} {u.name}
+                      </option>
+                    ))}
                   </select>
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddMeal}
@@ -953,7 +961,9 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
             >
               <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-warm-100 shrink-0">
                 <div className="min-w-0">
-                  <p className="text-2xl leading-none mb-1">{viewRecipe.emoji}</p>
+                  <p className="text-2xl leading-none mb-1">
+                    {displayEmojiToken(viewRecipe.emoji) || DEFAULT_RECIPE_EMOJI}
+                  </p>
                   <h2 className="text-lg font-bold text-warm-800 leading-tight">{viewRecipe.name}</h2>
                 </div>
                 <button
@@ -1176,7 +1186,7 @@ export default function MealPlanner({ initialRecipes, initialMarketRecipes, init
                     onClick={handleSaveRecipe}
                     className="w-full py-3 bg-gradient-to-r from-peach-500 to-peach-400 text-white rounded-2xl font-semibold"
                   >
-                    {editingRecipeId ? t.saveChanges : `${t.saveRecipe} ${newRecipe.emoji}`}
+                    {editingRecipeId ? t.saveChanges : t.saveRecipe}
                   </motion.button>
                 </div>
               </div>

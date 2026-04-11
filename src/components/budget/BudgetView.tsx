@@ -5,7 +5,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Circle, Landmark, Pencil, Plus, Trash2, Wallet, X, TrendingDown, TrendingUp } from "lucide-react";
 import { kyivInstantAsCalendarYmd, kyivShiftCalendarDays } from "@/lib/kyiv-range";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { displayEmojiToken, formatDate, formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
@@ -27,7 +27,7 @@ interface Credit {
   note: string | null;
 }
 
-const CAT_EMOJIS = ["category"];
+const CAT_EMOJIS = ["💳", "🛒", "🏠", "☕", "🎯", "🎁"];
 const CAT_COLORS = ["#4ade80", "#38bdf8", "#fb923c", "#f43f5e", "#818cf8", "#c084fc", "#f472b6", "#facc15"];
 const KYIV_TZ = "Europe/Kyiv";
 
@@ -85,7 +85,7 @@ export default function BudgetView({
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
   const [newIncome, setNewIncome] = useState({ title: "", amount: "", note: "", date: new Date().toISOString().split("T")[0] });
-  const [newCat, setNewCat] = useState({ name: "", emoji: "category", color: "#4ade80", budget: "" });
+  const [newCat, setNewCat] = useState({ name: "", emoji: CAT_EMOJIS[0]!, color: "#4ade80", budget: "" });
   const [plannedIncome, setPlannedIncome] = useState<number | null>(null);
   const [plannedIncomeInput, setPlannedIncomeInput] = useState("");
   const [newCredit, setNewCredit] = useState({
@@ -454,12 +454,12 @@ export default function BudgetView({
     }
     setShowAddCategory(false);
     setEditingCategoryId(null);
-    setNewCat({ name: "", emoji: "category", color: "#4ade80", budget: "" });
+    setNewCat({ name: "", emoji: CAT_EMOJIS[0]!, color: "#4ade80", budget: "" });
   };
 
   const openAddCategory = () => {
     setEditingCategoryId(null);
-    setNewCat({ name: "", emoji: "category", color: "#4ade80", budget: "" });
+    setNewCat({ name: "", emoji: CAT_EMOJIS[0]!, color: "#4ade80", budget: "" });
     setShowAddCategory(true);
   };
 
@@ -467,7 +467,7 @@ export default function BudgetView({
     setEditingCategoryId(category.id);
     setNewCat({
       name: category.name,
-      emoji: category.emoji,
+      emoji: displayEmojiToken(category.emoji) || CAT_EMOJIS[0]!,
       color: category.color,
       budget: category.budget != null ? String(category.budget) : "",
     });
@@ -481,7 +481,7 @@ export default function BudgetView({
     setCategories((prev) => prev.filter((item) => item.id !== editingCategoryId));
     setShowAddCategory(false);
     setEditingCategoryId(null);
-    setNewCat({ name: "", emoji: "category", color: "#4ade80", budget: "" });
+    setNewCat({ name: "", emoji: CAT_EMOJIS[0]!, color: "#4ade80", budget: "" });
     toast.success(t.toastDeleted);
   };
 
@@ -600,7 +600,7 @@ export default function BudgetView({
                   className="bg-white/80 rounded-2xl p-4 shadow-cozy border border-warm-100">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xl">{cat.emoji}</span>
+                    <span className="text-xl">{displayEmojiToken(cat.emoji) || CAT_EMOJIS[0]}</span>
                     <span className="text-xs font-semibold text-warm-700 truncate">{cat.name}</span>
                     </div>
                     <button
@@ -1048,7 +1048,11 @@ export default function BudgetView({
                   <select value={newExpense.categoryId} onChange={(e) => setNewExpense((p) => ({ ...p, categoryId: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400">
                     <option value="">{t.optionalCategory}</option>
-                    {categories.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {displayEmojiToken(c.emoji) || CAT_EMOJIS[0]} {c.name}
+                      </option>
+                    ))}
                   </select>
                   <input type="date" value={newExpense.date} onChange={(e) => setNewExpense((p) => ({ ...p, date: e.target.value }))}
                     className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
@@ -1108,7 +1112,7 @@ export default function BudgetView({
                     placeholder={t.monthlyBudgetPlaceholder} className="w-full bg-warm-50 rounded-xl px-4 py-3 text-sm outline-none border border-warm-200 focus:border-sage-400" />
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleAddCategory}
                     className="w-full py-3 bg-gradient-to-r from-sage-500 to-sage-400 text-white rounded-2xl font-semibold">
-                    {editingCategoryId ? t.save : `${t.create} ${newCat.emoji}`}
+                    {editingCategoryId ? t.save : t.create}
                   </motion.button>
                   {editingCategoryId && (
                     <button

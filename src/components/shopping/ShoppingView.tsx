@@ -20,7 +20,7 @@ export default function ShoppingView({ initialLists, currentUserId }: { initialL
   const [activeList, setActiveList] = useState(lists[0]?.id || "");
   const [showAddList, setShowAddList] = useState(false);
   const [newListName, setNewListName] = useState("");
-  const [newListEmoji, setNewListEmoji] = useState("shopping");
+  const [newListEmoji, setNewListEmoji] = useState("🛒");
   const [newItem, setNewItem] = useState({ name: "", quantity: "", unit: "", category: "" });
 
   const currentList = lists.find((l) => l.id === activeList);

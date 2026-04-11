@@ -45,6 +45,12 @@ function toIso(d: unknown): string | null {
   return null;
 }
 
+function normalizeColumnEmoji(raw: unknown): string {
+  const s = String(raw ?? "").trim();
+  if (!s || s === "column") return "📋";
+  return s;
+}
+
 export function normalizeBoardsPayload(raw: unknown): TaskBoardBoard[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((board) => {
@@ -62,7 +68,7 @@ export function normalizeBoardsPayload(raw: unknown): TaskBoardBoard[] {
         return {
           id: String(c.id),
           name: String(c.name ?? ""),
-          emoji: String(c.emoji ?? "column"),
+          emoji: normalizeColumnEmoji(c.emoji),
           color: String(c.color ?? "#e7e5e4"),
           order: typeof c.order === "number" ? c.order : 0,
           tasks: tasks.map((t) => {

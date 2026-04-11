@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { ExchangeRates } from "@/lib/exchange-rates";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 import { I18N } from "@/lib/i18n";
+import { normalizeProfileEmoji } from "@/lib/utils";
 
 type FamilyRole = "OWNER" | "MEMBER";
 type BillingCycle = "MONTHLY" | "YEARLY";
@@ -444,13 +445,16 @@ export default function SubscriptionsView({
                       {item.members.length === 0 && <span className="text-xs text-warm-400">{t.nobodyAssigned}</span>}
                       {item.members.map((member) => (
                         <span key={member.id} className="text-xs px-2.5 py-1 rounded-full bg-warm-100 text-warm-700 border border-warm-200/70">
-                          {member.user.emoji} {member.user.name || member.user.email || t.memberFallback}
+                          {normalizeProfileEmoji(member.user.emoji)}{" "}
+                          {member.user.name || member.user.email || t.memberFallback}
                         </span>
                       ))}
                     </div>
                     <p className="text-sm text-warm-600">
                       <span className="text-warm-500">{t.payerLabel}</span>{" "}
-                      {payer ? `${payer.emoji} ${payer.name || payer.email || t.memberFallback}` : t.notSpecified}
+                      {payer
+                        ? `${normalizeProfileEmoji(payer.emoji)} ${payer.name || payer.email || t.memberFallback}`
+                        : t.notSpecified}
                     </p>
                   </div>
 

@@ -73,6 +73,8 @@ export default function TaskColumn({
     [setSortableRef, setDroppableRef]
   );
 
+  const columnEmoji = column.emoji === "column" ? "📋" : column.emoji;
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -141,7 +143,9 @@ export default function TaskColumn({
               />
             ) : (
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-lg flex-shrink-0">{column.emoji}</span>
+                <span className="text-lg flex-shrink-0 leading-none" aria-hidden>
+                  {columnEmoji}
+                </span>
                 <h3 className="font-semibold text-warm-800 text-sm truncate">{column.name}</h3>
                 <span className="bg-warm-100 text-warm-500 text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
                   {column.tasks.length}
