@@ -50,6 +50,22 @@ export const I18N = {
       errorMail: "Пошта ще не налаштована на сервері.",
       errorFiles: "Недопустимі файли або завеликий розмір.",
     },
+    legal: {
+      cookieTitle: "Трохи про cookie",
+      cookieText:
+        "Ми використовуємо невеликі файли cookie, щоб тримати вас залогіненим і запам’ятати обрану мову. Без них сервіс не зможе працювати як треба.",
+      cookieAccept: "Приймаю, гайда далі",
+      cookieLearnMore: "Детальніше",
+      privacyMetaTitle: "Конфіденційність і cookie",
+      privacyHeading: "Конфіденційність і cookie",
+      privacyLead:
+        "Nibbo — затишний простір для родини. Ми обробляємо лише ті дані, які потрібні для роботи сервісу, і не продаємо їх третім сторонам.",
+      privacyCookiesTitle: "Які cookie використовуємо",
+      privacyCookiesBody:
+        "Технічні cookie для сесії входу (після авторизації через Google) та cookie вибору мови інтерфейсу. Вони потрібні для безпеки та зручності. Ви можете видалити cookie в налаштуваннях браузера; тоді доведеться знову увійти й обрати мову.",
+      privacyContactTitle: "Питання",
+      privacyContactBody: "З радістю пояснимо деталі щодо ваших даних або налаштувань cookie.",
+    },
     header: {
       friendFallback: "друже",
       logoutTitle: "Вийти",
@@ -714,6 +730,22 @@ export const I18N = {
       errorValidation: "Please check the form fields.",
       errorMail: "Email is not configured on the server yet.",
       errorFiles: "Invalid files or file too large.",
+    },
+    legal: {
+      cookieTitle: "A little note about cookies",
+      cookieText:
+        "We use small cookies to keep you signed in and remember your language. Without them, the app would not work the way you expect.",
+      cookieAccept: "Accept and continue",
+      cookieLearnMore: "Learn more",
+      privacyMetaTitle: "Privacy and cookies",
+      privacyHeading: "Privacy and cookies",
+      privacyLead:
+        "Nibbo is a cozy space for your family. We only process data needed to run the service and do not sell it to third parties.",
+      privacyCookiesTitle: "Cookies we use",
+      privacyCookiesBody:
+        "Technical cookies for your sign-in session (after Google sign-in) and a cookie for your interface language. They are needed for security and convenience. You can clear cookies in your browser; you will need to sign in again and pick your language.",
+      privacyContactTitle: "Questions",
+      privacyContactBody: "We are glad to explain more about your data or cookie settings.",
     },
     header: {
       friendFallback: "friend",

@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { cookies } from "next/headers";
 import { APP_LANGUAGE_COOKIE_KEY } from "@/lib/i18n";
 import { AppLanguageProvider } from "@/components/shared/AppLanguageProvider";
+import { CookieConsent } from "@/components/shared/CookieConsent";
 import { getMetadataBaseUrl } from "@/lib/site-url";
 import { OG_ALT, OG_SIZE } from "@/lib/og-share-card";
 import "./globals.css";
@@ -99,6 +100,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="font-sans min-h-screen antialiased bg-gradient-to-br from-cream-50 via-rose-50/30 to-lavender-50/20">
         <AppLanguageProvider initialLanguage={language}>
           {children}
+          <CookieConsent />
         </AppLanguageProvider>
         <Toaster
           position="bottom-right"
