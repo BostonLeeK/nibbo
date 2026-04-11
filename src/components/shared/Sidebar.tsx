@@ -18,6 +18,7 @@ import {
   Users,
   UtensilsCrossed,
   MessageSquareText,
+  Shield,
   X,
 } from "lucide-react";
 import { I18N } from "@/lib/i18n";
@@ -29,7 +30,7 @@ const mobileMenuIconBtnClass =
 const mobileTopBarClass =
   "flex min-h-[52px] shrink-0 items-center justify-between gap-2 border-b border-warm-100 px-3 py-2";
 
-const navItems = [
+const mainNavItems = [
   { href: "/dashboard", key: "dashboard", Icon: House },
   { href: "/family", key: "family", Icon: Users },
   { href: "/tasks", key: "tasks", Icon: SquareKanban },
@@ -39,8 +40,12 @@ const navItems = [
   { href: "/budget", key: "budget", Icon: CreditCard },
   { href: "/subscriptions", key: "subscriptions", Icon: Repeat2 },
   { href: "/shopping", key: "shopping", Icon: ShoppingCart },
+] as const;
+
+const bottomNavItems = [
   { href: "/feedback", key: "feedback", Icon: MessageSquareText },
-];
+  { href: "/privacy", key: "privacy", Icon: Shield },
+] as const;
 
 interface SidebarProps {
   user: {
@@ -117,8 +122,8 @@ export default function Sidebar({ user: u }: SidebarProps) {
                   <X size={20} strokeWidth={2} aria-hidden />
                 </button>
               </div>
-              <nav className="flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden px-3 pb-2 pt-3">
-                {navItems.map((item) => {
+              <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden px-3 pb-3 pt-3">
+                {mainNavItems.map((item) => {
                   const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
                   const tourKey =
                     item.href === "/family"
@@ -160,29 +165,34 @@ export default function Sidebar({ user: u }: SidebarProps) {
                   );
                 })}
               </nav>
-              <div className="mx-3 mb-3 mt-4 rounded-2xl border border-warm-100 bg-warm-50 p-3">
-                <div className="flex items-center gap-3">
-                  {user.image ? (
-                    <Image
-                      src={user.image}
-                      alt={user.name || "User"}
-                      width={40}
-                      height={40}
-                      className="rounded-full ring-2 ring-rose-200"
-                      unoptimized={user.image.startsWith("/api/users/avatar/")}
-                    />
-                  ) : (
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-base text-white"
-                      style={{ backgroundColor: user.color || "#f43f5e" }}
-                    >
-                      {user.name?.[0] || "U"}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-warm-800 truncate">{user.name}</p>
-                    <p className="text-xs text-warm-500 truncate">{user.email}</p>
-                  </div>
+              <div className="shrink-0 border-t border-warm-100 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                <div className="flex items-center justify-center gap-4">
+                  {bottomNavItems.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(item.href);
+                    const label = t.nav[item.key as keyof typeof t.nav];
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpenMobileMenu(false)}
+                        aria-label={label}
+                        title={label}
+                        className="touch-manipulation"
+                      >
+                        <motion.div
+                          whileTap={{ scale: 0.96 }}
+                          className={cn(
+                            "flex h-[52px] w-[52px] items-center justify-center rounded-2xl border-2 transition-colors",
+                            isActive
+                              ? "border-rose-300/90 bg-gradient-to-br from-rose-50 to-rose-100 text-rose-600 shadow-sm"
+                              : "border-warm-200/90 bg-warm-50/90 text-warm-600 shadow-sm active:bg-warm-100"
+                          )}
+                        >
+                          <item.Icon size={22} strokeWidth={2} aria-hidden />
+                        </motion.div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -206,8 +216,8 @@ export default function Sidebar({ user: u }: SidebarProps) {
             </div>
           </Link>
         </div>
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4">
+          {mainNavItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
             const tourKey =
               item.href === "/family"
@@ -228,7 +238,7 @@ export default function Sidebar({ user: u }: SidebarProps) {
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.97 }}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-sm transition-all relative",
+                      "relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all",
                       isActive
                         ? "bg-gradient-to-r from-rose-50 to-rose-100/50 text-rose-700 shadow-sm"
                         : "text-warm-600 hover:bg-warm-50 hover:text-warm-800"
@@ -237,22 +247,52 @@ export default function Sidebar({ user: u }: SidebarProps) {
                     {isActive && (
                       <motion.div
                         layoutId="sidebar-active"
-                        className="absolute inset-0 bg-gradient-to-r from-rose-100 to-rose-50 rounded-2xl"
+                        className="absolute inset-0 rounded-2xl bg-gradient-to-r from-rose-100 to-rose-50"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                       />
                     )}
                     <item.Icon size={18} className="relative z-10" />
                     <span className="relative z-10">{t.nav[item.key as keyof typeof t.nav]}</span>
-                    {isActive && (
-                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-rose-400 relative z-10" />
-                    )}
+                    {isActive && <div className="relative z-10 ml-auto h-1.5 w-1.5 rounded-full bg-rose-400" />}
                   </motion.div>
                 </Link>
               </div>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-warm-100">
+        <div className="shrink-0 space-y-1 border-t border-warm-100 p-4 pt-3">
+          {bottomNavItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href);
+            return (
+              <div key={item.href}>
+                <Link href={item.href}>
+                  <motion.div
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={cn(
+                      "relative flex items-center gap-3 rounded-2xl px-4 py-2.5 text-[13px] font-medium transition-all",
+                      isActive
+                        ? "bg-gradient-to-r from-rose-50 to-rose-100/50 text-rose-700 shadow-sm"
+                        : "text-warm-500 hover:bg-warm-50 hover:text-warm-700"
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="sidebar-active"
+                        className="absolute inset-0 rounded-2xl bg-gradient-to-r from-rose-100 to-rose-50"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                      />
+                    )}
+                    <item.Icon size={17} className="relative z-10" />
+                    <span className="relative z-10">{t.nav[item.key as keyof typeof t.nav]}</span>
+                    {isActive && <div className="relative z-10 ml-auto h-1.5 w-1.5 rounded-full bg-rose-400" />}
+                  </motion.div>
+                </Link>
+              </div>
+            );
+          })}
+        </div>
+        <div className="shrink-0 border-t border-warm-100 p-4">
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-warm-50">
             {user.image ? (
               <Image

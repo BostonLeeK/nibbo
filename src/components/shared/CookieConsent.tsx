@@ -75,6 +75,7 @@ export function CookieConsent() {
 
   if (!mounted) return null;
   if (pathname === "/privacy" || pathname?.startsWith("/privacy/")) return null;
+  if (pathname === "/login" || pathname?.startsWith("/login/")) return null;
 
   return (
     <AnimatePresence>
@@ -87,11 +88,11 @@ export function CookieConsent() {
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", stiffness: 380, damping: 36 }}
-          className="fixed inset-x-0 bottom-0 z-[9980] flex justify-center pointer-events-none md:px-4 md:pb-4"
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-[9980] flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 md:px-4 md:pb-4 md:pt-0"
         >
-          <div className="pointer-events-auto relative w-full max-w-3xl overflow-hidden rounded-t-3xl border-x border-t border-rose-200/90 bg-gradient-to-br from-cream-50 via-white to-lavender-50 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 shadow-[0_-8px_40px_rgba(244,63,94,0.12)] sm:px-5 sm:pt-5 md:rounded-3xl md:border md:shadow-cozy-lg">
+          <div className="pointer-events-auto relative w-full max-w-3xl overflow-hidden rounded-3xl border border-rose-200/65 bg-white/95 shadow-[0_16px_48px_-8px_rgba(244,63,94,0.18)] backdrop-blur-md md:bg-gradient-to-br md:from-cream-50 md:via-white md:to-lavender-50 md:shadow-cozy-lg">
             <div
-              className="pointer-events-none absolute inset-0 overflow-hidden rounded-t-3xl md:rounded-3xl"
+              className="pointer-events-none absolute inset-0 hidden overflow-hidden rounded-3xl md:block"
               aria-hidden
             >
               {cookieBannerDecorItems.map((item, i) => (
@@ -120,24 +121,24 @@ export function CookieConsent() {
                 </motion.div>
               ))}
             </div>
-            <div className="relative z-10 flex gap-3 md:gap-4">
+            <div className="relative z-10 flex gap-3 p-4 sm:p-5 sm:gap-4">
               <div
-                className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 via-rose-50 to-lavender-100 text-rose-500 sm:flex"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 via-rose-50 to-lavender-100 text-rose-500 sm:h-12 sm:w-12"
                 aria-hidden
               >
-                <Cookie size={26} strokeWidth={2} />
+                <Cookie className="h-[22px] w-[22px] sm:h-[26px] sm:w-[26px]" strokeWidth={2} />
               </div>
               <div className="min-w-0 flex-1">
                 <h2
                   id="cookie-consent-title"
-                  className="font-heading text-base font-bold text-warm-800 md:text-lg"
+                  className="font-heading text-[15px] font-bold leading-snug text-warm-800 sm:text-base md:text-lg"
                 >
                   {t.cookieTitle}
                 </h2>
-                <p className="mt-1.5 text-sm leading-relaxed text-warm-600 md:text-[15px]">
+                <p className="mt-1.5 text-[13px] leading-relaxed text-warm-600 sm:text-sm md:text-[15px]">
                   {t.cookieText}
                 </p>
-                <p className="mt-2 text-xs leading-relaxed text-warm-500 md:text-[13px]">
+                <p className="mt-2 text-[11px] leading-relaxed text-warm-500 sm:text-xs md:text-[13px]">
                   {t.cookieAckBeforeLink}{" "}
                   <Link
                     href="/privacy"
@@ -147,17 +148,17 @@ export function CookieConsent() {
                   </Link>{" "}
                   {t.cookieAckAfterLink}
                 </p>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                   <button
                     type="button"
                     onClick={accept}
-                    className="rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-transform active:scale-[0.98] hover:opacity-95"
+                    className="min-h-[48px] w-full rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-transform active:scale-[0.98] hover:opacity-95 sm:min-h-0 sm:w-auto sm:py-2.5"
                   >
                     {t.cookieAccept}
                   </button>
                   <Link
                     href="/privacy"
-                    className="rounded-2xl px-3 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50"
+                    className="flex min-h-[44px] w-full items-center justify-center rounded-2xl px-3 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 active:bg-rose-100/80 sm:min-h-0 sm:w-auto sm:py-2"
                   >
                     {t.cookieLearnMore}
                   </Link>

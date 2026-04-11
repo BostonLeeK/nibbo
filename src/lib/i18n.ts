@@ -21,11 +21,13 @@ export const I18N = {
       subscriptions: "Підписки",
       shopping: "Покупки",
       feedback: "Зворотний зв'язок",
+      privacy: "Конфіденційність",
     },
     feedback: {
       metaTitle: "Зворотний зв'язок",
       pageTitle: "Зворотний зв'язок",
-      pageSubtitle: "Опишіть баг або поділіться ідеєю. Скріншоти для багів обробляються безпечно (PNG).",
+      pageSubtitle:
+        "Опишіть баг або поділіться ідеєю. Скріншоти для багів обробляються безпечно (PNG).",
       backDashboard: "До додатку",
       backLogin: "Вхід",
       tabBug: "Звіт про баг",
@@ -34,12 +36,15 @@ export const I18N = {
       titlePlaceholderBug: "Напр.: не зберігається задача після оновлення",
       titlePlaceholderSuggestion: "Напр.: додати темну тему",
       descriptionLabel: "Деталі",
-      descriptionPlaceholderBug: "Що очікували, що сталося, кроки для відтворення…",
-      descriptionPlaceholderSuggestion: "Опишіть ідею та чому вона буде корисною…",
+      descriptionPlaceholderBug:
+        "Що очікували, що сталося, кроки для відтворення…",
+      descriptionPlaceholderSuggestion:
+        "Опишіть ідею та чому вона буде корисною…",
       contactLabel: "Email для відповіді (необов'язково)",
       contactPlaceholder: "you@example.com",
       screenshotsLabel: "Скріншоти (до 3, PNG/JPEG/WebP, до 2 МБ кожен)",
-      screenshotsHint: "Файли перекодуються на сервері; оригінальні імена не використовуються.",
+      screenshotsHint:
+        "Файли перекодуються на сервері; оригінальні імена не використовуються.",
       honeypotLabel: "Веб-сайт",
       submit: "Надіслати",
       sending: "Надсилання…",
@@ -54,9 +59,11 @@ export const I18N = {
       cookieTitle: "Трохи про cookie та дані",
       cookieText:
         "Ми використовуємо невеликі cookie, щоб тримати вас залогіненим і запам’ятати мову. Контент, який ви додаєте в Nibbo (задачі, меню, нотатки тощо), зберігається як описано в політиці конфіденційності.",
-      cookieAckBeforeLink: "Натискаючи «Приймаю», ви підтверджуєте, що ознайомилися з",
+      cookieAckBeforeLink:
+        "Натискаючи «Приймаю», ви підтверджуєте, що ознайомилися з",
       cookieAckLinkLabel: "політикою конфіденційності",
-      cookieAckAfterLink: "і погоджуєтесь на обробку даних і cookie в межах, там описаних.",
+      cookieAckAfterLink:
+        "і погоджуєтесь на обробку даних і cookie в межах, там описаних.",
       cookieAccept: "Приймаю, гайда далі",
       cookieLearnMore: "Уся політика",
       privacyMetaTitle: "Політика конфіденційності та cookie",
@@ -92,7 +99,8 @@ export const I18N = {
       privacyChangesBody:
         "Ми можемо оновлювати цю сторінку; актуальна версія завжди тут. Якщо зміни суттєві, можемо показати нагадування в сервісі або попросити підтвердження знову.",
       privacyContactTitle: "Зв’язок",
-      privacyContactBody: "З радістю відповімо на запитання щодо даних і цієї політики.",
+      privacyContactBody:
+        "З радістю відповімо на запитання щодо даних і цієї політики.",
     },
     notFound: {
       metaTitle: "Сторінку не знайдено",
@@ -187,10 +195,12 @@ export const I18N = {
       },
       history: {
         title: "Літопис звершень",
-        subtitle: "Це історія вашого довгого шляху - крок за кроком, як у затишній RPG пригоді",
+        subtitle:
+          "Це історія вашого довгого шляху - крок за кроком, як у затишній RPG пригоді",
         backToBoard: "До дошок",
         emptyTitle: "Тут починається ваша історія",
-        emptyText: "Перші виконані задачі з'являться тут і стануть початком великого шляху вашої сім'ї",
+        emptyText:
+          "Перші виконані задачі з'являться тут і стануть початком великого шляху вашої сім'ї",
         completedAt: "Виконано о",
         dayLabel: "Хроніка дня",
         taskXp: "XP за задачу",
@@ -199,7 +209,8 @@ export const I18N = {
     },
     login: {
       subtitle: "Затишне місце для вашої родини",
-      footer: "Тут ви можете організувати свою родину та управляти домашніми справами",
+      footer:
+        "Тут ви можете організувати свою родину та управляти домашніми справами",
       feedbackLine: "Знайшли баг або є ідея?",
       feedbackLink: "Зворотний зв'язок",
       signingIn: "Входимо...",
@@ -232,7 +243,8 @@ export const I18N = {
       leaveFamily: "Вийти із сім’ї",
       leaveFamilyOwnerConfirm:
         "Вийти з цієї сім'ї? Якщо в сім'ї є інші учасники, власником стане перший з них. Тобі буде створено нову власну сім'ю.",
-      leaveFamilyMemberConfirm: "Вийти з цієї сім'ї? Тобі буде створено нову власну сім'ю.",
+      leaveFamilyMemberConfirm:
+        "Вийти з цієї сім'ї? Тобі буде створено нову власну сім'ю.",
       acceptInviteConfirm:
         "Прийняти запрошення до сім'ї «{familyName}»?\nТи вийдеш зі своєї поточної сім'ї. Якщо вона порожня, її буде видалено.",
     },
@@ -284,7 +296,8 @@ export const I18N = {
         "Прийняти запрошення до сім'ї «{familyName}»?\nТи вийдеш зі своєї поточної сім'ї. Якщо вона порожня, її буде видалено.",
       leaveFamilyOwnerConfirm:
         "Вийти із сім'ї? Якщо в сім'ї є інші учасники, власником стане перший з них. Тобі буде створено нову власну сім'ю.",
-      leaveFamilyMemberConfirm: "Вийти із сім'ї? Тобі буде створено нову власну сім'ю.",
+      leaveFamilyMemberConfirm:
+        "Вийти із сім'ї? Тобі буде створено нову власну сім'ю.",
     },
     shopping: {
       toastListCreated: "Список створено!",
@@ -355,7 +368,8 @@ export const I18N = {
       creditMonthlyAmount: "Сума на місяць (грн)",
       creditPaymentDayLabel: "День місяця для платежу",
       creditPaymentDayPlaceholder: "День виплати (1-31)",
-      creditPaymentDayHint: "Наприклад 11 означає, що платіж очікується 11-го числа кожного місяця",
+      creditPaymentDayHint:
+        "Наприклад 11 означає, що платіж очікується 11-го числа кожного місяця",
       paymentDay: "Виплата до",
       lastPayment: "Останній платіж",
       markPaidToday: "Сплачено сьогодні",
@@ -487,11 +501,13 @@ export const I18N = {
       achievementsTitle: "Досягнення",
       threshold: "Поріг",
       rankingTitle: "Рейтинг родин (XP)",
-      rankingSubtitle: "У таблиці тільки родини, які ввімкнули видимість в рейтингу.",
+      rankingSubtitle:
+        "У таблиці тільки родини, які ввімкнули видимість в рейтингу.",
       yourFamilyRankPrefix: "Ваша родина",
       yourFamilyRankMiddle: "на",
       yourFamilyRankSuffix: "місці з",
-      familyNotInRating: "Ваша родина не бере участь у рейтингу. Увімкніть опцію в розділі Родина.",
+      familyNotInRating:
+        "Ваша родина не бере участь у рейтингу. Увімкніть опцію в розділі Родина.",
       noFamilies: "Поки немає родин у рейтингу.",
       badges: {
         "first-steps": "Перша іскра",
@@ -527,7 +543,8 @@ export const I18N = {
       shareButton: "Сторіс у Instagram",
       shareAria: "Зберегти картинку для сторіс у Instagram про успіх з Nibby",
       sharePreparing: "Готуємо знімок…",
-      shareSaved: "Зображення збережено — відкрий Instagram і додай його з галереї",
+      shareSaved:
+        "Зображення збережено — відкрий Instagram і додай його з галереї",
       shareFailed: "Не вдалося зробити знімок",
       shareText: "Мій прогрес з Nibby у Nibbo",
       cardMotto: "Це мій {name}!",
@@ -633,7 +650,8 @@ export const I18N = {
       tabPlanner: "Тижневе меню",
       tabRecipes: "Рецепти",
       tabMarket: "Маркет рецептів",
-      collectIngredientsTitle: "Зібрати інгредієнти з усіх страв у тижневому плані",
+      collectIngredientsTitle:
+        "Зібрати інгредієнти з усіх страв у тижневому плані",
       ingredientsFromPlan: "Інгредієнти з плану",
       toShopping: "До покупок",
       newRecipe: "Новий рецепт",
@@ -681,40 +699,57 @@ export const I18N = {
       saveChanges: "Зберегти зміни",
       saveRecipe: "Зберегти рецепт",
       menuIngredientsTitle: "Інгредієнти з меню",
-      menuIngredientsHint: "Усі інгредієнти зі страв у поточному тижневому плані (без дублів)",
+      menuIngredientsHint:
+        "Усі інгредієнти зі страв у поточному тижневому плані (без дублів)",
       copyText: "Копіювати текст",
       toShoppingList: "У список «Покупки»",
       openShopping: "Відкрити розділ Покупки →",
-      deleteRecipeConfirm: "Видалити «{name}»? Клітинки в тижневому меню з цим рецептом стануть порожніми.",
+      deleteRecipeConfirm:
+        "Видалити «{name}»? Клітинки в тижневому меню з цим рецептом стануть порожніми.",
       mealTypes: {
         breakfast: "Сніданок",
         lunch: "Обід",
         dinner: "Вечеря",
         snack: "Перекус",
       },
-      categories: ["Сніданок", "Обід", "Вечеря", "Перекус", "Суп", "Салат", "Десерт"],
+      categories: [
+        "Сніданок",
+        "Обід",
+        "Вечеря",
+        "Перекус",
+        "Суп",
+        "Салат",
+        "Десерт",
+      ],
     },
     tour: {
       welcomeTitle: "Ласкаво просимо в Nibbo",
       welcomeContent:
         "Nibbo потрібен, щоб уся сім'я тримала домашні справи в одному місці: задачі, календар, меню, нотатки, витрати й покупки — все синхронно, прозоро і без хаосу.",
       homeTitle: "Головна сторінка",
-      homeContent: "Це твій домашній екран: прогрес, події, задачі та швидкі дії в одному місці.",
+      homeContent:
+        "Це твій домашній екран: прогрес, події, задачі та швидкі дії в одному місці.",
       familyTitle: "Сім'я та учасники",
-      familyContent: "У розділі «Родина» є керування сім'єю, ролями та налаштуваннями учасників.",
+      familyContent:
+        "У розділі «Родина» є керування сім'єю, ролями та налаштуваннями учасників.",
       xpTitle: "Досвід (XP)",
-      xpContent: "XP нараховується за виконані задачі. Чим більше закритих задач — тим вищий прогрес.",
+      xpContent:
+        "XP нараховується за виконані задачі. Чим більше закритих задач — тим вищий прогрес.",
       nibboTitle: "Ваш Nibbo",
       nibboContent:
         "Стан персонажа залежить від виконання задач: закриваєш більше задач — персонаж стає активнішим і сильнішим.",
       recipesTitle: "Рецепти",
-      recipesContent: "Тут починається планування меню: додавай рецепти, страви і формуй покупки з інгредієнтів.",
+      recipesContent:
+        "Тут починається планування меню: додавай рецепти, страви і формуй покупки з інгредієнтів.",
       calendarTitle: "Календар",
-      calendarContent: "Потрібен, щоб планувати події та важливі дати для всієї сім'ї і не пропускати дедлайни.",
+      calendarContent:
+        "Потрібен, щоб планувати події та важливі дати для всієї сім'ї і не пропускати дедлайни.",
       notesTitle: "Нотатки",
-      notesContent: "Зручно зберігати ідеї, списки та домашні замітки в категоріях, щоб усе було структуровано.",
+      notesContent:
+        "Зручно зберігати ідеї, списки та домашні замітки в категоріях, щоб усе було структуровано.",
       budgetTitle: "Витрати",
-      budgetContent: "Допомагає контролювати витрати сім'ї, бачити куди йдуть гроші та тримати бюджет під контролем.",
+      budgetContent:
+        "Допомагає контролювати витрати сім'ї, бачити куди йдуть гроші та тримати бюджет під контролем.",
       back: "Назад",
       close: "Закрити",
       done: "Готово",
@@ -739,11 +774,13 @@ export const I18N = {
       subscriptions: "Subscriptions",
       shopping: "Shopping",
       feedback: "Feedback",
+      privacy: "Privacy",
     },
     feedback: {
       metaTitle: "Feedback",
       pageTitle: "Feedback",
-      pageSubtitle: "Report a bug or share an idea. Bug screenshots are processed safely (PNG).",
+      pageSubtitle:
+        "Report a bug or share an idea. Bug screenshots are processed safely (PNG).",
       backDashboard: "Back to app",
       backLogin: "Sign in",
       tabBug: "Bug report",
@@ -752,12 +789,15 @@ export const I18N = {
       titlePlaceholderBug: "E.g. task not saved after refresh",
       titlePlaceholderSuggestion: "E.g. add dark mode",
       descriptionLabel: "Details",
-      descriptionPlaceholderBug: "What you expected, what happened, steps to reproduce…",
-      descriptionPlaceholderSuggestion: "Describe the idea and why it would help…",
+      descriptionPlaceholderBug:
+        "What you expected, what happened, steps to reproduce…",
+      descriptionPlaceholderSuggestion:
+        "Describe the idea and why it would help…",
       contactLabel: "Reply-to email (optional)",
       contactPlaceholder: "you@example.com",
       screenshotsLabel: "Screenshots (up to 3, PNG/JPEG/WebP, max 2 MB each)",
-      screenshotsHint: "Files are re-encoded on the server; original filenames are not used.",
+      screenshotsHint:
+        "Files are re-encoded on the server; original filenames are not used.",
       honeypotLabel: "Website",
       submit: "Send",
       sending: "Sending…",
@@ -772,9 +812,11 @@ export const I18N = {
       cookieTitle: "Cookies and your data",
       cookieText:
         "We use small cookies to keep you signed in and remember your language. Content you add in Nibbo (tasks, menu, notes, and so on) is stored as described in the privacy policy.",
-      cookieAckBeforeLink: "By tapping “Accept”, you confirm that you have read the",
+      cookieAckBeforeLink:
+        "By tapping “Accept”, you confirm that you have read the",
       cookieAckLinkLabel: "privacy policy",
-      cookieAckAfterLink: "and agree to the processing of data and cookies within what it describes.",
+      cookieAckAfterLink:
+        "and agree to the processing of data and cookies within what it describes.",
       cookieAccept: "Accept and continue",
       cookieLearnMore: "Full policy",
       privacyMetaTitle: "Privacy policy and cookies",
@@ -810,7 +852,8 @@ export const I18N = {
       privacyChangesBody:
         "We may update this page; the current version is always here. If changes are material, we may show a reminder in the product or ask you to confirm again.",
       privacyContactTitle: "Contact",
-      privacyContactBody: "We are glad to answer questions about data and this policy.",
+      privacyContactBody:
+        "We are glad to answer questions about data and this policy.",
     },
     notFound: {
       metaTitle: "Page not found",
@@ -905,10 +948,12 @@ export const I18N = {
       },
       history: {
         title: "Chronicle of achievements",
-        subtitle: "This is the story of your long journey - step by step, like in a cozy RPG adventure",
+        subtitle:
+          "This is the story of your long journey - step by step, like in a cozy RPG adventure",
         backToBoard: "Back to boards",
         emptyTitle: "Your story begins here",
-        emptyText: "Your first completed tasks will appear here and become the beginning of your family journey",
+        emptyText:
+          "Your first completed tasks will appear here and become the beginning of your family journey",
         completedAt: "Completed at",
         dayLabel: "Daily chronicle",
         taskXp: "XP per task",
@@ -950,9 +995,10 @@ export const I18N = {
       leaveFamily: "Leave family",
       leaveFamilyOwnerConfirm:
         "Leave this family? If there are other members, ownership will be transferred to the first one. A new personal family will be created for you.",
-      leaveFamilyMemberConfirm: "Leave this family? A new personal family will be created for you.",
+      leaveFamilyMemberConfirm:
+        "Leave this family? A new personal family will be created for you.",
       acceptInviteConfirm:
-        "Accept invitation to family \"{familyName}\"?\nYou will leave your current family. If it's empty, it will be deleted.",
+        'Accept invitation to family "{familyName}"?\nYou will leave your current family. If it\'s empty, it will be deleted.',
     },
     family: {
       title: "Family management",
@@ -999,10 +1045,11 @@ export const I18N = {
       toastLeftFamily: "You left the family",
       toastLeaveError: "Failed to leave family",
       acceptInviteConfirm:
-        "Accept invitation to family \"{familyName}\"?\nYou will leave your current family. If it's empty, it will be deleted.",
+        'Accept invitation to family "{familyName}"?\nYou will leave your current family. If it\'s empty, it will be deleted.',
       leaveFamilyOwnerConfirm:
         "Leave family? If there are other members, ownership will transfer to the first one. A new personal family will be created for you.",
-      leaveFamilyMemberConfirm: "Leave family? A new personal family will be created for you.",
+      leaveFamilyMemberConfirm:
+        "Leave family? A new personal family will be created for you.",
     },
     shopping: {
       toastListCreated: "List created!",
@@ -1073,7 +1120,8 @@ export const I18N = {
       creditMonthlyAmount: "Monthly amount (UAH)",
       creditPaymentDayLabel: "Payment day of month",
       creditPaymentDayPlaceholder: "Payment day (1-31)",
-      creditPaymentDayHint: "For example, 11 means payment is expected on the 11th of each month",
+      creditPaymentDayHint:
+        "For example, 11 means payment is expected on the 11th of each month",
       paymentDay: "Payment day",
       lastPayment: "Last payment",
       markPaidToday: "Mark paid today",
@@ -1197,7 +1245,8 @@ export const I18N = {
     },
     achievements: {
       title: "Achievements",
-      subtitle: "Earn XP, unlock achievements, and push your family to the top of the ranking.",
+      subtitle:
+        "Earn XP, unlock achievements, and push your family to the top of the ranking.",
       next: "Next",
       allUnlocked: "All achievements unlocked",
       unlocked: "UNLOCKED",
@@ -1205,11 +1254,13 @@ export const I18N = {
       achievementsTitle: "Achievements",
       threshold: "Threshold",
       rankingTitle: "Family ranking (XP)",
-      rankingSubtitle: "Only families that enabled leaderboard visibility are shown.",
+      rankingSubtitle:
+        "Only families that enabled leaderboard visibility are shown.",
       yourFamilyRankPrefix: "Your family",
       yourFamilyRankMiddle: "is",
       yourFamilyRankSuffix: "place with",
-      familyNotInRating: "Your family is not in the leaderboard. Enable the option in Family section.",
+      familyNotInRating:
+        "Your family is not in the leaderboard. Enable the option in Family section.",
       noFamilies: "No families in leaderboard yet.",
       badges: {
         "first-steps": "First spark",
@@ -1351,7 +1402,8 @@ export const I18N = {
       tabPlanner: "Weekly menu",
       tabRecipes: "Recipes",
       tabMarket: "Recipe marketplace",
-      collectIngredientsTitle: "Collect ingredients from all dishes in weekly plan",
+      collectIngredientsTitle:
+        "Collect ingredients from all dishes in weekly plan",
       ingredientsFromPlan: "Ingredients from plan",
       toShopping: "To shopping",
       newRecipe: "New recipe",
@@ -1399,39 +1451,57 @@ export const I18N = {
       saveChanges: "Save changes",
       saveRecipe: "Save recipe",
       menuIngredientsTitle: "Ingredients from menu",
-      menuIngredientsHint: "All ingredients from dishes in current weekly plan (without duplicates)",
+      menuIngredientsHint:
+        "All ingredients from dishes in current weekly plan (without duplicates)",
       copyText: "Copy text",
       toShoppingList: "To Shopping list",
       openShopping: "Open Shopping section →",
-      deleteRecipeConfirm: "Delete \"{name}\"? Weekly menu cells with this recipe will become empty.",
+      deleteRecipeConfirm:
+        'Delete "{name}"? Weekly menu cells with this recipe will become empty.',
       mealTypes: {
         breakfast: "Breakfast",
         lunch: "Lunch",
         dinner: "Dinner",
         snack: "Snack",
       },
-      categories: ["Breakfast", "Lunch", "Dinner", "Snack", "Soup", "Salad", "Dessert"],
+      categories: [
+        "Breakfast",
+        "Lunch",
+        "Dinner",
+        "Snack",
+        "Soup",
+        "Salad",
+        "Dessert",
+      ],
     },
     tour: {
       welcomeTitle: "Welcome to Nibbo",
       welcomeContent:
         "Nibbo helps your whole family keep home life in one place: tasks, calendar, menu, notes, expenses, and shopping — synced, clear, and organized.",
       homeTitle: "Home page",
-      homeContent: "This is your home screen: progress, events, tasks, and quick actions in one place.",
+      homeContent:
+        "This is your home screen: progress, events, tasks, and quick actions in one place.",
       familyTitle: "Family and members",
-      familyContent: "In the Family section you can manage your family, member roles, and participant settings.",
+      familyContent:
+        "In the Family section you can manage your family, member roles, and participant settings.",
       xpTitle: "Experience (XP)",
-      xpContent: "XP is earned by completing tasks. The more tasks you finish, the more progress you get.",
+      xpContent:
+        "XP is earned by completing tasks. The more tasks you finish, the more progress you get.",
       nibboTitle: "Your Nibbo",
-      nibboContent: "The 3D character reacts to completed tasks: more completed tasks means a stronger and more active Nibbo.",
+      nibboContent:
+        "The 3D character reacts to completed tasks: more completed tasks means a stronger and more active Nibbo.",
       recipesTitle: "Recipes",
-      recipesContent: "This is where menu planning starts: add recipes, plan meals, and build shopping items from ingredients.",
+      recipesContent:
+        "This is where menu planning starts: add recipes, plan meals, and build shopping items from ingredients.",
       calendarTitle: "Calendar",
-      calendarContent: "Use it to plan family events and key dates so nothing important is missed.",
+      calendarContent:
+        "Use it to plan family events and key dates so nothing important is missed.",
       notesTitle: "Notes",
-      notesContent: "Keep ideas, lists, and home notes organized in categories.",
+      notesContent:
+        "Keep ideas, lists, and home notes organized in categories.",
       budgetTitle: "Expenses",
-      budgetContent: "Track family spending, see where money goes, and keep your budget under control.",
+      budgetContent:
+        "Track family spending, see where money goes, and keep your budget under control.",
       back: "Back",
       close: "Close",
       done: "Done",

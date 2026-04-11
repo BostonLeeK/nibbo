@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { CozyPageBackground } from "@/components/shared/CozyPageBackground";
-import { I18N } from "@/lib/i18n";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
+import { I18N } from "@/lib/i18n";
+import Link from "next/link";
 
 export function PrivacyContent() {
   const { language } = useAppLanguage();
@@ -34,19 +34,33 @@ export function PrivacyContent() {
             ← {nav.dashboard}
           </Link>
           <article className="mt-6 rounded-3xl border border-warm-100 bg-white p-6 shadow-cozy md:p-10">
-            <h1 className="font-heading text-2xl font-bold text-warm-800 md:text-3xl">{t.privacyHeading}</h1>
-            <p className="mt-2 text-xs font-medium text-warm-400">{t.privacyUpdated}</p>
-            <p className="mt-4 text-sm leading-relaxed text-warm-600 md:text-[15px]">{t.privacyLead}</p>
+            <h1 className="font-heading text-2xl font-bold text-warm-800 md:text-3xl">
+              {t.privacyHeading}
+            </h1>
+            <p className="mt-2 text-xs font-medium text-warm-400">
+              {t.privacyUpdated}
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-warm-600 md:text-[15px]">
+              {t.privacyLead}
+            </p>
             <div className="mt-10 space-y-10">
               {blocks.map((b) => (
                 <section key={b.title}>
-                  <h2 className="font-heading text-lg font-bold text-warm-800">{b.title}</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-warm-600 md:text-[15px]">{b.body}</p>
+                  <h2 className="font-heading text-lg font-bold text-warm-800">
+                    {b.title}
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-warm-600 md:text-[15px]">
+                    {b.body}
+                  </p>
                 </section>
               ))}
               <section>
-                <h2 className="font-heading text-lg font-bold text-warm-800">{t.privacyContactTitle}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-warm-600 md:text-[15px]">{t.privacyContactBody}</p>
+                <h2 className="font-heading text-lg font-bold text-warm-800">
+                  {t.privacyContactTitle}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-warm-600 md:text-[15px]">
+                  {t.privacyContactBody}
+                </p>
                 <p className="mt-3">
                   <Link
                     href="/feedback"
