@@ -20,7 +20,7 @@ type Invite = { id: string; email: string; createdAt: string };
 type IncomingInvite = { id: string; email: string; createdAt: string; familyId: string; family: { name: string } };
 
 type Payload = {
-  family: { id: string; name: string; shareInLeaderboard: boolean } | null;
+  family: { id: string; name: string; shareInLeaderboard: boolean; shareWatchingFeed: boolean } | null;
   members: Member[];
   invitations: Invite[];
   incomingInvitations: IncomingInvite[];
@@ -37,6 +37,7 @@ export default function FamilyManagement() {
   const [busy, setBusy] = useState(false);
   const [familyName, setFamilyName] = useState("");
   const [shareInLeaderboard, setShareInLeaderboard] = useState(false);
+  const [shareWatchingFeed, setShareWatchingFeed] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -47,6 +48,7 @@ export default function FamilyManagement() {
       setData(payload);
       setFamilyName(payload.family?.name || "");
       setShareInLeaderboard(Boolean(payload.family?.shareInLeaderboard));
+      setShareWatchingFeed(Boolean(payload.family?.shareWatchingFeed));
     } catch {
       toast.error(t.toastLoadError);
     } finally {
@@ -172,6 +174,7 @@ export default function FamilyManagement() {
           type: "settings",
           name: familyName.trim(),
           shareInLeaderboard,
+          shareWatchingFeed,
         }),
       });
       if (!res.ok) {
@@ -242,6 +245,16 @@ export default function FamilyManagement() {
               className="accent-rose-500"
             />
             {t.leaderboardShare}
+          </label>
+          <label className="flex items-center gap-2 text-sm text-warm-700">
+            <input
+              type="checkbox"
+              checked={shareWatchingFeed}
+              onChange={(e) => setShareWatchingFeed(e.target.checked)}
+              disabled={!owner || busy}
+              className="accent-rose-500"
+            />
+            {t.watchingFeedShare}
           </label>
           <button
             type="button"

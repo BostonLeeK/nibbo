@@ -22,7 +22,7 @@ export async function GET() {
 
   const family = await prisma.family.findUnique({
     where: { id: familyId },
-    select: { id: true, name: true, shareInLeaderboard: true },
+    select: { id: true, name: true, shareInLeaderboard: true, shareWatchingFeed: true },
   });
 
   const me = await prisma.user.findUnique({
@@ -265,10 +265,11 @@ export async function PATCH(req: NextRequest) {
     if (!name) return NextResponse.json({ error: "Family name required" }, { status: 400 });
     if (name.length > 64) return NextResponse.json({ error: "Family name is too long" }, { status: 400 });
     const shareInLeaderboard = Boolean(body.shareInLeaderboard);
+    const shareWatchingFeed = Boolean(body.shareWatchingFeed);
     const family = await prisma.family.update({
       where: { id: familyId },
-      data: { name, shareInLeaderboard },
-      select: { id: true, name: true, shareInLeaderboard: true },
+      data: { name, shareInLeaderboard, shareWatchingFeed },
+      select: { id: true, name: true, shareInLeaderboard: true, shareWatchingFeed: true },
     });
     return NextResponse.json({ success: true, family });
   }

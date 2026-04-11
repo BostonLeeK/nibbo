@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Upload } from "lucide-react";
+import { Copy, Upload } from "lucide-react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { USER_COLORS, USER_EMOJIS, normalizeProfileEmoji } from "@/lib/utils";
@@ -47,6 +47,11 @@ export default function ProfileSettingsForm({ initialUser }: ProfileSettingsForm
   const [deleteSuccessorId, setDeleteSuccessorId] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [mcpTokens, setMcpTokens] = useState<{ id: string; createdAt: string }[]>([]);
+  const [mcpBusy, setMcpBusy] = useState(false);
+  const [mcpShownSecret, setMcpShownSecret] = useState<string | null>(null);
+  const [mcpErr, setMcpErr] = useState<string | null>(null);
+  const [mcpCopied, setMcpCopied] = useState(false);
 
   const successorCandidates = useMemo(
     () => familyMembers.filter((m) => m.id !== user.id),
@@ -99,6 +104,74 @@ export default function ProfileSettingsForm({ initialUser }: ProfileSettingsForm
   useEffect(() => {
     void loadFamily();
   }, [user.id, loadFamily]);
+
+  const loadMcpTokens = useCallback(async () => {
+    const pt = I18N[language].profile;
+    setMcpBusy(true);
+    setMcpErr(null);
+    try {
+      const res = await fetch("/api/users/me/mcp-tokens");
+      if (!res.ok) {
+        setMcpErr(pt.mcpLoadError);
+        return;
+      }
+      const data = (await res.json()) as { tokens?: { id: string; createdAt: string }[] };
+      setMcpTokens(data.tokens ?? []);
+    } finally {
+      setMcpBusy(false);
+    }
+  }, [language]);
+
+  useEffect(() => {
+    void loadMcpTokens();
+  }, [loadMcpTokens, user.id]);
+
+  const createMcpToken = async () => {
+    setMcpBusy(true);
+    setMcpErr(null);
+    setMcpShownSecret(null);
+    setMcpCopied(false);
+    try {
+      const res = await fetch("/api/users/me/mcp-tokens", { method: "POST" });
+      if (!res.ok) {
+        setMcpErr(t.mcpCreateError);
+        return;
+      }
+      const data = (await res.json()) as { token?: string };
+      if (data.token) setMcpShownSecret(data.token);
+      await loadMcpTokens();
+    } finally {
+      setMcpBusy(false);
+    }
+  };
+
+  const revokeMcpToken = async (id: string) => {
+    if (!window.confirm(t.mcpRevokeConfirm)) return;
+    setMcpBusy(true);
+    setMcpErr(null);
+    try {
+      const res = await fetch(`/api/users/me/mcp-tokens/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setMcpErr(t.mcpRevokeError);
+        return;
+      }
+      await loadMcpTokens();
+    } finally {
+      setMcpBusy(false);
+    }
+  };
+
+  const copyMcpSecret = async (secret: string) => {
+    try {
+      await navigator.clipboard.writeText(secret);
+      setMcpCopied(true);
+      setTimeout(() => setMcpCopied(false), 2000);
+    } catch {
+      setMcpErr(t.mcpCopyError);
+    }
+  };
+
+  const dateLocale = language === "uk" ? "uk-UA" : "en-US";
 
   const save = async () => {
     setBusy(true);
@@ -398,6 +471,75 @@ export default function ProfileSettingsForm({ initialUser }: ProfileSettingsForm
         ) : (
           <div className="h-8 rounded-xl border border-warm-100 bg-warm-50" />
         )}
+      </div>
+
+      <div className="space-y-3 rounded-3xl border border-warm-100 bg-white/80 p-5">
+        <h3 className="text-sm font-semibold text-warm-800">{t.mcpSectionTitle}</h3>
+        <p className="text-sm text-warm-500">{t.mcpSectionHint}</p>
+        {mcpErr && <p className="text-sm text-rose-600">{mcpErr}</p>}
+        {mcpShownSecret && (
+          <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50/80 p-3 dark:border-amber-800/60 dark:bg-amber-950/30">
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-100">{t.mcpCreatedOnceHint}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <code className="max-w-full flex-1 break-all rounded-lg bg-white/90 px-2 py-1.5 text-xs text-warm-900 dark:bg-warm-900 dark:text-warm-100">
+                {mcpShownSecret}
+              </code>
+              <button
+                type="button"
+                onClick={() => void copyMcpSecret(mcpShownSecret)}
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-warm-900 dark:text-amber-100 dark:hover:bg-warm-800"
+              >
+                <Copy size={14} aria-hidden />
+                {mcpCopied ? t.mcpCopied : t.mcpCopy}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMcpShownSecret(null)}
+                className="text-xs text-warm-600 underline dark:text-warm-400"
+              >
+                {t.mcpTokenAck}
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={mcpBusy}
+            onClick={() => void createMcpToken()}
+            className="rounded-xl bg-lavender-500 px-4 py-2 text-sm text-white hover:bg-lavender-600 disabled:opacity-60"
+          >
+            {t.mcpCreateButton}
+          </button>
+        </div>
+        <ul className="space-y-2">
+          {mcpTokens.length === 0 && !mcpBusy ? (
+            <li className="text-sm text-warm-400">{t.mcpNoTokens}</li>
+          ) : (
+            mcpTokens.map((tok) => (
+              <li
+                key={tok.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-warm-50 px-3 py-2 dark:bg-warm-900/50"
+              >
+                <span className="text-xs text-warm-600 dark:text-warm-300">
+                  {t.mcpKeyLabel} · {tok.id.slice(0, 8)}… ·{" "}
+                  {new Date(tok.createdAt).toLocaleString(dateLocale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </span>
+                <button
+                  type="button"
+                  disabled={mcpBusy}
+                  onClick={() => void revokeMcpToken(tok.id)}
+                  className="rounded-lg border border-warm-200 px-2 py-1 text-xs text-warm-700 hover:bg-white dark:border-warm-600 dark:text-warm-200 dark:hover:bg-warm-800"
+                >
+                  {t.mcpRevoke}
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
       </div>
 
       <div className="space-y-3 rounded-3xl border border-warm-100 bg-white/80 p-5">

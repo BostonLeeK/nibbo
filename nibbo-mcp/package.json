@@ -1,0 +1,30 @@
+{
+  "name": "nibbo-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Read-only Model Context Protocol server for Nibbo",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "nibbo-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.2"
+  }
+}

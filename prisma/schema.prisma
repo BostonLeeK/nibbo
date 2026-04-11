@@ -64,8 +64,21 @@ model User {
   ownedSubscriptions FamilySubscription[] @relation("SubscriptionOwner")
   subscriptionMembers FamilySubscriptionMember[]
   shoppingItems ShoppingItem[]
+  watchItems    WatchItem[]
   sentInvites   FamilyInvitation[] @relation("FamilyInviteSender")
   adminProfile  Admin?
+  mcpReadTokens McpReadToken[]
+}
+
+model McpReadToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([userId, revokedAt])
 }
 
 model VerificationToken {
@@ -80,6 +93,7 @@ model Family {
   id          String   @id @default(cuid())
   name        String
   shareInLeaderboard Boolean @default(false)
+  shareWatchingFeed Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -97,6 +111,7 @@ model Family {
   credits           Credit[]
   subscriptions     FamilySubscription[]
   shoppingLists     ShoppingList[]
+  watchItems          WatchItem[]
 }
 
 model FamilyInvitation {
@@ -481,4 +496,40 @@ model ShoppingItem {
 
   list    ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
   addedBy User         @relation(fields: [addedById], references: [id])
+}
+
+enum WatchMediaType {
+  MOVIE
+  TV
+}
+
+enum WatchStatus {
+  WATCHING
+  PAUSED
+  FINISHED
+  DROPPED
+}
+
+model WatchItem {
+  id          String         @id @default(cuid())
+  familyId    String
+  userId      String
+  provider    String         @default("tmdb")
+  externalId  String
+  mediaType   WatchMediaType
+  title       String
+  posterPath  String?
+  status      WatchStatus    @default(WATCHING)
+  season      Int?
+  startedAt   DateTime       @default(now())
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, provider, externalId])
+  @@index([familyId, status])
+  @@index([familyId, updatedAt])
 }

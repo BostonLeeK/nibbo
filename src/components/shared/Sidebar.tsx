@@ -14,6 +14,7 @@ import {
   NotebookPen,
   Repeat2,
   ShoppingCart,
+  Clapperboard,
   SquareKanban,
   Users,
   UtensilsCrossed,
@@ -40,6 +41,7 @@ const mainNavItems = [
   { href: "/budget", key: "budget", Icon: CreditCard },
   { href: "/subscriptions", key: "subscriptions", Icon: Repeat2 },
   { href: "/shopping", key: "shopping", Icon: ShoppingCart },
+  { href: "/watch", key: "watch", Icon: Clapperboard },
 ] as const;
 
 const bottomNavItems = [
