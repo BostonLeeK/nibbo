@@ -25,11 +25,11 @@ export function formatTime(date: Date | string): string {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("uk-UA", {
-    style: "currency",
-    currency: "UAH",
+  const formatted = new Intl.NumberFormat("uk-UA", {
     minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(amount);
+  return `${formatted}\u00a0₴`;
 }
 
 export function dashboardHeaderLabels(now: Date = new Date()) {
@@ -71,6 +71,112 @@ export const USER_COLORS = [
   "#38bdf8", "#818cf8", "#c084fc", "#f472b6",
 ];
 
-export const USER_EMOJIS = [
+export const DEFAULT_USER_EMOJI = "🌸";
+
+const LEGACY_EMOJI_TOKENS = new Set([
   "user",
+  "board",
+  "meal",
+  "note",
+  "category",
+  "event",
+  "shopping",
+]);
+
+export function normalizeProfileEmoji(value: string | null | undefined) {
+  if (!value || LEGACY_EMOJI_TOKENS.has(value)) return DEFAULT_USER_EMOJI;
+  return value;
+}
+
+export const USER_EMOJIS = [
+  "🌸",
+  "🍀",
+  "⭐",
+  "🌙",
+  "🎀",
+  "🦋",
+  "🌺",
+  "✨",
+  "🐻",
+  "🐱",
+  "🐶",
+  "🦊",
+  "🐰",
+  "🐼",
+  "🦁",
+  "☕",
+  "🍰",
+  "🎮",
+  "📚",
+  "🎧",
+  "💻",
+  "🏠",
+  "❤️",
+  "🌈",
+  "🎈",
+  "🍓",
+  "🥐",
+  "🌻",
+  "🪴",
+  "🎨",
+  "✏️",
+];
+
+export const DEFAULT_NOTE_EMOJI = "📝";
+
+export function normalizeNoteEmoji(value: string | null | undefined) {
+  if (!value || value === "note") return DEFAULT_NOTE_EMOJI;
+  return value;
+}
+
+export const NOTE_EMOJIS = [
+  "📝",
+  "📌",
+  "💡",
+  "✅",
+  "📋",
+  "📅",
+  "⏰",
+  "❤️",
+  "🌟",
+  "🔔",
+  "📎",
+  "✏️",
+  "📖",
+  "☕",
+  "🏠",
+  "💭",
+  "📣",
+  "✨",
+  "🌈",
+  "🎯",
+  "📦",
+  "🔖",
+  "🗂️",
+];
+
+export const DEFAULT_NOTE_CATEGORY_EMOJI = "📁";
+
+export function normalizeNoteCategoryEmoji(value: string | null | undefined) {
+  if (!value || value === "category") return DEFAULT_NOTE_CATEGORY_EMOJI;
+  return value;
+}
+
+export const NOTE_CATEGORY_EMOJIS = [
+  "📁",
+  "📂",
+  "🏷️",
+  "💼",
+  "📚",
+  "🎨",
+  "📦",
+  "🗂️",
+  "⭐",
+  "💡",
+  "🌸",
+  "✨",
+  "🔖",
+  "📌",
+  "🎯",
+  "🏠",
 ];

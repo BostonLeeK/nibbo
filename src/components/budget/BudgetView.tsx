@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { formatInTimeZone } from "date-fns-tz";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Circle, Landmark, Pencil, Plus, Trash2, Wallet, X, TrendingDown, TrendingUp } from "lucide-react";
+import { kyivInstantAsCalendarYmd, kyivShiftCalendarDays } from "@/lib/kyiv-range";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
@@ -27,10 +29,15 @@ interface Credit {
 
 const CAT_EMOJIS = ["category"];
 const CAT_COLORS = ["#4ade80", "#38bdf8", "#fb923c", "#f43f5e", "#818cf8", "#c084fc", "#f472b6", "#facc15"];
+const KYIV_TZ = "Europe/Kyiv";
 
 export default function BudgetView({
   initialCategories,
   initialExpenses,
+  expensesMonthTotal,
+  expensesMonthCount,
+  initialCategorySpent,
+  initialExpenseWindowStartYmd,
   initialIncomes,
   initialCredits,
   monthlySubscriptionsTotal,
@@ -41,6 +48,10 @@ export default function BudgetView({
 }: {
   initialCategories: Category[];
   initialExpenses: Expense[];
+  expensesMonthTotal: number;
+  expensesMonthCount: number;
+  initialCategorySpent: Record<string, number>;
+  initialExpenseWindowStartYmd: string;
   initialIncomes: Income[];
   initialCredits: Credit[];
   monthlySubscriptionsTotal: number;
@@ -54,6 +65,16 @@ export default function BudgetView({
   const [categories, setCategories] = useState(initialCategories);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [incomes, setIncomes] = useState(initialIncomes);
+  const [monthExpenseTotal, setMonthExpenseTotal] = useState(expensesMonthTotal);
+  const [monthExpenseTxCount, setMonthExpenseTxCount] = useState(expensesMonthCount);
+  const [categorySpent, setCategorySpent] = useState<Record<string, number>>(initialCategorySpent);
+  const [expenseOlderLoading, setExpenseOlderLoading] = useState(false);
+  const [expenseHasMoreOlder, setExpenseHasMoreOlder] = useState(true);
+  const [nextExpenseOlderUntilYmd, setNextExpenseOlderUntilYmd] = useState(() =>
+    kyivShiftCalendarDays(initialExpenseWindowStartYmd, 1)
+  );
+  const expenseOlderBusyRef = useRef(false);
+  const expenseSentinelRef = useRef<HTMLDivElement | null>(null);
   const [credits, setCredits] = useState(initialCredits);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddIncome, setShowAddIncome] = useState(false);
@@ -83,11 +104,33 @@ export default function BudgetView({
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }, []);
 
-  const totalExpenseSpent = expenses.reduce((s, e) => s + e.amount, 0);
+  const expenseDayGroups = useMemo(() => {
+    const map = new Map<string, Expense[]>();
+    for (const row of expenses) {
+      const key = kyivInstantAsCalendarYmd(new Date(row.date));
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(row);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+    const keys = [...map.keys()].sort((a, b) => b.localeCompare(a));
+    return keys.map((ymd) => {
+      const items = map.get(ymd)!;
+      const dayTotal = items.reduce((s, x) => s + x.amount, 0);
+      return { ymd, items, dayTotal };
+    });
+  }, [expenses]);
+
+  const sortedIncomes = useMemo(
+    () => [...incomes].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [incomes]
+  );
+
+  const totalIncome = useMemo(() => incomes.reduce((s, i) => s + i.amount, 0), [incomes]);
   const activeCredits = credits.filter((credit) => credit.status === "ACTIVE");
   const creditsAutoTotal = activeCredits.reduce((sum, credit) => sum + credit.monthlyAmount, 0);
-  const totalSpent = totalExpenseSpent + monthlySubscriptionsTotal + creditsAutoTotal;
-  const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
+  const totalSpent = monthExpenseTotal + monthlySubscriptionsTotal + creditsAutoTotal;
   const balance = totalIncome - totalSpent;
   const expectedBalance = (plannedIncome ?? 0) - totalSpent;
   const planDelta = plannedIncome !== null ? totalIncome - plannedIncome : null;
@@ -111,7 +154,7 @@ export default function BudgetView({
 
   const byCategory = categories.map((cat) => ({
     ...cat,
-    spent: expenses.filter((e) => e.category?.id === cat.id).reduce((s, e) => s + e.amount, 0),
+    spent: categorySpent[cat.id] ?? 0,
   }));
   const bankLabels: Record<Credit["bank"], string> = {
     MONOBANK: t.creditBankMonobank,
@@ -148,12 +191,13 @@ export default function BudgetView({
 
   const handleAddExpense = async () => {
     if (!newExpense.title || !newExpense.amount) return;
+    const amount = parseFloat(newExpense.amount);
     const res = await fetch("/api/budget", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: newExpense.title,
-        amount: parseFloat(newExpense.amount),
+        amount,
         categoryId: newExpense.categoryId || undefined,
         note: newExpense.note,
         date: new Date(newExpense.date).toISOString(),
@@ -161,26 +205,50 @@ export default function BudgetView({
     });
     const expense = await res.json();
     setExpenses((prev) => [expense, ...prev]);
+    const expKey = formatInTimeZone(new Date(expense.date), KYIV_TZ, "yyyy-MM");
+    const nowKey = formatInTimeZone(new Date(), KYIV_TZ, "yyyy-MM");
+    if (expKey === nowKey) {
+      setMonthExpenseTotal((x) => x + amount);
+      setMonthExpenseTxCount((c) => c + 1);
+      const cid = expense.category?.id ?? newExpense.categoryId;
+      if (cid) {
+        setCategorySpent((prev) => ({ ...prev, [cid]: (prev[cid] ?? 0) + amount }));
+      }
+    }
     setShowAddExpense(false);
     setNewExpense({ title: "", amount: "", categoryId: "", note: "", date: new Date().toISOString().split("T")[0] });
     toast.success(t.toastExpenseAdded);
   };
 
   const handleDeleteExpense = async (id: string) => {
+    const row = expenses.find((e) => e.id === id);
     await fetch(`/api/budget/${id}`, { method: "DELETE" });
     setExpenses((prev) => prev.filter((e) => e.id !== id));
+    if (row) {
+      const ek = formatInTimeZone(new Date(row.date), KYIV_TZ, "yyyy-MM");
+      const nk = formatInTimeZone(new Date(), KYIV_TZ, "yyyy-MM");
+      if (ek === nk) {
+        setMonthExpenseTotal((x) => x - row.amount);
+        setMonthExpenseTxCount((c) => Math.max(0, c - 1));
+        const cid = row.category?.id;
+        if (cid) {
+          setCategorySpent((prev) => ({ ...prev, [cid]: Math.max(0, (prev[cid] ?? 0) - row.amount) }));
+        }
+      }
+    }
     toast.success(t.toastDeleted);
   };
 
   const handleAddIncome = async () => {
     if (!newIncome.title || !newIncome.amount) return;
+    const amount = parseFloat(newIncome.amount);
     const res = await fetch("/api/budget", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: "income",
         title: newIncome.title,
-        amount: parseFloat(newIncome.amount),
+        amount,
         note: newIncome.note,
         date: new Date(newIncome.date).toISOString(),
       }),
@@ -197,6 +265,54 @@ export default function BudgetView({
     setIncomes((prev) => prev.filter((i) => i.id !== id));
     toast.success(t.toastDeleted);
   };
+
+  const loadOlderExpenses = useCallback(async () => {
+    if (expenseOlderBusyRef.current || !expenseHasMoreOlder) return;
+    expenseOlderBusyRef.current = true;
+    setExpenseOlderLoading(true);
+    try {
+      const res = await fetch(
+        `/api/budget/expenses?until=${encodeURIComponent(nextExpenseOlderUntilYmd)}&days=7`
+      );
+      if (!res.ok) throw new Error("fail");
+      const data = (await res.json()) as {
+        expenses: Expense[];
+        range: { startYmd: string; until: string };
+      };
+      if (data.expenses.length === 0) {
+        setExpenseHasMoreOlder(false);
+        return;
+      }
+      setExpenses((prev) => {
+        const ids = new Set(prev.map((x) => x.id));
+        const merged = [...prev];
+        for (const ex of data.expenses) {
+          if (!ids.has(ex.id)) merged.push(ex);
+        }
+        merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return merged;
+      });
+      setNextExpenseOlderUntilYmd(kyivShiftCalendarDays(data.range.startYmd, 1));
+    } catch {
+      toast.error(t.expensesLoadError);
+    } finally {
+      expenseOlderBusyRef.current = false;
+      setExpenseOlderLoading(false);
+    }
+  }, [expenseHasMoreOlder, nextExpenseOlderUntilYmd, t.expensesLoadError]);
+
+  useEffect(() => {
+    const el = expenseSentinelRef.current;
+    if (!el || !expenseHasMoreOlder) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) void loadOlderExpenses();
+      },
+      { root: null, rootMargin: "160px", threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [expenseHasMoreOlder, loadOlderExpenses]);
 
   const handleSaveCredit = async () => {
     if (!newCredit.title || !newCredit.monthlyAmount || !newCredit.paymentDay) return;
@@ -379,7 +495,7 @@ export default function BudgetView({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
             <div className="bg-white/20 rounded-2xl px-4 py-2">
               <p className="text-xs text-sage-100">{t.transactions}</p>
-              <p className="font-bold">{expenses.length}</p>
+              <p className="font-bold">{monthExpenseTxCount}</p>
             </div>
             <div className="bg-white/20 rounded-2xl px-4 py-2">
               <p className="text-xs text-sage-100">{t.incomeThisMonth}</p>
@@ -599,18 +715,25 @@ export default function BudgetView({
         <div className="bg-white/70 rounded-3xl shadow-cozy border border-warm-100 overflow-hidden mb-4">
           <div className="px-4 py-3 border-b border-warm-100 bg-sky-50/70">
             <h4 className="font-semibold text-warm-800">{t.monthIncomes}</h4>
+            <p className="text-[11px] text-warm-500 mt-1">{t.incomeMonthHint}</p>
           </div>
-          {incomes.length === 0 ? (
+          {sortedIncomes.length === 0 ? (
             <div className="text-center py-10 text-warm-400">
               <div className="mb-3 flex justify-center"><Wallet className="h-9 w-9 text-warm-400" /></div>
               <p>{t.emptyIncomes}</p>
             </div>
           ) : (
             <div className="divide-y divide-warm-50">
-              {incomes.map((income) => (
-                <motion.div key={income.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 hover:bg-sky-50/30 transition-colors group">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-sky-100/80"><Wallet size={18} className="text-sky-700" /></div>
+              {sortedIncomes.map((income) => (
+                <motion.div
+                  key={income.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 hover:bg-sky-50/30 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-sky-100/80 shrink-0">
+                    <Wallet size={18} className="text-sky-700" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-warm-800 text-sm">{income.title}</p>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -619,10 +742,15 @@ export default function BudgetView({
                       <span className="text-xs text-warm-400">{income.user.name}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-sm md:text-base text-sky-700">+{formatCurrency(income.amount)}</span>
-                    <button onClick={() => handleDeleteIncome(income.id)}
-                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all">
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="font-bold text-sm md:text-base text-sky-700">
+                      +{formatCurrency(income.amount)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteIncome(income.id)}
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all"
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -633,39 +761,74 @@ export default function BudgetView({
         </div>
 
         <div className="bg-white/70 rounded-3xl shadow-cozy border border-warm-100 overflow-hidden">
-          {expenses.length === 0 ? (
+          <div className="px-4 py-3 border-b border-warm-100 bg-sage-50/70">
+            <h4 className="font-semibold text-warm-800">{t.monthExpenses}</h4>
+            <p className="text-[11px] text-warm-500 mt-1">{t.expenseListSubtitle}</p>
+          </div>
+          {expenseDayGroups.length === 0 ? (
             <div className="text-center py-12 text-warm-400">
               <div className="mb-3 flex justify-center"><Wallet className="h-9 w-9 text-warm-400" /></div>
               <p>{t.emptyExpenses}</p>
             </div>
           ) : (
-            <div className="divide-y divide-warm-50">
-              {expenses.map((expense) => (
-                <motion.div key={expense.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 hover:bg-warm-50/50 transition-colors group">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
-                    style={{ backgroundColor: (expense.category?.color || "#e7e5e4") + "20" }}>
-                    <Circle size={16} className="text-warm-500" />
+            <div className="divide-y divide-warm-100">
+              {expenseDayGroups.map((group) => (
+                <div key={group.ymd}>
+                  <div className="px-3 md:px-5 py-2 bg-warm-50/80 border-b border-warm-100 flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-warm-600">{formatDate(group.items[0].date)}</p>
+                    <p className="text-[11px] text-warm-500">
+                      {t.expenseDayTotal.replace("{amount}", formatCurrency(group.dayTotal))}
+                    </p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-warm-800 text-sm">{expense.title}</p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {expense.category && <span className="text-xs text-warm-400">{expense.category.name}</span>}
-                      <span className="text-xs text-warm-300">•</span>
-                      <span className="text-xs text-warm-400">{formatDate(expense.date)}</span>
-                      <span className="text-xs text-warm-400">• {expense.user.name}</span>
-                    </div>
+                  <div className="divide-y divide-warm-50">
+                    {group.items.map((expense) => (
+                      <motion.div
+                        key={expense.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 hover:bg-warm-50/50 transition-colors group"
+                      >
+                        <div
+                          className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
+                          style={{ backgroundColor: (expense.category?.color || "#e7e5e4") + "20" }}
+                        >
+                          <Circle size={16} className="text-warm-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-warm-800 text-sm">{expense.title}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {expense.category && (
+                              <span className="text-xs text-warm-400">{expense.category.name}</span>
+                            )}
+                            <span className="text-xs text-warm-300">•</span>
+                            <span className="text-xs text-warm-400">{formatDate(expense.date)}</span>
+                            <span className="text-xs text-warm-400">• {expense.user.name}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-sm md:text-base text-warm-800">
+                            {formatCurrency(expense.amount)}
+                          </span>
+                          <button
+                            onClick={() => handleDeleteExpense(expense.id)}
+                            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-sm md:text-base text-warm-800">{formatCurrency(expense.amount)}</span>
-                    <button onClick={() => handleDeleteExpense(expense.id)}
-                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-warm-300 hover:text-rose-500 transition-all">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </motion.div>
+                </div>
               ))}
             </div>
+          )}
+          {expenseHasMoreOlder && <div ref={expenseSentinelRef} className="h-2 w-full" aria-hidden />}
+          {expenseOlderLoading && (
+            <p className="text-center text-xs text-warm-500 py-3 border-t border-warm-50">{t.expensesLoadingOlder}</p>
+          )}
+          {!expenseHasMoreOlder && expenses.length > 0 && (
+            <p className="text-center text-xs text-warm-400 py-3 border-t border-warm-50">{t.expensesEndOfHistory}</p>
           )}
         </div>
         {monthlySubscriptionsCount > 0 && (

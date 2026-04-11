@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarClock, Circle, Plus, Trash2, UserRound, X } from "lucide-react";
+import { CalendarClock, Plus, Trash2, UserRound, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { createPortal } from "react-dom";
 import { ExchangeRates } from "@/lib/exchange-rates";
@@ -85,6 +85,22 @@ function toMonthlyAmount(amount: number, billingCycle: BillingCycle) {
 function toUah(amount: number, currency: string, exchangeRates: ExchangeRates) {
   const rate = exchangeRates[currency as keyof ExchangeRates] ?? 1;
   return amount * rate;
+}
+
+function getCategoryEmoji(category: string | null) {
+  if (!category) return "✨";
+  const c = category.toLowerCase();
+  if (c.includes("відео") || c.includes("video") || c.includes("stream")) return "🎬";
+  if (c.includes("музик") || c.includes("music")) return "🎧";
+  if (c.includes("ігр") || c.includes("game")) return "🎮";
+  if (c.includes("освіт") || c.includes("education")) return "📚";
+  if (c.includes("хмар") || c.includes("cloud") || c.includes("storage") || c.includes("зберіган")) return "☁️";
+  if (c.includes("продуктив") || c.includes("productivity")) return "🗂️";
+  if (c.includes("безпек") || c.includes("security")) return "🛡️";
+  if (c.includes("здоров") || c.includes("health") || c.includes("sport") || c.includes("спорт")) return "💪";
+  if (c.includes("транспорт") || c.includes("transport")) return "🚗";
+  if (c.includes("інш") || c.includes("other")) return "💳";
+  return "💳";
 }
 
 type DueInfoText = {
@@ -374,6 +390,7 @@ export default function SubscriptionsView({
             {filteredItems.map((item) => {
               const payer = item.members.find((member) => member.role === "PAYER")?.user;
               const dueInfo = getDueInfo(item.nextBillingDate, t);
+              const categoryEmoji = getCategoryEmoji(item.category);
               return (
                 <motion.div
                   key={item.id}
@@ -386,8 +403,8 @@ export default function SubscriptionsView({
                   <div className="absolute -bottom-10 -left-8 w-24 h-24 rounded-full bg-peach-100/30 blur-2xl" />
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-white/90 border border-warm-100 flex items-center justify-center shadow-sm">
-                        <Circle size={16} className="text-warm-500" />
+                      <div className="w-10 h-10 rounded-2xl bg-white/90 border border-warm-100 flex items-center justify-center text-lg leading-none shadow-sm">
+                        {categoryEmoji}
                       </div>
                       <div>
                       <p className="text-[11px] uppercase tracking-wide text-warm-400 font-semibold">{item.category || t.noCategory}</p>
@@ -427,12 +444,13 @@ export default function SubscriptionsView({
                       {item.members.length === 0 && <span className="text-xs text-warm-400">{t.nobodyAssigned}</span>}
                       {item.members.map((member) => (
                         <span key={member.id} className="text-xs px-2.5 py-1 rounded-full bg-warm-100 text-warm-700 border border-warm-200/70">
-                          {member.user.name || member.user.email || t.memberFallback}
+                          {member.user.emoji} {member.user.name || member.user.email || t.memberFallback}
                         </span>
                       ))}
                     </div>
                     <p className="text-sm text-warm-600">
-                      <span className="text-warm-500">{t.payerLabel}</span> {payer ? `${payer.name || payer.email || t.memberFallback}` : t.notSpecified}
+                      <span className="text-warm-500">{t.payerLabel}</span>{" "}
+                      {payer ? `${payer.emoji} ${payer.name || payer.email || t.memberFallback}` : t.notSpecified}
                     </p>
                   </div>
 

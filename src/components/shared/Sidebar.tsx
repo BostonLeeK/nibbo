@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, normalizeProfileEmoji } from "@/lib/utils";
 import Image from "next/image";
 import {
   CalendarDays,
@@ -44,7 +44,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ user: u }: SidebarProps) {
-  const user = u ?? { name: null, email: null, image: null, color: "#f43f5e", emoji: "user" };
+  const user = {
+    name: u?.name ?? null,
+    email: u?.email ?? null,
+    image: u?.image ?? null,
+    color: u?.color ?? "#f43f5e",
+    emoji: normalizeProfileEmoji(u?.emoji),
+  };
   const { language } = useAppLanguage();
   const t = I18N[language];
   const pathname = usePathname();

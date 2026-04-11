@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Pin, Trash2, X, Search, Save, FolderPlus, NotebookPen } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import {
+  formatDate,
+  NOTE_EMOJIS,
+  NOTE_CATEGORY_EMOJIS,
+  DEFAULT_NOTE_EMOJI,
+  DEFAULT_NOTE_CATEGORY_EMOJI,
+  normalizeNoteEmoji,
+  normalizeNoteCategoryEmoji,
+} from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 import { I18N } from "@/lib/i18n";
@@ -26,9 +34,79 @@ interface Note {
 const NOTE_COLORS = [
   "#faf3e0", "#fff1f4", "#f5f3ff", "#f0fdf4", "#f0f9ff", "#fff7ed", "#fdf2f8",
 ];
-const NOTE_EMOJIS = ["note"];
-const CATEGORY_EMOJIS = ["category"];
 const CATEGORY_COLORS = ["#f5f3ff", "#fff1f4", "#f0f9ff", "#f0fdf4", "#fff7ed", "#faf3e0"];
+
+type NoteCardProps = {
+  note: Note;
+  onOpen: (note: Note) => void;
+  onPin: (note: Note) => void;
+  onDelete: (id: string) => void;
+};
+
+const NoteCard = memo(function NoteCard({ note, onOpen, onPin, onDelete }: NoteCardProps) {
+  return (
+    <motion.div
+      layout={false}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      onClick={() => onOpen(note)}
+      className="rounded-2xl cursor-pointer transition-shadow relative group bg-white border border-warm-200/90 shadow-cozy hover:shadow-cozy-hover overflow-hidden flex flex-col min-h-[140px]"
+    >
+      <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: note.color }} />
+      <div className="p-4 flex flex-col flex-1 min-h-0">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <span className="text-2xl leading-none shrink-0">{normalizeNoteEmoji(note.emoji)}</span>
+          {note.pinned && <Pin size={14} className="text-rose-400 fill-rose-200 shrink-0 mt-0.5" />}
+        </div>
+        <h3 className="font-semibold text-warm-900 text-sm leading-snug mb-2 line-clamp-2 break-words">{note.title}</h3>
+        {note.category && (
+          <p className="text-[10px] text-warm-500 mb-1">
+            {normalizeNoteCategoryEmoji(note.category.emoji)} {note.category.name}
+          </p>
+        )}
+        <p className="text-xs text-warm-600 line-clamp-4 leading-relaxed break-words flex-1">{note.content || "…"}</p>
+        {note.tags.length > 0 && (
+          <div className="flex gap-1 flex-wrap mt-3">
+            {note.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[10px] font-medium bg-warm-100 text-warm-600 px-2 py-0.5 rounded-md"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-warm-100">
+          <p className="text-[10px] text-warm-400">{formatDate(note.updatedAt)}</p>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPin(note);
+              }}
+              className="w-8 h-8 rounded-lg bg-warm-50 hover:bg-warm-100 flex items-center justify-center text-warm-500"
+            >
+              <Pin size={12} className={note.pinned ? "text-rose-500 fill-rose-400" : ""} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(note.id);
+              }}
+              className="w-8 h-8 rounded-lg bg-warm-50 hover:bg-rose-50 flex items-center justify-center text-warm-400 hover:text-rose-500"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
 
 export default function NotesView({
   initialNotes,
@@ -45,20 +123,41 @@ export default function NotesView({
   const [categories, setCategories] = useState(initialCategories);
   const [search, setSearch] = useState("");
   const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [editDraft, setEditDraft] = useState({ title: "", content: "", emoji: "note", color: "#faf3e0", tags: "", categoryId: "" });
+  const [editDraft, setEditDraft] = useState({
+    title: "",
+    content: "",
+    emoji: DEFAULT_NOTE_EMOJI,
+    color: "#faf3e0",
+    tags: "",
+    categoryId: "",
+  });
   const [showAdd, setShowAdd] = useState(false);
-  const [newNote, setNewNote] = useState({ title: "", content: "", emoji: "note", color: "#faf3e0", tags: "", categoryId: "" });
+  const [newNote, setNewNote] = useState({
+    title: "",
+    content: "",
+    emoji: DEFAULT_NOTE_EMOJI,
+    color: "#faf3e0",
+    tags: "",
+    categoryId: "",
+  });
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: "", emoji: "category", color: "#f5f3ff", parentId: "" });
+  const [newCategory, setNewCategory] = useState({
+    name: "",
+    emoji: DEFAULT_NOTE_CATEGORY_EMOJI,
+    color: "#f5f3ff",
+    parentId: "",
+  });
 
-  const childrenMap = new Map<string, NoteCategory[]>();
-  for (const c of categories) {
-    const key = c.parentId || "root";
-    if (!childrenMap.has(key)) childrenMap.set(key, []);
-    childrenMap.get(key)!.push(c);
-  }
-  const rootCategories = childrenMap.get("root") || [];
+  const { childrenMap, rootCategories } = useMemo(() => {
+    const map = new Map<string, NoteCategory[]>();
+    for (const c of categories) {
+      const key = c.parentId || "root";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(c);
+    }
+    return { childrenMap: map, rootCategories: map.get("root") || [] };
+  }, [categories]);
 
   const descendants = (categoryId: string): Set<string> => {
     const set = new Set<string>();
@@ -88,7 +187,7 @@ export default function NotesView({
   const noteToDraft = (note: Note) => ({
     title: note.title,
     content: note.content,
-    emoji: note.emoji,
+    emoji: normalizeNoteEmoji(note.emoji),
     color: note.color,
     tags: note.tags.join(", "),
     categoryId: note.categoryId || "",
@@ -116,7 +215,7 @@ export default function NotesView({
     const note = await res.json();
     setNotes((prev) => [note, ...prev]);
     setShowAdd(false);
-    setNewNote({ title: "", content: "", emoji: "note", color: "#faf3e0", tags: "", categoryId: "" });
+    setNewNote({ title: "", content: "", emoji: DEFAULT_NOTE_EMOJI, color: "#faf3e0", tags: "", categoryId: "" });
     toast.success(t.toastSaved);
   };
 
@@ -182,19 +281,22 @@ export default function NotesView({
     const category = await res.json();
     setCategories((prev) => [...prev, category]);
     setShowAddCategory(false);
-    setNewCategory({ name: "", emoji: "category", color: "#f5f3ff", parentId: "" });
+    setNewCategory({ name: "", emoji: DEFAULT_NOTE_CATEGORY_EMOJI, color: "#f5f3ff", parentId: "" });
     toast.success(t.toastCategoryAdded);
   };
 
-  const categoryOptions: NoteCategory[] = [];
-  const walkCategories = (parentId: string | null, level: number) => {
-    const arr = parentId ? childrenMap.get(parentId) || [] : rootCategories;
-    for (const c of arr) {
-      categoryOptions.push({ ...c, name: `${level > 0 ? "↳ ".repeat(level) : ""}${c.name}` });
-      walkCategories(c.id, level + 1);
-    }
-  };
-  walkCategories(null, 0);
+  const categoryOptions = useMemo(() => {
+    const options: NoteCategory[] = [];
+    const walk = (parentId: string | null, level: number) => {
+      const arr = parentId ? childrenMap.get(parentId) || [] : rootCategories;
+      for (const c of arr) {
+        options.push({ ...c, name: `${level > 0 ? "↳ ".repeat(level) : ""}${c.name}` });
+        walk(c.id, level + 1);
+      }
+    };
+    walk(null, 0);
+    return options;
+  }, [childrenMap, rootCategories]);
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/notes/${id}`, { method: "DELETE" });
@@ -207,84 +309,13 @@ export default function NotesView({
     setNewNote({
       title: "",
       content: "",
-      emoji: "note",
+      emoji: DEFAULT_NOTE_EMOJI,
       color: "#faf3e0",
       tags: "",
       categoryId: selectedCategoryId ?? "",
     });
     setShowAdd(true);
   };
-
-  const NoteCard = ({ note }: { note: Note }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      onClick={() => openEdit(note)}
-      className="rounded-2xl cursor-pointer transition-shadow relative group bg-white border border-warm-200/90 shadow-cozy hover:shadow-cozy-hover overflow-hidden flex flex-col min-h-[140px]"
-    >
-      <div
-        className="h-1.5 w-full shrink-0"
-        style={{ backgroundColor: note.color }}
-      />
-      <div className="p-4 flex flex-col flex-1 min-h-0">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <span className="text-2xl leading-none shrink-0">{note.emoji}</span>
-          {note.pinned && (
-            <Pin size={14} className="text-rose-400 fill-rose-200 shrink-0 mt-0.5" />
-          )}
-        </div>
-        <h3 className="font-semibold text-warm-900 text-sm leading-snug mb-2 line-clamp-2 break-words">
-          {note.title}
-        </h3>
-        {note.category && (
-          <p className="text-[10px] text-warm-500 mb-1">
-            {note.category.emoji} {note.category.name}
-          </p>
-        )}
-        <p className="text-xs text-warm-600 line-clamp-4 leading-relaxed break-words flex-1">
-          {note.content || "…"}
-        </p>
-        {note.tags.length > 0 && (
-          <div className="flex gap-1 flex-wrap mt-3">
-            {note.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] font-medium bg-warm-100 text-warm-600 px-2 py-0.5 rounded-md"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-warm-100">
-          <p className="text-[10px] text-warm-400">{formatDate(note.updatedAt)}</p>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePin(note);
-              }}
-              className="w-8 h-8 rounded-lg bg-warm-50 hover:bg-warm-100 flex items-center justify-center text-warm-500"
-            >
-              <Pin size={12} className={note.pinned ? "text-rose-500 fill-rose-400" : ""} />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(note.id);
-              }}
-              className="w-8 h-8 rounded-lg bg-warm-50 hover:bg-rose-50 flex items-center justify-center text-warm-400 hover:text-rose-500"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
 
   return (
     <div>
@@ -324,7 +355,7 @@ export default function NotesView({
               className={`px-3 py-1.5 rounded-xl text-xs border ${selectedCategoryId === cat.id ? "bg-rose-100 border-rose-300 text-rose-700" : "bg-white border-warm-200 text-warm-600"}`}
               style={{ borderColor: selectedCategoryId === cat.id ? undefined : cat.color }}
             >
-              {cat.emoji} {cat.name}
+              {normalizeNoteCategoryEmoji(cat.emoji)} {cat.name}
             </button>
           ))}
         </div>
@@ -341,7 +372,7 @@ export default function NotesView({
                   onClick={() => setSelectedCategoryId(ch.id)}
                   className={`px-2 py-1 rounded-lg text-[11px] border ${selectedCategoryId === ch.id ? "bg-rose-100 border-rose-300 text-rose-700" : "bg-white border-warm-200 text-warm-600"}`}
                 >
-                  {ch.emoji} {ch.name}
+                  {normalizeNoteCategoryEmoji(ch.emoji)} {ch.name}
                 </button>
               ))}
             </div>
@@ -357,7 +388,7 @@ export default function NotesView({
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             {pinned.map((note) => (
-              <NoteCard key={note.id} note={note} />
+              <NoteCard key={note.id} note={note} onOpen={openEdit} onPin={handlePin} onDelete={handleDelete} />
             ))}
           </div>
         </div>
@@ -369,7 +400,7 @@ export default function NotesView({
           {pinned.length > 0 && <p className="text-xs font-semibold text-warm-400 mb-3">{t.othersTitle}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             {unpinned.map((note) => (
-              <NoteCard key={note.id} note={note} />
+              <NoteCard key={note.id} note={note} onOpen={openEdit} onPin={handlePin} onDelete={handleDelete} />
             ))}
           </div>
         </div>
@@ -423,7 +454,7 @@ export default function NotesView({
                       type="button"
                       onClick={() => setNewNote((p) => ({ ...p, emoji: e }))}
                       className={`text-lg w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${
-                        newNote.emoji === e
+                        normalizeNoteEmoji(newNote.emoji) === normalizeNoteEmoji(e)
                           ? "bg-rose-50 border-rose-300"
                           : "bg-warm-50 border-transparent hover:border-warm-200"
                       }`}
@@ -473,7 +504,8 @@ export default function NotesView({
                   <option value="">{t.root}</option>
                   {categoryOptions.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.parentId ? "↳ " : ""}{c.emoji} {c.name}
+                      {c.parentId ? "↳ " : ""}
+                      {normalizeNoteCategoryEmoji(c.emoji)} {c.name}
                     </option>
                   ))}
                 </select>
@@ -483,7 +515,7 @@ export default function NotesView({
                   onClick={handleAdd}
                   className="w-full py-3 bg-gradient-to-r from-rose-400 to-rose-500 text-white rounded-2xl font-semibold text-sm"
                 >
-                  {t.save} {newNote.emoji}
+                  {t.save} {normalizeNoteEmoji(newNote.emoji)}
                 </motion.button>
               </div>
             </motion.div>
@@ -515,7 +547,7 @@ export default function NotesView({
               <div className="overflow-y-auto overscroll-contain p-5 flex-1 min-h-0">
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-3xl shrink-0">{editingNote.emoji}</span>
+                    <span className="text-3xl shrink-0">{normalizeNoteEmoji(editingNote.emoji)}</span>
                     <div className="min-w-0">
                       <p className="text-xs text-warm-500 truncate">{editingNote.author.name}</p>
                       <p className="text-[10px] text-warm-400">{formatDate(editingNote.updatedAt)}</p>
@@ -553,7 +585,7 @@ export default function NotesView({
                       type="button"
                       onClick={() => setEditDraft((p) => ({ ...p, emoji: e }))}
                       className={`text-lg w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${
-                        editDraft.emoji === e
+                        normalizeNoteEmoji(editDraft.emoji) === normalizeNoteEmoji(e)
                           ? "bg-rose-50 border-rose-300"
                           : "bg-warm-50 border-transparent hover:border-warm-200"
                       }`}
@@ -603,7 +635,8 @@ export default function NotesView({
                   <option value="">{t.root}</option>
                   {categoryOptions.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.parentId ? "↳ " : ""}{c.emoji} {c.name}
+                      {c.parentId ? "↳ " : ""}
+                      {normalizeNoteCategoryEmoji(c.emoji)} {c.name}
                     </option>
                   ))}
                 </select>
@@ -669,16 +702,22 @@ export default function NotesView({
                 >
                   <option value="">{t.rootCategory}</option>
                   {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {normalizeNoteCategoryEmoji(c.emoji)} {c.name}
+                    </option>
                   ))}
                 </select>
                 <div className="flex flex-wrap gap-1.5 mb-3">
-                  {CATEGORY_EMOJIS.map((e) => (
+                  {NOTE_CATEGORY_EMOJIS.map((e) => (
                     <button
                       key={e}
                       type="button"
                       onClick={() => setNewCategory((p) => ({ ...p, emoji: e }))}
-                      className={`text-lg w-9 h-9 rounded-xl flex items-center justify-center border ${newCategory.emoji === e ? "bg-rose-50 border-rose-300" : "bg-warm-50 border-transparent"}`}
+                      className={`text-lg w-9 h-9 rounded-xl flex items-center justify-center border ${
+                        normalizeNoteCategoryEmoji(newCategory.emoji) === normalizeNoteCategoryEmoji(e)
+                          ? "bg-rose-50 border-rose-300"
+                          : "bg-warm-50 border-transparent"
+                      }`}
                     >
                       {e}
                     </button>

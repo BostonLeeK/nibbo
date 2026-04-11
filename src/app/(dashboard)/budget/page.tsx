@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { getNbuExchangeRates } from "@/lib/exchange-rates";
 import { ensureUserFamily } from "@/lib/family";
+import { kyivCalendarYmd, kyivCalendarYmdMinusDays, kyivRangeUtcFromCalendarYmd } from "@/lib/kyiv-range";
 import { prisma } from "@/lib/prisma";
 import { SubscriptionBillingCycle } from "@prisma/client";
 import BudgetView from "@/components/budget/BudgetView";
@@ -14,11 +15,43 @@ export default async function BudgetPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const expenseWindowEndYmd = kyivCalendarYmd(now);
+  const expenseWindowStartYmd = kyivCalendarYmdMinusDays(expenseWindowEndYmd, 3);
+  const { start: expenseListStart, end: expenseListEnd } = kyivRangeUtcFromCalendarYmd(
+    expenseWindowStartYmd,
+    expenseWindowEndYmd
+  );
 
-  const [categories, expenses, incomes, subscriptions, exchangeRates, credits] = await Promise.all([
+  const [
+    categories,
+    expenseMonthAgg,
+    expenseCategoryGroup,
+    expensesMonthCount,
+    expenses,
+    incomes,
+    subscriptions,
+    exchangeRates,
+    credits,
+  ] = await Promise.all([
     prisma.expenseCategory.findMany({ where: { familyId }, orderBy: { name: "asc" } }),
-    prisma.expense.findMany({
+    prisma.expense.aggregate({
       where: { familyId, date: { gte: monthStart, lte: monthEnd } },
+      _sum: { amount: true },
+    }),
+    prisma.expense.groupBy({
+      by: ["categoryId"],
+      where: {
+        familyId,
+        date: { gte: monthStart, lte: monthEnd },
+        categoryId: { not: null },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.expense.count({
+      where: { familyId, date: { gte: monthStart, lte: monthEnd } },
+    }),
+    prisma.expense.findMany({
+      where: { familyId, date: { gte: expenseListStart, lte: expenseListEnd } },
       include: {
         category: true,
         user: { select: { id: true, name: true, image: true, color: true, emoji: true } },
@@ -69,6 +102,12 @@ export default async function BudgetPage() {
     user: i.user,
   }));
 
+  const expensesMonthTotal = expenseMonthAgg._sum.amount ?? 0;
+  const categorySpent: Record<string, number> = {};
+  for (const row of expenseCategoryGroup) {
+    if (row.categoryId) categorySpent[row.categoryId] = row._sum.amount ?? 0;
+  }
+
   const initialCredits = credits.map((c) => ({
     id: c.id,
     title: c.title,
@@ -95,6 +134,10 @@ export default async function BudgetPage() {
     <BudgetView
       initialCategories={categories}
       initialExpenses={initialExpenses}
+      expensesMonthTotal={expensesMonthTotal}
+      expensesMonthCount={expensesMonthCount}
+      initialCategorySpent={categorySpent}
+      initialExpenseWindowStartYmd={expenseWindowStartYmd}
       initialIncomes={initialIncomes}
       initialCredits={initialCredits}
       monthlySubscriptionsTotal={monthlySubscriptionsTotal}

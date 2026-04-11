@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserRound, X, Upload } from "lucide-react";
+import { X, Upload } from "lucide-react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
-import { USER_COLORS } from "@/lib/utils";
+import { USER_COLORS, USER_EMOJIS, normalizeProfileEmoji } from "@/lib/utils";
 import { useAppLanguage } from "@/hooks/useAppLanguage";
 import { I18N } from "@/lib/i18n";
 
@@ -30,7 +30,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
   const { language } = useAppLanguage();
   const t = I18N[language].profile;
   const [name, setName] = useState(user.name ?? "");
-  const [emoji, setEmoji] = useState(user.emoji || "user");
+  const [emoji, setEmoji] = useState(() => normalizeProfileEmoji(user.emoji));
   const [color, setColor] = useState(user.color || "#f43f5e");
   const [busy, setBusy] = useState(false);
   const [familyBusy, setFamilyBusy] = useState(false);
@@ -47,9 +47,23 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
   useEffect(() => {
     if (!open) return;
     setName(user.name ?? "");
-    setEmoji(user.emoji || "user");
+    setEmoji(normalizeProfileEmoji(user.emoji));
     setColor(user.color || "#f43f5e");
   }, [open, user.name, user.emoji, user.color]);
+
+  const emojiPicker = useMemo(() => {
+    const current = normalizeProfileEmoji(emoji);
+    const seen = new Set<string>();
+    const out: string[] = [];
+    const add = (e: string) => {
+      if (seen.has(e)) return;
+      seen.add(e);
+      out.push(e);
+    };
+    add(current);
+    USER_EMOJIS.forEach(add);
+    return out;
+  }, [emoji]);
 
   useEffect(() => {
     if (!open) return;
@@ -207,7 +221,7 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                     <Image src={user.image} alt={user.name || t.userFallback} width={52} height={52} className="rounded-2xl ring-2 ring-rose-100 object-cover" unoptimized={user.image.startsWith("/api/users/avatar/")} />
                   ) : (
                     <div className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-white" style={{ backgroundColor: color }}>
-                      <UserRound size={24} />
+                      <span className="text-[1.65rem] leading-none select-none">{normalizeProfileEmoji(emoji)}</span>
                     </div>
                   )}
                   <label className="inline-flex items-center gap-2 px-3 py-2 text-xs bg-warm-100 hover:bg-warm-200 text-warm-700 rounded-xl cursor-pointer">
@@ -224,8 +238,21 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                 />
                 <div>
                   <p className="text-xs font-semibold text-warm-500 mb-2">{t.iconLabel}</p>
-                  <div className="w-9 h-9 rounded-xl bg-warm-50 border border-warm-200 flex items-center justify-center">
-                    <UserRound size={16} className="text-warm-600" />
+                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                    {emojiPicker.map((e) => (
+                      <button
+                        key={e}
+                        type="button"
+                        onClick={() => setEmoji(e)}
+                        className={`text-lg w-9 h-9 rounded-xl flex items-center justify-center transition-all border leading-none shrink-0 ${
+                          normalizeProfileEmoji(emoji) === e
+                            ? "bg-rose-50 border-rose-300 ring-1 ring-rose-200"
+                            : "bg-warm-50 border-transparent hover:border-warm-200"
+                        }`}
+                      >
+                        {e}
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <div>
@@ -256,10 +283,10 @@ export default function ProfileModal({ open, onClose, user, onSaved }: ProfileMo
                     {familyMembers.map((m) => (
                       <div key={m.id} className="flex items-center gap-2 bg-warm-50 rounded-xl px-3 py-2">
                         <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white"
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white leading-none"
                           style={{ backgroundColor: m.color || "#f43f5e" }}
                         >
-                          {m.name?.[0] || "U"}
+                          <span className="text-sm leading-none">{normalizeProfileEmoji(m.emoji)}</span>
                         </div>
                         <span className="text-xs text-warm-700">{m.name || m.email || t.memberFallback}</span>
                       </div>
