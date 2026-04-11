@@ -1,12 +1,12 @@
-import type { Metadata, Viewport } from "next";
-import { Inter, Nunito } from "next/font/google";
-import { Toaster } from "react-hot-toast";
-import { cookies } from "next/headers";
-import { APP_LANGUAGE_COOKIE_KEY } from "@/lib/i18n";
 import { AppLanguageProvider } from "@/components/shared/AppLanguageProvider";
 import { CookieConsent } from "@/components/shared/CookieConsent";
-import { getMetadataBaseUrl } from "@/lib/site-url";
+import { APP_LANGUAGE_COOKIE_KEY } from "@/lib/i18n";
 import { OG_ALT, OG_SIZE } from "@/lib/og-share-card";
+import { getMetadataBaseUrl } from "@/lib/site-url";
+import type { Metadata, Viewport } from "next";
+import { Inter, Nunito } from "next/font/google";
+import { cookies } from "next/headers";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -48,7 +48,10 @@ export const metadata: Metadata = {
   creator: "Nibbo",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/icon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
     shortcut: ["/favicon.svg"],
   },
   alternates: {
@@ -90,7 +93,11 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const cookieStore = await cookies();
   const cookieLanguage = cookieStore.get(APP_LANGUAGE_COOKIE_KEY)?.value;
   const language = cookieLanguage === "en" ? "en" : "uk";

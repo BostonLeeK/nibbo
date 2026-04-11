@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { CozyPageBackground } from "@/components/shared/CozyPageBackground";
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -104,9 +105,10 @@ export function FeedbackForm(props: {
   };
 
   return (
-    <div className="min-h-screen px-4 py-8 md:py-12">
-      <div className="mx-auto max-w-lg">
-        <div className="mb-6 flex items-center justify-between gap-3">
+    <CozyPageBackground>
+      <div className="min-h-screen px-4 py-8 md:py-12">
+        <div className="mx-auto max-w-lg">
+          <div className="mb-6 flex items-center justify-between gap-3">
           <Link
             href={props.backHref}
             className="text-sm font-semibold text-rose-600 hover:text-rose-700 underline-offset-2 hover:underline"
@@ -121,9 +123,9 @@ export function FeedbackForm(props: {
             <Image src="/favicon.svg" alt="" width={32} height={32} className="opacity-90" aria-hidden />
             <span className="font-heading text-lg font-bold tracking-tight">Nibbo</span>
           </Link>
-        </div>
+          </div>
 
-        <div className="rounded-3xl border border-warm-100 bg-white/90 p-6 shadow-cozy md:p-8">
+          <div className="rounded-3xl border border-warm-100 bg-white p-6 shadow-cozy md:p-8">
           <h1 className="font-heading text-2xl font-bold text-warm-800">{t.pageTitle}</h1>
           <p className="mt-2 text-sm text-warm-500">{t.pageSubtitle}</p>
 
@@ -230,8 +232,9 @@ export function FeedbackForm(props: {
               {sending ? t.sending : t.submit}
             </button>
           </form>
+          </div>
         </div>
       </div>
-    </div>
+    </CozyPageBackground>
   );
 }

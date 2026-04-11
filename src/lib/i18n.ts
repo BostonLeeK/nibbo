@@ -51,20 +51,57 @@ export const I18N = {
       errorFiles: "Недопустимі файли або завеликий розмір.",
     },
     legal: {
-      cookieTitle: "Трохи про cookie",
+      cookieTitle: "Трохи про cookie та дані",
       cookieText:
-        "Ми використовуємо невеликі файли cookie, щоб тримати вас залогіненим і запам’ятати обрану мову. Без них сервіс не зможе працювати як треба.",
+        "Ми використовуємо невеликі cookie, щоб тримати вас залогіненим і запам’ятати мову. Контент, який ви додаєте в Nibbo (задачі, меню, нотатки тощо), зберігається як описано в політиці конфіденційності.",
+      cookieAckBeforeLink: "Натискаючи «Приймаю», ви підтверджуєте, що ознайомилися з",
+      cookieAckLinkLabel: "політикою конфіденційності",
+      cookieAckAfterLink: "і погоджуєтесь на обробку даних і cookie в межах, там описаних.",
       cookieAccept: "Приймаю, гайда далі",
-      cookieLearnMore: "Детальніше",
-      privacyMetaTitle: "Конфіденційність і cookie",
-      privacyHeading: "Конфіденційність і cookie",
+      cookieLearnMore: "Уся політика",
+      privacyMetaTitle: "Політика конфіденційності та cookie",
+      privacyHeading: "Політика конфіденційності та cookie",
+      privacyUpdated: "Останнє оновлення: квітень 2026.",
       privacyLead:
-        "Nibbo — затишний простір для родини. Ми обробляємо лише ті дані, які потрібні для роботи сервісу, і не продаємо їх третім сторонам.",
-      privacyCookiesTitle: "Які cookie використовуємо",
+        "Nibbo — затишний простір для родини. Нижче — зрозумілий опис того, які дані збираємо, навіщо це робимо і які у вас є можливості. Цей текст не замінює індивідуальну юридичну консультацію, але відображає наші наміри прозоро.",
+      privacyDataTitle: "Які дані обробляємо",
+      privacyDataBody:
+        "Дані облікового запису після входу через Google: зокрема ім’я, електронна пошта та фото профілю, якщо ви їх надаєте. Дані, які ви вводите в сервісі: родина та учасники, задачі та дошки, календар, меню й рецепти (у тому числі зображення страв), нотатки, бюджет, підписки, списки покупок, повідомлення про призначення та інший вміст, який ви самі додаєте. Технічна інформація: cookie для сесії та мови, журнали помилок на стороні хостингу в загальному вигляді.",
+      privacyPurposeTitle: "Навіщо це потрібно",
+      privacyPurposeBody:
+        "Щоб надавати сервіс: показувати ваші дані вам і учасникам родини, синхронізувати зміни між пристроями, забезпечувати вхід і безпеку, покращувати стабільність продукту. Ми не продаємо ваші персональні дані й не використовуємо їх для сторонньої реклами на кшталт рекламних мереж.",
+      privacyBasisTitle: "Правові підстави",
+      privacyBasisBody:
+        "Зокрема: ваша згода (використання сайту, плашка про cookie та ця політика); виконання угоди про надання сервісу між вами та оператором сервісу; де застосовно — законний інтерес (наприклад, захист від зловживань і забезпечення безпеки), у межах, дозволених законом.",
+      privacyProcessorsTitle: "Де зберігаються дані та хто допомагає",
+      privacyProcessorsBody:
+        "Дані зберігаються в інфраструктурі хмарного провайдера (хостинг і база даних), файли зображень — у об’єктному сховищі того ж класу сервісів. Вхід через Google керується політиками Google. Перелік конкретних постачальників може змінюватися з технічних причин; суть залишається — обробка в межах надання Nibbo.",
+      privacyRetentionTitle: "Скільки тримаємо дані",
+      privacyRetentionBody:
+        "Поки діє ваш обліковий запис і ви користуєтеся сервісом, або поки ви самі не видалите окремий вміст там, де це передбачено інтерфейсом. Після видалення облікового запису (якщо така опція з’явиться або за вашим запитом) ми прагнемо прибрати персональні дані в розумні строки, крім випадків, коли закон вимагає їх зберегти довше.",
+      privacyRightsTitle: "Ваші права",
+      privacyRightsBody:
+        "Залежно від застосовного закону ви можете мати право на доступ, виправлення, обмеження обробки, заперечення, переносимість даних або видалення. Напишіть нам через зворотний зв’язок — розглянемо запит і відповімо в розумний строк. Також ви можете керувати cookie в браузері та налаштуваннями Google-акаунта.",
+      privacyMinorsTitle: "Діти",
+      privacyMinorsBody:
+        "Сервіс орієнтований на родини. Якщо ви додаєте інформацію про дітей, робіть це лише з дозволу законних представників і в межах, дозволених законом.",
+      privacyCookiesTitle: "Cookie окремо",
       privacyCookiesBody:
-        "Технічні cookie для сесії входу (після авторизації через Google) та cookie вибору мови інтерфейсу. Вони потрібні для безпеки та зручності. Ви можете видалити cookie в налаштуваннях браузера; тоді доведеться знову увійти й обрати мову.",
-      privacyContactTitle: "Питання",
-      privacyContactBody: "З радістю пояснимо деталі щодо ваших даних або налаштувань cookie.",
+        "Технічні cookie для сесії після входу та cookie вибору мови. Ви можете їх очистити в браузері — тоді потрібно буде знову увійти й обрати мову.",
+      privacyChangesTitle: "Зміни до тексту",
+      privacyChangesBody:
+        "Ми можемо оновлювати цю сторінку; актуальна версія завжди тут. Якщо зміни суттєві, можемо показати нагадування в сервісі або попросити підтвердження знову.",
+      privacyContactTitle: "Зв’язок",
+      privacyContactBody: "З радістю відповімо на запитання щодо даних і цієї політики.",
+    },
+    notFound: {
+      metaTitle: "Сторінку не знайдено",
+      badge: "404",
+      title: "Ой, сторінка загубилася",
+      subtitle:
+        "Схоже, такої адреси немає в Nibbo — ніби шкарпетка після прання. Перевір посилання або повернись додому.",
+      homeCta: "На головну",
+      feedbackCta: "Повідомити про проблему",
     },
     header: {
       friendFallback: "друже",
@@ -732,20 +769,57 @@ export const I18N = {
       errorFiles: "Invalid files or file too large.",
     },
     legal: {
-      cookieTitle: "A little note about cookies",
+      cookieTitle: "Cookies and your data",
       cookieText:
-        "We use small cookies to keep you signed in and remember your language. Without them, the app would not work the way you expect.",
+        "We use small cookies to keep you signed in and remember your language. Content you add in Nibbo (tasks, menu, notes, and so on) is stored as described in the privacy policy.",
+      cookieAckBeforeLink: "By tapping “Accept”, you confirm that you have read the",
+      cookieAckLinkLabel: "privacy policy",
+      cookieAckAfterLink: "and agree to the processing of data and cookies within what it describes.",
       cookieAccept: "Accept and continue",
-      cookieLearnMore: "Learn more",
-      privacyMetaTitle: "Privacy and cookies",
-      privacyHeading: "Privacy and cookies",
+      cookieLearnMore: "Full policy",
+      privacyMetaTitle: "Privacy policy and cookies",
+      privacyHeading: "Privacy policy and cookies",
+      privacyUpdated: "Last updated: April 2026.",
       privacyLead:
-        "Nibbo is a cozy space for your family. We only process data needed to run the service and do not sell it to third parties.",
-      privacyCookiesTitle: "Cookies we use",
+        "Nibbo is a cozy space for your family. Below is a plain-language overview of what we collect, why, and what you can do. This is not a substitute for personal legal advice, but it reflects how we intend to be transparent.",
+      privacyDataTitle: "What data we process",
+      privacyDataBody:
+        "Account data after Google sign-in: for example name, email, and profile photo if you provide them. Data you enter in the app: family and members, tasks and boards, calendar, menu and recipes (including dish images), notes, budget, subscriptions, shopping lists, assignment notifications, and other content you add. Technical data: cookies for session and language, and routine hosting logs in aggregate form.",
+      privacyPurposeTitle: "Why we need it",
+      privacyPurposeBody:
+        "To provide the service: show your data to you and family members, sync changes across devices, keep sign-in secure, and improve stability. We do not sell your personal data or use it for third-party ad networks.",
+      privacyBasisTitle: "Legal bases",
+      privacyBasisBody:
+        "Including: your consent (using the site, the cookie notice, and this policy); performance of the agreement to provide the service; where applicable, legitimate interests (for example abuse prevention and security), within what the law allows.",
+      privacyProcessorsTitle: "Where data lives and subprocessors",
+      privacyProcessorsBody:
+        "Data is stored on cloud infrastructure (hosting and database), images in object storage of the same class of services. Google sign-in is governed by Google’s policies. Specific vendors may change for technical reasons; the purpose remains processing within operating Nibbo.",
+      privacyRetentionTitle: "How long we keep data",
+      privacyRetentionBody:
+        "While your account is active and you use the service, or until you delete specific content where the product allows it. After account deletion (when available or upon your request), we aim to remove personal data within a reasonable time except where the law requires longer retention.",
+      privacyRightsTitle: "Your rights",
+      privacyRightsBody:
+        "Depending on applicable law, you may have rights such as access, rectification, restriction, objection, portability, or erasure. Contact us via feedback — we will review and respond within a reasonable time. You can also manage cookies in your browser and in your Google account settings.",
+      privacyMinorsTitle: "Children",
+      privacyMinorsBody:
+        "The service is family-oriented. If you add information about children, do so only with permission from legal guardians and within what the law allows.",
+      privacyCookiesTitle: "Cookies in more detail",
       privacyCookiesBody:
-        "Technical cookies for your sign-in session (after Google sign-in) and a cookie for your interface language. They are needed for security and convenience. You can clear cookies in your browser; you will need to sign in again and pick your language.",
-      privacyContactTitle: "Questions",
-      privacyContactBody: "We are glad to explain more about your data or cookie settings.",
+        "Technical cookies for your session after sign-in and a cookie for language. You can clear them in your browser; you will need to sign in again and pick your language.",
+      privacyChangesTitle: "Changes to this page",
+      privacyChangesBody:
+        "We may update this page; the current version is always here. If changes are material, we may show a reminder in the product or ask you to confirm again.",
+      privacyContactTitle: "Contact",
+      privacyContactBody: "We are glad to answer questions about data and this policy.",
+    },
+    notFound: {
+      metaTitle: "Page not found",
+      badge: "404",
+      title: "This page wandered off",
+      subtitle:
+        "We could not find that address in Nibbo — like a sock after laundry. Double-check the link or head back home.",
+      homeCta: "Back home",
+      feedbackCta: "Report a problem",
     },
     header: {
       friendFallback: "friend",
