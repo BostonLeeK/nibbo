@@ -94,6 +94,9 @@ function clamp(value: number, min = 0, max = 100) {
 
 const STORY_W = 1080;
 const STORY_H = 1920;
+const STORY_BOTTOM_TEXT_H = 228;
+const STORY_EXPORT_DPR = 2;
+const STORY_CAPTURE_CAMERA_PULL = 1.52;
 
 function canvasToPngBlob(canvas: HTMLCanvasElement, quality?: number) {
   return new Promise<Blob | null>((resolve) => {
@@ -105,8 +108,6 @@ async function buildInstagramStoryPng(
   sourceCanvas: HTMLCanvasElement,
   opts: {
     headline: string;
-    title: string;
-    subtitle: string;
     canvasFrom: string;
     canvasTo: string;
     familyXp: number;
@@ -114,132 +115,129 @@ async function buildInstagramStoryPng(
     achievementsLabel: string;
     achievementLines: string[];
     achievementsMoreText: string | null;
-    doneToday: number;
-    doneWeek: number;
-    dayLabel: string;
-    weekLabel: string;
-    dayTarget: number;
-    weekTarget: number;
     siteLabel: string;
   }
 ) {
+  const iw = STORY_W * STORY_EXPORT_DPR;
+  const ih = STORY_H * STORY_EXPORT_DPR;
   const out = document.createElement("canvas");
-  out.width = STORY_W;
-  out.height = STORY_H;
+  out.width = iw;
+  out.height = ih;
   const ctx = out.getContext("2d");
   if (!ctx) return null;
+  ctx.scale(STORY_EXPORT_DPR, STORY_EXPORT_DPR);
   const g = ctx.createLinearGradient(0, 0, 0, STORY_H);
   g.addColorStop(0, opts.canvasFrom);
   g.addColorStop(1, opts.canvasTo);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, STORY_W, STORY_H);
 
-  const pad = 48;
-  const slotH = Math.round(STORY_H * 0.5);
-  const slotW = STORY_W - pad * 2;
-  const aspect = sourceCanvas.width / Math.max(1, sourceCanvas.height);
-  let drawW = slotW;
-  let drawH = Math.round(drawW / aspect);
-  if (drawH > slotH) {
-    drawH = slotH;
-    drawW = Math.round(drawH * aspect);
-  }
-  const dx = Math.round((STORY_W - drawW) / 2);
-  const dy = pad + Math.round((slotH - drawH) / 2);
+  const slotH = STORY_H - STORY_BOTTOM_TEXT_H;
+  const inset = 12;
+  const slotW = STORY_W - inset * 2;
+  const cw = sourceCanvas.width;
+  const ch = Math.max(1, sourceCanvas.height);
+  const scaleContain = Math.min(slotW / cw, slotH / ch);
+  const scaleCover = Math.max(slotW / cw, slotH / ch);
+  const zoomBlend = 0.52;
+  const scale = scaleContain + (scaleCover - scaleContain) * zoomBlend;
+  const drawW = Math.round(cw * scale);
+  const drawH = Math.round(ch * scale);
+  const dx = Math.round(inset + (slotW - drawW) / 2);
+  const dy = Math.round((slotH - drawH) / 2);
   ctx.save();
-  ctx.fillStyle = "rgba(255,255,255,0.22)";
-  const r = 28;
   ctx.beginPath();
-  if (typeof ctx.roundRect === "function") {
-    ctx.roundRect(dx - 6, dy - 6, drawW + 12, drawH + 12, r + 8);
-  } else {
-    ctx.rect(dx - 6, dy - 6, drawW + 12, drawH + 12);
-  }
-  ctx.fill();
-  ctx.beginPath();
-  if (typeof ctx.roundRect === "function") {
-    ctx.roundRect(dx, dy, drawW, drawH, r);
-  } else {
-    ctx.rect(dx, dy, drawW, drawH);
-  }
+  ctx.rect(inset, 0, slotW, slotH);
   ctx.clip();
   ctx.drawImage(sourceCanvas, dx, dy, drawW, drawH);
   ctx.restore();
 
-  ctx.strokeStyle = "rgba(255,255,255,0.35)";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  if (typeof ctx.roundRect === "function") {
-    ctx.roundRect(dx, dy, drawW, drawH, r);
-  } else {
-    ctx.rect(dx, dy, drawW, drawH);
-  }
-  ctx.stroke();
+  const gradH = 72;
+  const textFade = ctx.createLinearGradient(0, slotH - gradH, 0, slotH);
+  textFade.addColorStop(0, "rgba(255,255,255,0)");
+  textFade.addColorStop(1, "rgba(255,255,255,0.38)");
+  ctx.fillStyle = textFade;
+  ctx.fillRect(0, slotH - gradH, STORY_W, gradH);
 
-  const footerY = STORY_H - 88;
-  let y = dy + drawH + 56;
+  const textPadX = 56;
+  const maxTextW = STORY_W - textPadX * 2;
+  const footerY = STORY_H - 24;
+  const ruleY = footerY - 34;
+  const achLineH = 22;
+  const maxAchLines = 5;
   ctx.textAlign = "center";
-  ctx.fillStyle = "#6d28d9";
-  ctx.font = "bold 48px system-ui, -apple-system, Segoe UI, sans-serif";
-  ctx.fillText(opts.headline, STORY_W / 2, y);
-  y += 80;
-  ctx.fillStyle = "#1c1917";
-  ctx.font = "bold 38px system-ui, -apple-system, Segoe UI, sans-serif";
-  ctx.fillText(opts.title, STORY_W / 2, y);
-  y += 56;
-  ctx.fillStyle = "rgba(28,25,23,0.78)";
-  ctx.font = "28px system-ui, -apple-system, Segoe UI, sans-serif";
-  const sub = opts.subtitle.length > 130 ? `${opts.subtitle.slice(0, 127)}…` : opts.subtitle;
-  const subLines = sub.split(/\n/);
-  for (const line of subLines.slice(0, 3)) {
-    ctx.fillText(line, STORY_W / 2, y);
-    y += 42;
-  }
-  y += 36;
-  ctx.fillStyle = "#4c1d95";
-  ctx.font = "bold 32px system-ui, -apple-system, Segoe UI, sans-serif";
-  ctx.fillText(`${opts.familyXpLabel}: ${opts.familyXp} XP`, STORY_W / 2, y);
-  y += 56;
+  ctx.font = "18px system-ui, -apple-system, Segoe UI, sans-serif";
+  const achLines: string[] = [];
   if (opts.achievementLines.length > 0) {
-    ctx.fillStyle = "#57534e";
-    ctx.font = "bold 26px system-ui, -apple-system, Segoe UI, sans-serif";
-    ctx.fillText(opts.achievementsLabel, STORY_W / 2, y);
-    y += 44;
-    ctx.font = "26px system-ui, -apple-system, Segoe UI, sans-serif";
-    ctx.fillStyle = "rgba(28,25,23,0.85)";
-    for (const line of opts.achievementLines.slice(0, 4)) {
-      const chunk = line.length > 48 ? `${line.slice(0, 45)}…` : line;
-      ctx.fillText(chunk, STORY_W / 2, y);
-      y += 38;
-    }
+    let ach = opts.achievementLines.join(" · ");
     if (opts.achievementsMoreText) {
-      ctx.fillStyle = "#78716c";
-      ctx.font = "24px system-ui, -apple-system, Segoe UI, sans-serif";
-      ctx.fillText(opts.achievementsMoreText, STORY_W / 2, y);
-      y += 44;
+      ach = `${ach}  ${opts.achievementsMoreText}`;
+    }
+    const achFull = `${opts.achievementsLabel}: ${ach}`;
+    const words = achFull.split(/\s+/);
+    let line = "";
+    for (const w of words) {
+      const next = line ? `${line} ${w}` : w;
+      if (ctx.measureText(next).width > maxTextW && line) {
+        achLines.push(line);
+        line = w;
+      } else {
+        line = next;
+      }
+    }
+    if (line) achLines.push(line);
+    while (achLines.length > maxAchLines) {
+      achLines.pop();
+    }
+    if (achLines.length === maxAchLines) {
+      const last = achLines[maxAchLines - 1]!;
+      let t = last;
+      while (t.length > 8 && ctx.measureText(`${t}…`).width > maxTextW) {
+        t = t.slice(0, -1);
+      }
+      achLines[maxAchLines - 1] = `${t}…`;
     }
   }
-  y += 40;
-  if (y > footerY - 140) {
-    y = footerY - 140;
+  const padAboveRule = 14;
+  const gapXpAch = 10;
+  const gapHeadXp = 34;
+  let baselineXp: number;
+  if (achLines.length > 0) {
+    let b = ruleY - padAboveRule;
+    ctx.fillStyle = "rgba(41,37,36,0.88)";
+    for (let i = achLines.length - 1; i >= 0; i -= 1) {
+      ctx.fillText(achLines[i]!, STORY_W / 2, b);
+      b -= achLineH;
+    }
+    baselineXp = b - gapXpAch;
+  } else {
+    baselineXp = ruleY - padAboveRule - 4;
   }
-  ctx.fillStyle = "#44403c";
-  ctx.font = "30px system-ui, -apple-system, Segoe UI, sans-serif";
-  ctx.fillText(
-    `${opts.dayLabel}: ${opts.doneToday}/${opts.dayTarget}  ·  ${opts.weekLabel}: ${opts.doneWeek}/${opts.weekTarget}`,
-    STORY_W / 2,
-    y
-  );
-  ctx.strokeStyle = "rgba(120,113,108,0.35)";
-  ctx.lineWidth = 2;
+  const baselineHead = Math.max(slotH + 16, baselineXp - gapHeadXp);
+  ctx.fillStyle = "#6d28d9";
+  ctx.font = "bold 30px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillText(opts.headline, STORY_W / 2, baselineHead);
+  ctx.fillStyle = "#5b21b6";
+  ctx.font = "600 19px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillText(`${opts.familyXpLabel}: ${opts.familyXp} XP`, STORY_W / 2, baselineXp);
+  ctx.strokeStyle = "rgba(120,113,108,0.28)";
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(pad + 80, footerY - 52);
-  ctx.lineTo(STORY_W - pad - 80, footerY - 52);
+  ctx.moveTo(textPadX, ruleY);
+  ctx.lineTo(STORY_W - textPadX, ruleY);
   ctx.stroke();
   ctx.fillStyle = "#57534e";
-  ctx.font = "600 34px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.font = "600 26px system-ui, -apple-system, Segoe UI, sans-serif";
   ctx.fillText(opts.siteLabel, STORY_W / 2, footerY);
-  return canvasToPngBlob(out, 0.92);
+  const final = document.createElement("canvas");
+  final.width = STORY_W;
+  final.height = STORY_H;
+  const f = final.getContext("2d");
+  if (!f) return canvasToPngBlob(out, 0.92);
+  f.imageSmoothingEnabled = true;
+  f.imageSmoothingQuality = "high";
+  f.drawImage(out, 0, 0, iw, ih, 0, 0, STORY_W, STORY_H);
+  return canvasToPngBlob(final, 0.92);
 }
 
 function resolveMood(doneToday: number, doneWeek: number, t: TamagotchiText) {
@@ -343,6 +341,9 @@ export default function TaskTamagotchi3D({
   configRef.current = config;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const storyGlRef = useRef<{
+    captureFrame: (w: number, h: number) => HTMLCanvasElement | null;
+  } | null>(null);
   const [shareBusy, setShareBusy] = useState(false);
 
   const shareToInstagramStory = useCallback(async () => {
@@ -362,13 +363,23 @@ export default function TaskTamagotchi3D({
           : null;
       const achShareNames = unlockedOrderedIds.map((id) => familyAchievementLabel(id, lang));
       const headline = tb.cardMotto.replace("{name}", mascotName);
-      const shareFullText = `${headline} ${tb.familyXpLabel}: ${familyXp} XP${
+      const shareFullText = `${headline}. ${tb.familyXpLabel}: ${familyXp} XP${
         achShareNames.length ? `. ${tb.achievementsLabel}: ${achShareNames.join(", ")}` : ""
-      }. ${tb.shareText} · ${tb.storySite}`;
-      const blob = await buildInstagramStoryPng(canvas, {
+      }. ${tb.storySite}`;
+      const inset = 18;
+      const slotW = STORY_W - inset * 2;
+      const slotH = STORY_H - STORY_BOTTOM_TEXT_H;
+      const maxSide = 3200;
+      let snapW = 1920;
+      let snapH = Math.round((snapW * slotH) / slotW);
+      if (snapH > maxSide) {
+        snapH = maxSide;
+        snapW = Math.round((snapH * slotW) / slotH);
+      }
+      const hi = storyGlRef.current?.captureFrame(snapW, snapH) ?? null;
+      const source = hi ?? canvas;
+      const blob = await buildInstagramStoryPng(source, {
         headline,
-        title: mood.title,
-        subtitle: mood.subtitle,
         canvasFrom: mood.canvasFrom,
         canvasTo: mood.canvasTo,
         familyXp,
@@ -376,12 +387,6 @@ export default function TaskTamagotchi3D({
         achievementsLabel: tb.achievementsLabel,
         achievementLines,
         achievementsMoreText,
-        doneToday,
-        doneWeek,
-        dayLabel: tb.day,
-        weekLabel: tb.week,
-        dayTarget: DAY_TARGET,
-        weekTarget: WEEK_TARGET,
         siteLabel: tb.storySite,
       });
       if (!blob) {
@@ -389,7 +394,7 @@ export default function TaskTamagotchi3D({
         return;
       }
       const file = new File([blob], "nibby-nibbo-story.png", { type: "image/png" });
-      const payload = { files: [file], title: mood.title, text: shareFullText };
+      const payload = { files: [file], title: headline, text: shareFullText };
       if (typeof navigator !== "undefined" && navigator.canShare?.(payload)) {
         await navigator.share(payload);
         toast.dismiss(busyId);
@@ -417,12 +422,8 @@ export default function TaskTamagotchi3D({
     language,
     lang,
     mascotName,
-    mood.title,
-    mood.subtitle,
     mood.canvasFrom,
     mood.canvasTo,
-    doneToday,
-    doneWeek,
     familyXp,
     unlockedOrderedIds,
   ]);
@@ -524,6 +525,58 @@ export default function TaskTamagotchi3D({
     resize();
     const resizeObserver = new ResizeObserver(() => resize());
     resizeObserver.observe(container);
+
+    const captureStoryFrame = (w: number, h: number): HTMLCanvasElement | null => {
+      const lim = renderer.capabilities.maxTextureSize;
+      const rw = Math.max(32, Math.min(lim, Math.round(w)));
+      const rh = Math.max(32, Math.min(lim, Math.round(h)));
+      const prevAspect = camera.aspect;
+      const prevRt = renderer.getRenderTarget();
+      const rt = new THREE.WebGLRenderTarget(rw, rh, {
+        depthBuffer: true,
+        stencilBuffer: false,
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+      });
+      rt.texture.colorSpace = THREE.SRGBColorSpace;
+      const prevPos = camera.position.clone();
+      const prevQuat = camera.quaternion.clone();
+      const look = new THREE.Vector3(0, 0.04, 0);
+      const arm = prevPos.clone().sub(look);
+      const armLen = arm.length();
+      if (armLen > 1e-6) {
+        arm.normalize();
+        camera.position.copy(look).addScaledVector(arm, armLen * STORY_CAPTURE_CAMERA_PULL);
+        camera.lookAt(look);
+      }
+      camera.aspect = rw / rh;
+      camera.updateProjectionMatrix();
+      renderer.setRenderTarget(rt);
+      renderer.render(scene, camera);
+      const px = new Uint8Array(rw * rh * 4);
+      renderer.readRenderTargetPixels(rt, 0, 0, rw, rh, px);
+      renderer.setRenderTarget(prevRt);
+      rt.dispose();
+      camera.position.copy(prevPos);
+      camera.quaternion.copy(prevQuat);
+      camera.aspect = prevAspect;
+      camera.updateProjectionMatrix();
+      resize();
+      const outC = document.createElement("canvas");
+      outC.width = rw;
+      outC.height = rh;
+      const c2 = outC.getContext("2d", { alpha: true });
+      if (!c2) return null;
+      const img = c2.createImageData(rw, rh);
+      const rowStride = rw * 4;
+      for (let y = 0; y < rh; y += 1) {
+        const srcStart = (rh - 1 - y) * rowStride;
+        img.data.set(px.subarray(srcStart, srcStart + rowStride), y * rowStride);
+      }
+      c2.putImageData(img, 0, 0);
+      return outC;
+    };
+    storyGlRef.current = { captureFrame: captureStoryFrame };
 
     const raycaster = new THREE.Raycaster();
     const ndc = new THREE.Vector2();
@@ -848,6 +901,7 @@ export default function TaskTamagotchi3D({
     animate();
 
     return () => {
+      storyGlRef.current = null;
       cancelAnimationFrame(frameId);
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.style.cursor = "";
